@@ -11,9 +11,9 @@ func TestMultiConn_Chat(t *testing.T) {
 		// init
 		mockT := t //&testing.T{}
 		server := newChatServerStub()
-		conn1, rec1 := NewGorillaMockWithRecorder(mockT)
-		conn2, rec2 := NewGorillaMockWithRecorder(mockT)
-		conn3, rec3 := NewGorillaMockWithRecorder(mockT)
+		conn1, rec1 := NewGorillaMockAndRecorder(mockT)
+		conn2, rec2 := NewGorillaMockAndRecorder(mockT)
+		conn3, rec3 := NewGorillaMockAndRecorder(mockT)
 		server.handle(conn1)
 		server.handle(conn2)
 		server.handle(conn3)

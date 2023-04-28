@@ -33,7 +33,7 @@ func TestAssertAfterTimeoutOrClose(t *testing.T) {
 	t.Run("with alwaysTrue custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -57,7 +57,7 @@ func TestAssertAfterTimeoutOrClose(t *testing.T) {
 	t.Run("with alwaysFalse custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -81,7 +81,7 @@ func TestAssertAfterTimeoutOrClose(t *testing.T) {
 	t.Run("with lastMessage custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -97,7 +97,7 @@ func TestAssertAfterTimeoutOrClose(t *testing.T) {
 	t.Run("with lastMessage custom Finder, asserted too soon", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -115,7 +115,7 @@ func TestAssertOnWrite(t *testing.T) {
 	t.Run("with alwaysTrue custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -139,7 +139,7 @@ func TestAssertOnWrite(t *testing.T) {
 	t.Run("with alwaysFalse custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -163,7 +163,7 @@ func TestAssertOnWrite(t *testing.T) {
 	t.Run("with moreMessagesThan custom Finder", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -179,7 +179,7 @@ func TestAssertOnWrite(t *testing.T) {
 	t.Run("with moreMessagesThan custom Finder, but too late", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script

@@ -9,7 +9,7 @@ func TestAssertReceived(t *testing.T) {
 	t.Run("message written to conn", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -33,7 +33,7 @@ func TestAssertReceived(t *testing.T) {
 	t.Run("message written to conn too late", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		conn.Send(Message{"join", "room:1"})
@@ -48,7 +48,7 @@ func TestAssertReceived(t *testing.T) {
 	t.Run("message written to closed conn", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		conn.Send(Message{"join", "room:1"})
@@ -77,7 +77,7 @@ func TestAssertNotReceived(t *testing.T) {
 	t.Run("message not written to conn", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		conn.Send(Message{"join", "room:1"})
@@ -92,7 +92,7 @@ func TestAssertNotReceived(t *testing.T) {
 	t.Run("message written to conn", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		conn.Send(Message{"join", "room:1"})
@@ -109,7 +109,7 @@ func TestAssertClosed(t *testing.T) {
 	t.Run("no event implying close", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -124,7 +124,7 @@ func TestAssertClosed(t *testing.T) {
 	t.Run("quit event implying close", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script

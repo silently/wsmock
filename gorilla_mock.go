@@ -11,7 +11,7 @@ type GorillaMock struct {
 	recorder *Recorder
 }
 
-func NewGorillaMockWithRecorder(t *testing.T) (*GorillaMock, *Recorder) {
+func NewGorillaMockAndRecorder(t *testing.T) (*GorillaMock, *Recorder) {
 	recorder := NewRecorder(t)
 	conn := &GorillaMock{recorder}
 

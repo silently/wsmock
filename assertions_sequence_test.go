@@ -9,7 +9,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("messages written includes sparse sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -35,7 +35,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("messages written includes sparse sequence, but too late", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -53,7 +53,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("messages written and sparse sequence order don't match", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -71,7 +71,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("messages written is shorter than sparse sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -91,7 +91,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 	t.Run("messages written include adjacent sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -118,7 +118,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 	t.Run("messages written does not include adjacent sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -138,7 +138,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 	t.Run("messages written match exact sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -156,7 +156,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 	t.Run("messages written and sequence differ", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
@@ -174,7 +174,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 	t.Run("messages written miss last message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
-		conn, rec := NewGorillaMockWithRecorder(mockT)
+		conn, rec := NewGorillaMockAndRecorder(mockT)
 		serveWsStub(conn)
 
 		// script
