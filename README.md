@@ -1,4 +1,23 @@
-```
+# wsmock
+
+Library for testing websocket connection handlers:
+
+- provides a mocked websocket connection that the server handler (the subject of the test) will read from and write to (in place of a real `Conn`)
+- tests are scripted by sending messages (client to server) like you would in JS (`ws.send(...)`)
+- possibility to have several mocked connections interacting (through the server handler/s) in the same test
+- a `Recorder` struct comes per mocked conn, coming with assertions to define the outcome of the test
+- possibility to define custom assertions
+- assertions are batched-run with a timeout, they won't wait till the timeout if they succeed before it
+
+## Status
+
+The project is in an early stage of development, API may change.
+
+Currently only Gorilla websocket mocks are provided, more to come.
+
+## Example
+
+```golang
 package mypackage
 
 import (
@@ -23,7 +42,7 @@ func TestWs(t *testing.T) {
     rec.AssertReceived(Message{"users", []string{"Micheline", "Johnny"}})
     conn.Send(Message{"quit", ""})
     rec.AssertClosed()
-    rec.RunAssertions(300 * time.Millisecond)
+    rec.RunAssertions(100 * time.Millisecond)
   })
 }
 ```
