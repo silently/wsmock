@@ -5,7 +5,7 @@ Library for testing websocket connection handlers:
 - provides a mocked websocket connection that the server handler (the subject of the test) will read from and write to (in place of a real `Conn`)
 - tests are scripted by sending messages (client to server) like you would in JS (`ws.send(...)`)
 - possibility to have several mocked connections interacting (through the server handler/s) in the same test
-- a `Recorder` struct comes per mocked conn, coming with assertions to define the outcome of the test
+- for each mocked conn a `Recorder` struct is provided to define the outcome of the test with assertions (`AssertReceived`, `AssertNotReceived`, `AssertReceivedSparseSequence`...)
 - possibility to define custom assertions
 - assertions are batched-run with a timeout, they won't wait till the timeout if they succeed before it
 
@@ -33,7 +33,7 @@ type Message struct {
 }
 
 func TestWs(t *testing.T) {
-	t.Run("supervisor has runner", func(t *testing.T) {
+  t.Run("supervisor has runner", func(t *testing.T) {
     conn, rec := wsmock.NewGorillaMockWithRecorder(t)
     
     serve(conn) // target of the test (defined in mypackage)
