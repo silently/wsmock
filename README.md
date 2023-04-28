@@ -7,11 +7,15 @@ Library for testing websocket connection handlers:
 - possibility to have several mocked connections interacting (through the server handler/s) in the same test
 - for each mocked conn a `Recorder` struct is provided to define the outcome of the test with assertions (`AssertReceived`, `AssertNotReceived`, `AssertReceivedSparseSequence`...)
 - possibility to define custom assertions
-- assertions are batched-run with a timeout, they won't wait till the timeout if they succeed before it. But some assertions (like `AssertNotReceived`) have to wait till the timeout (that you define).
+- assertions are capped with a timeout, but they won't necessarilly wait till it's reached:
+  - for instance `AssertReceived` succeeds as soon as the right message comes in
+  - at the opposite `AssertNotReceived` needs the timeout to be reached to check the message has not been received.
+
+All the assertions have the client-side point of view, they mirror what you would expect in JS with `ws.onmessage(...)`.
 
 ## Status
 
-The project is in an early stage of development, API may change.
+wsmock is in an early stage of development, API may change.
 
 Currently only Gorilla websocket mocks are provided, more to come.
 
