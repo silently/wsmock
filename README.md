@@ -2,10 +2,10 @@
 package mypackage
 
 import (
-	"testing"
+  "testing"
   "time"
 
-	"github.com/silently/wsmock"
+  "github.com/silently/wsmock"
 )
 
 type Message struct {
@@ -15,16 +15,16 @@ type Message struct {
 
 func TestWs(t *testing.T) {
 	t.Run("supervisor has runner", func(t *testing.T) {
-		conn := wsmock.NewGorillaConn(t)
-    serve(conn) // target of the test present in mypackage
+    conn, rec := wsmock.NewGorillaMockWithRecorder(t)
+    
+    serve(conn) // target of the test (defined in mypackage)
     conn.Send(Message{"join", "room:1"})
-    conn.AssertReceived(Message{"joined", "room:1"})
-    conn.AssertReceived(Message{"users", []string{"Micheline", "Johnny"}})
+    rec.AssertReceived(Message{"joined", "room:1"})
+    rec.AssertReceived(Message{"users", []string{"Micheline", "Johnny"}})
     conn.Send(Message{"quit", ""})
-    conn.AssertClosed()
-    conn.SetAssertTimeout(300 * time.Millisecond)
-	})
-
+    rec.AssertClosed()
+    rec.RunAssertions(300 * time.Millisecond)
+  })
 }
 ```
 
