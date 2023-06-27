@@ -14,7 +14,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
 		rec.AssertReceivedSparseSequence(seq)
 
 		before := time.Now()
@@ -40,7 +40,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
 		rec.AssertReceivedSparseSequence(seq)
 
 		rec.RunAssertions(40 * time.Millisecond)
@@ -59,7 +59,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence1"}})
+		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence1"}})
 		rec.AssertReceivedSparseSequence(seq)
 		rec.RunAssertions(100 * time.Millisecond)
 
@@ -77,7 +77,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}, {"chat", "sentence5"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}, {"chat", "sentence5"}})
 		rec.AssertReceivedSparseSequence(seq)
 		rec.RunAssertions(100 * time.Millisecond)
 
@@ -97,7 +97,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence3"}})
+		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence3"}})
 		rec.AssertReceivedAdjacentSequence(seq)
 
 		before := time.Now()
@@ -124,7 +124,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence4"}})
+		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence4"}})
 		rec.AssertReceivedAdjacentSequence(seq)
 		rec.RunAssertions(100 * time.Millisecond)
 
@@ -143,7 +143,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}})
 		rec.AssertReceivedExactSequence(seq)
 
 		rec.RunAssertions(300 * time.Millisecond)
@@ -162,7 +162,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence5"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence5"}})
 		rec.AssertReceivedExactSequence(seq)
 		rec.RunAssertions(100 * time.Millisecond)
 
@@ -180,7 +180,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		// script
 		conn.Send(Message{"history", ""})
 
-		seq := ToAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}})
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}})
 		rec.AssertReceivedExactSequence(seq)
 		rec.RunAssertions(100 * time.Millisecond)
 

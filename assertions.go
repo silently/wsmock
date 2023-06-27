@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func ToAnySlice[T any](expecteds []T) []any {
+func toAnySlice[T any](expecteds []T) []any {
 	expectedsAny := make([]any, len(expecteds))
 	for i, v := range expecteds {
 		expectedsAny[i] = v
@@ -207,7 +207,7 @@ func (r *Recorder) AssertClosed() {
 // RunAssertions will go till this timeout.
 //
 // Some assertions (like AssertNotReceived) always wait until the timeout has been reached
-// to decide of their outcome.
+// to assert success, but may fail sooner.
 //
 // At the end of RunAssertions, the recorder keeps previously received messages but assertions
 // are removed. It's then possible to add new Assert* methods and RunAssertions again.

@@ -11,7 +11,7 @@ type Message struct {
 }
 
 // stub for single conn tests
-func serveWsStub(conn GorillaConn) {
+func serveWsStub(conn IGorilla) {
 	go func() {
 		for {
 			var m Message
@@ -49,7 +49,7 @@ func newChatServerStub() *chatServerStub {
 	return &chatServerStub{sync.Mutex{}, make(map[*GorillaConn]string)}
 }
 
-func (s *chatServerStub) handle(conn GorillaConn) {
+func (s *chatServerStub) handle(conn *GorillaConn) {
 	go func() {
 		for {
 			var m Message
@@ -59,15 +59,15 @@ func (s *chatServerStub) handle(conn GorillaConn) {
 				return
 			} else if m.Kind == "join" {
 				s.Lock()
-				s.connIndex[&conn] = m.Payload
+				s.connIndex[conn] = m.Payload
 				s.Unlock()
 				conn.WriteJSON(Message{"joined", m.Payload})
 			} else if m.Kind == "message" {
 				s.Lock()
-				from := s.connIndex[&conn]
+				from := s.connIndex[conn]
 				for c := range s.connIndex {
-					if c != &conn {
-						(*c).WriteJSON(Message{from, m.Payload})
+					if c != conn {
+						c.WriteJSON(Message{from, m.Payload})
 					}
 				}
 				s.Unlock()
