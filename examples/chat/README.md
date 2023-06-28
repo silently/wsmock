@@ -1,6 +1,6 @@
 ## wsmock aside
 
-The `examples/chat` folder is a copy of `https://github.com/gorilla/websocket/tree/master/examples/chat` with a few added tests to showcase how wsmock can be used.
+The `examples/chat` folder is a copy of `https://github.com/gorilla/websocket/tree/master/examples/chat` with a few changes (in `client.go`) and added tests to showcase how wsmock can be used.
 
 As explained in wsmock documentation, Gorilla `websocket.Conn` type in `client.go` has been replaced by an interface, allowing mocks to be passed in place within tests. We have also created a `runClient` function to encapsulate client creation and its read/write pump loops.
 
@@ -61,8 +61,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := runClient(hub, conn) // wsmock 3/3 -> use runClient function
-	client.hub.register <- client
+	hub.register <- runClient(hub, conn)  // wsmock 3/3 -> use runClient function
 }
 ```
 
@@ -87,6 +86,8 @@ using the following commands.
 
     $ go examples/chat/
     $ go run !(*_test).go
+		or
+		$ go run $(ls -1 *.go | grep -v _test.go)
 
 To use the chat example, open http://localhost:8080/ in your browser.
 

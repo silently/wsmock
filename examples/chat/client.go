@@ -136,6 +136,5 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := runClient(hub, conn)
-	client.hub.register <- client
+	hub.register <- runClient(hub, conn)
 }
