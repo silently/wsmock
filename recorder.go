@@ -38,6 +38,14 @@ func NewRecorder(t *testing.T) *Recorder {
 	return &r
 }
 
+func (r *Recorder) Close() error {
+	if !r.closed {
+		r.closed = true
+		close(r.closedCh)
+	}
+	return nil
+}
+
 func (r *Recorder) resetAssertions() {
 	r.timeoutCh = make(chan struct{})
 	r.fastExit = true

@@ -47,12 +47,11 @@ type Client struct {
 }
 
 // wsmock 2/3 -> function to encapsulate Client creation and loops
-func runClient(hub *Hub, conn wsmock.IGorilla) *Client {
-  client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-  go client.writePump()
+func runClient(hub *Hub, conn wsmock.IGorilla) {
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	hub.register <- client
+	go client.writePump()
 	go client.readPump()
-  
-  return client
 }
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
@@ -61,7 +60,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	hub.register <- runClient(hub, conn)  // wsmock 3/3 -> use runClient function
+	runClient(hub, conn)  // wsmock 3/3 -> use runClient function
 }
 ```
 

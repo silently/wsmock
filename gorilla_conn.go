@@ -1,11 +1,11 @@
 package wsmock
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
@@ -14,57 +14,124 @@ import (
 
 type GorillaConn struct {
 	recorder *Recorder
+	closed   bool
+	closedCh chan struct{}
+}
+
+type gorillaWriter struct {
+	messageType int
+	conn        *GorillaConn
+	data        []byte
+}
+
+func (w *gorillaWriter) Write(data []byte) (n int, err error) {
+	w.data = append(w.data, data...)
+	return len(data), nil
+}
+
+func (w *gorillaWriter) Close() error {
+	return w.conn.WriteMessage(w.messageType, w.data)
 }
 
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 	recorder := NewRecorder(t)
-	conn := &GorillaConn{recorder}
+	conn := &GorillaConn{
+		recorder: recorder,
+		closedCh: make(chan struct{}),
+	}
 
 	return conn, recorder
 }
 
+// Client-side API
+
+// Send does not make any asumption on its message argument type (and does not serializes it),
+// this will be decided upon what Read* function is used to retrieve it
+func (conn *GorillaConn) Send(message any) {
+	conn.recorder.serverReadCh <- message
+}
+
 // Stub API (used by server)
 
-// blocking till next message sent from client
-func (conn *GorillaConn) ReadJSON(m any) error {
+// Parses as JSON the first message available on conn and stores the result in the value pointed to by v
+// While waiting for it, it can return sooner if conn is closed
+func (conn *GorillaConn) ReadJSON(v any) error {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return errors.New("ReadJSON: argument should be a pointer")
+	}
 	for {
 		select {
 		case read := <-conn.recorder.serverReadCh:
-			b := read.(*bytes.Buffer)
-			json.NewDecoder(b).Decode(m)
-
-			return nil
-		case <-conn.recorder.closedCh:
+			b, err := json.Marshal(read)
+			if err != nil {
+				return err
+			}
+			return json.Unmarshal(b, v)
+		case <-conn.closedCh:
 			return errors.New("[wsmock] conn closed while reading")
 		}
 	}
 }
 
-func (conn *GorillaConn) WriteJSON(m any) error {
+// Returns the first message available on conn, as []byte:
+// - []byte message returned as is
+// - string message converted to [byte]
+// - other message types are JSON marshalled
+// While waiting for a message, it can return sooner if conn is closed
+func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
 	for {
 		select {
-		case conn.recorder.serverWriteCh <- m:
-			return nil
-		case <-conn.recorder.closedCh:
-			return errors.New("[wsmock] conn closed while writing")
+		case read := <-conn.recorder.serverReadCh:
+			switch v := read.(type) {
+			case []byte:
+				return websocket.BinaryMessage, v, nil
+			case string:
+				return websocket.TextMessage, []byte(v), nil
+			default:
+				b, err := json.Marshal(read)
+				if err != nil {
+					return -1, nil, err
+				}
+				return websocket.TextMessage, b, nil
+			}
+		case <-conn.closedCh:
+			return -1, nil, nil
 		}
 	}
 }
 
-func (conn *GorillaConn) Close() error {
-	if !conn.recorder.closed {
-		conn.recorder.closed = true
-		close(conn.recorder.closedCh)
+func (conn *GorillaConn) WriteJSON(m any) error {
+	if conn.closed {
+		return errors.New("[wsmock] conn closed while writing")
+	}
+	conn.recorder.serverWriteCh <- m
+	return nil
+}
+
+func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
+	if conn.closed {
+		return errors.New("[wsmock] conn closed while writing")
+	}
+	if messageType == websocket.TextMessage {
+		conn.recorder.serverWriteCh <- string(data)
+	} else {
+		conn.recorder.serverWriteCh <- data
 	}
 	return nil
 }
 
-// Client-side API
+func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
+	return &gorillaWriter{messageType, conn, nil}, nil
+}
 
-func (conn *GorillaConn) Send(m any) {
-	w := &bytes.Buffer{}
-	json.NewEncoder(w).Encode(m)
-	conn.recorder.serverReadCh <- w
+func (conn *GorillaConn) Close() error {
+	if !conn.closed {
+		conn.closed = true
+		close(conn.closedCh)
+		conn.recorder.Close()
+	}
+	return nil
 }
 
 // IGorilla noop implementations
@@ -81,9 +148,6 @@ func (conn *GorillaConn) LocalAddr() net.Addr {
 func (conn *GorillaConn) NextReader() (messageType int, r io.Reader, err error) {
 	return 1, &io.PipeReader{}, nil
 }
-func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
-	return &io.PipeWriter{}, nil
-}
 func (conn *GorillaConn) PingHandler() func(appData string) error {
 	return func(appData string) error {
 		return errors.New("")
@@ -93,9 +157,6 @@ func (conn *GorillaConn) PongHandler() func(appData string) error {
 	return func(appData string) error {
 		return nil
 	}
-}
-func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
-	return 1, []byte{}, nil
 }
 func (conn *GorillaConn) RemoteAddr() net.Addr {
 	return &net.IPAddr{}
@@ -120,9 +181,6 @@ func (conn *GorillaConn) UnderlyingConn() net.Conn {
 	return &net.TCPConn{}
 }
 func (conn *GorillaConn) WriteControl(messageType int, data []byte, deadline time.Time) error {
-	return nil
-}
-func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 	return nil
 }
 func (conn *GorillaConn) WritePreparedMessage(pm *websocket.PreparedMessage) error {

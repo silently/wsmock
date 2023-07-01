@@ -121,12 +121,11 @@ func (c *Client) writePump() {
 	}
 }
 
-func runClient(hub *Hub, conn wsmock.IGorilla) *Client {
+func runClient(hub *Hub, conn wsmock.IGorilla) {
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	hub.register <- client
 	go client.writePump()
 	go client.readPump()
-
-	return client
 }
 
 // serveWs handles websocket requests from the peer.
@@ -136,5 +135,5 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	hub.register <- runClient(hub, conn)
+	runClient(hub, conn)
 }

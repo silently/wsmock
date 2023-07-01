@@ -35,10 +35,6 @@ type IGorilla interface {
 	WritePreparedMessage(pm *websocket.PreparedMessage) error
 }
 
-// type GorillaConn interface {
-// 	ReadJSON(any) error
-// 	WriteJSON(any) error
-// 	Close() error
-// }
+type Asserter func(latest any, messages []any) (done, result bool, errMessage string)
 
 type Finder func(messages []any) bool

@@ -1,6 +1,8 @@
 package wsmock
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -99,10 +101,25 @@ func (r *Recorder) AssertOnTimeoutOrClose(errMessage string, f Finder) {
 // AssertReceived checks if a message has been received (on each write).
 func (r *Recorder) AssertReceived(expected any) {
 	r.t.Helper()
-	r.AssertOnWrite("[wsmock] message not received", func(messages []any) bool {
+	r.AssertOnWrite(fmt.Sprintf("[wsmock] message not received: %v", expected), func(messages []any) bool {
 		for _, m := range messages {
 			if m == expected {
 				return true
+			}
+		}
+		return false
+	})
+}
+
+// AssertReceivedContains checks if a received message contains a given string (on each write).
+func (r *Recorder) AssertReceivedContains(expected string) {
+	r.t.Helper()
+	r.AssertOnWrite(fmt.Sprintf("[wsmock] no message contained: %v", expected), func(messages []any) bool {
+		for _, m := range messages {
+			if str, ok := m.(string); ok {
+				if strings.Contains(str, expected) {
+					return true
+				}
 			}
 		}
 		return false

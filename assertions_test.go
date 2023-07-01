@@ -30,7 +30,7 @@ func TestAssertReceived(t *testing.T) {
 		}
 	})
 
-	t.Run("message written to conn too late", func(t *testing.T) {
+	t.Run("message to conn too late", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -100,7 +100,7 @@ func TestAssertNotReceived(t *testing.T) {
 		rec.RunAssertions(110 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("message should be received")
+			t.Error("message should not be received")
 		}
 	})
 }
