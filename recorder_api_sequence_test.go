@@ -14,7 +14,7 @@ func toAnySlice[T any](expecteds []T) []any {
 }
 
 func TestAssertReceivedSparseSequence(t *testing.T) {
-	t.Run("messages written includes sparse sequence", func(t *testing.T) {
+	t.Run("sparse sequence sent on time", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -30,17 +30,17 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("sparse sequence should be received")
+			t.Error("AssertReceivedSparseSequence should succeed")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Error("sparse sequence should be received faster")
+				t.Error("AssertReceivedSparseSequence should succeed faster")
 			}
 		}
 	})
 
-	t.Run("messages written includes sparse sequence, but too late", func(t *testing.T) {
+	t.Run("timeout comes before sparse sequence sent", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -54,11 +54,11 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		rec.RunAssertions(40 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("sparse sequence should not be already received")
+			t.Error("AssertReceivedSparseSequence because of timeout")
 		}
 	})
 
-	t.Run("messages written and sparse sequence order don't match", func(t *testing.T) {
+	t.Run("sparse sequence order differ", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -72,11 +72,11 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("sparse sequence should not be received")
+			t.Error("AssertReceivedSparseSequence should fail")
 		}
 	})
 
-	t.Run("messages written is shorter than sparse sequence", func(t *testing.T) {
+	t.Run("sparse sequence incomplete", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -90,13 +90,13 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("sparse sequence should not be received")
+			t.Error("AssertReceivedSparseSequence should fail")
 		}
 	})
 }
 
 func TestAssertReceivedAdjacentSequence(t *testing.T) {
-	t.Run("messages written include adjacent sequence", func(t *testing.T) {
+	t.Run("adjacent sequence is sent before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -113,17 +113,17 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("adjacent sequence should be received")
+			t.Error("AssertReceivedAdjacentSequence should succeed")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Error("adjacent sequence should be received faster")
+				t.Error("AssertReceivedAdjacentSequence should succeed faster")
 			}
 		}
 	})
 
-	t.Run("messages written does not include adjacent sequence", func(t *testing.T) {
+	t.Run("adjacent sequence incomplete", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -137,13 +137,13 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("adjacent sequence should not be received")
+			t.Error("AssertReceivedAdjacentSequence should fail")
 		}
 	})
 }
 
 func TestAssertReceivedExactSequence(t *testing.T) {
-	t.Run("messages written match exact sequence", func(t *testing.T) {
+	t.Run("exact sequence sent before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -157,11 +157,11 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		rec.RunAssertions(300 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("exact sequence should be received")
+			t.Error("AssertReceivedExactSequence should succeed")
 		}
 	})
 
-	t.Run("messages written and sequence differ", func(t *testing.T) {
+	t.Run("exact sequence differs", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -175,11 +175,11 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("exact sequence should not be received")
+			t.Error("AssertReceivedExactSequence should fail")
 		}
 	})
 
-	t.Run("messages written miss last message", func(t *testing.T) {
+	t.Run("exact sequence misses last message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -193,7 +193,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("exact sequence should not be received")
+			t.Error("AssertReceivedExactSequence should fail")
 		}
 	})
 }

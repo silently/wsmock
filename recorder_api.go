@@ -8,6 +8,29 @@ import (
 	"time"
 )
 
+type Finder func(index int, write any) (ok bool)
+
+func (r *Recorder) FindOne(f Finder) (found any, ok bool) {
+	r.t.Helper()
+	for i, w := range r.serverWrites {
+		if f(i, w) {
+			return w, true
+		}
+	}
+	return nil, false
+}
+
+func (r *Recorder) FindAll(f Finder) (founds []any, ok bool) {
+	r.t.Helper()
+	for i, w := range r.serverWrites {
+		if f(i, w) {
+			founds = append(founds, w)
+			ok = true
+		}
+	}
+	return
+}
+
 func (r *Recorder) AssertWith(asserter Asserter) {
 	r.t.Helper()
 	a := newAssertion(r, asserter)
@@ -84,6 +107,18 @@ func (r *Recorder) AssertReceivedContains(target string) {
 				done = true
 				passed = true
 			}
+		}
+		return
+	})
+}
+
+// AssertClosed checks if conn has been closed (on timeout and close)
+func (r *Recorder) AssertClosed() {
+	r.t.Helper()
+	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+		if end {
+			passed = r.closed
+			errorMessage = "[wsmock] should be closed"
 		}
 		return
 	})
@@ -180,18 +215,6 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 	})
 }
 
-// AssertClosed checks if conn has been closed (on timeout and close)
-func (r *Recorder) AssertClosed() {
-	r.t.Helper()
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
-		if end {
-			passed = r.closed
-			errorMessage = "[wsmock] should be closed"
-		}
-		return
-	})
-}
-
 // RunAssertions runs all Assert* methods that have been previously added
 // on this recorder, with a timeout.
 //
@@ -204,10 +227,11 @@ func (r *Recorder) AssertClosed() {
 // are removed. It's then possible to add new Assert* methods and RunAssertions again.
 func (r *Recorder) RunAssertions(timeout time.Duration) {
 	r.startAssertions()
-	// wait for end of assert group
-	<-time.After(timeout)
-	close(r.timeoutCh)
-	// wait gracefully for assertions to be indeed finished
+	go func() {
+		<-time.After(timeout)
+		close(r.timeoutCh)
+	}()
+	// wait for assertions to be finished (when timeout is reached, of if all outcomes are decided before)
 	r.assertionWG.Wait()
 	r.resetAssertions()
 }
