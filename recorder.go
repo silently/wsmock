@@ -9,8 +9,6 @@ type Recorder struct {
 	// testing logic
 	t              *testing.T
 	timeoutCh      chan struct{}
-	fastExit       bool
-	fastExitWG     sync.WaitGroup // if fastExit is enabled, we may not have to wait for timeoutCh to be closed
 	assertionWG    sync.WaitGroup // track if assertions are finished
 	assertionIndex map[*assertion]bool
 	// ws communication
@@ -22,7 +20,7 @@ type Recorder struct {
 	serverWrites []any
 }
 
-func NewRecorder(t *testing.T) *Recorder {
+func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:             t,
 		serverReadCh:  make(chan any, 32),
@@ -38,7 +36,7 @@ func NewRecorder(t *testing.T) *Recorder {
 	return &r
 }
 
-func (r *Recorder) Close() error {
+func (r *Recorder) close() error {
 	if !r.closed {
 		r.closed = true
 		close(r.closedCh)
@@ -48,8 +46,6 @@ func (r *Recorder) Close() error {
 
 func (r *Recorder) resetAssertions() {
 	r.timeoutCh = make(chan struct{})
-	r.fastExit = true
-	r.fastExitWG = sync.WaitGroup{}
 	r.assertionWG = sync.WaitGroup{}
 	r.assertionIndex = make(map[*assertion]bool)
 }
@@ -61,11 +57,11 @@ func (r *Recorder) startAssertions() {
 }
 
 func (r *Recorder) loop() {
-	for m := range r.serverWriteCh {
-		r.serverWrites = append(r.serverWrites, m)
+	for w := range r.serverWriteCh {
+		r.serverWrites = append(r.serverWrites, w)
 		for a := range r.assertionIndex {
 			go func(a *assertion) { // we don't want to block the loop while assertions haven't started
-				a.newWriteCh <- struct{}{}
+				a.latestWriteCh <- w
 			}(a)
 		}
 	}

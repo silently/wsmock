@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -19,19 +20,23 @@ func runNewHub() *Hub {
 	return hub
 }
 
-// if type Asserter
-func HasReceivedAutoSplit(expected string) wsmock.Finder {
-	return func(messages []any) bool {
-		for _, m := range messages {
-			if str, ok := m.(string); ok {
-				for _, w := range strings.Split(str, "\n") {
-					if w == expected {
-						return true
-					}
+// Custom Asserter that splits received writes into several messages if separated by "\n"
+// and then test if one of them is target
+func hasReceivedAutoSplit(target string) wsmock.Asserter {
+	return func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+		if end {
+			passed = false
+			errorMessage = fmt.Sprintf("[wsmock] no message received containing: %v", target)
+		} else if str, ok := latestWrite.(string); ok {
+			for _, w := range strings.Split(str, "\n") {
+				if w == target {
+					done = true
+					passed = true
+					break
 				}
 			}
 		}
-		return false
+		return
 	}
 }
 
@@ -48,7 +53,7 @@ func TestRunClient(t *testing.T) {
 		conn2.Send("two")
 		// - assertions: client may queue and bundle messages together, that's why we check
 		//   if message is contained in a wider bundled message
-		// - alternatively: write a custom Finder by splitting messages around newlines (check client.go line 108)
+		// - alternatively: check next test with a custom Asserter
 		rec1.AssertReceivedContains("one")
 		rec1.AssertReceivedContains("two")
 		rec2.AssertReceivedContains("one")
@@ -68,11 +73,9 @@ func TestRunClient(t *testing.T) {
 		// script sends
 		conn1.Send("one")
 		conn2.Send("two")
-		// - assertions: client may queue and bundle messages together, that's why we check
-		//   if message is contained in a wider bundled message
-		// - alternatively: write a custom Finder by splitting messages around newlines (check client.go line 108)
-		rec1.AssertOnWrite("", HasReceivedAutoSplit("one"))
-		rec2.AssertOnWrite("", HasReceivedAutoSplit("one"))
+		// use a custom Asserter that splits messages around newlines (check client.go line 108)
+		rec1.AssertWith(hasReceivedAutoSplit("one"))
+		rec2.AssertWith(hasReceivedAutoSplit("one"))
 
 		// run all previously declared assertions with a timeout
 		wsmock.RunAssertions(t, 100*time.Millisecond)

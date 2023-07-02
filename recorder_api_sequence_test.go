@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+func toAnySlice[T any](expecteds []T) []any {
+	expectedsAny := make([]any, len(expecteds))
+	for i, v := range expecteds {
+		expectedsAny[i] = v
+	}
+	return expectedsAny
+}
+
 func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("messages written includes sparse sequence", func(t *testing.T) {
 		// init
