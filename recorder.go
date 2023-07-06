@@ -1,16 +1,22 @@
 package wsmock
 
 import (
+	"log"
 	"sync"
 	"testing"
+	"time"
 )
 
-type Recorder struct {
-	// testing logic
-	t              *testing.T
+type round struct {
+	wg             sync.WaitGroup // track if assertions are finished
 	timeoutCh      chan struct{}
-	assertionWG    sync.WaitGroup // track if assertions are finished
+	doneCh         chan struct{} // caused by timeout or outcome known before timeout (wg passed)
 	assertionIndex map[*assertion]bool
+}
+
+type Recorder struct {
+	t            *testing.T
+	currentRound round
 	// ws communication
 	serverReadCh  chan any
 	serverWriteCh chan any
@@ -20,16 +26,24 @@ type Recorder struct {
 	serverWrites []any
 }
 
+func (r *Recorder) newRound() {
+	r.currentRound = round{
+		wg:             sync.WaitGroup{},
+		timeoutCh:      make(chan struct{}),
+		doneCh:         make(chan struct{}),
+		assertionIndex: make(map[*assertion]bool),
+	}
+}
+
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:             t,
-		serverReadCh:  make(chan any, 32),
-		serverWriteCh: make(chan any),
+		serverReadCh:  make(chan any, 512),
+		serverWriteCh: make(chan any, 512),
 		closedCh:      make(chan struct{}),
 	}
-	r.resetAssertions()
+	r.newRound()
 	indexRecorder(t, &r)
-	go r.loop() // TODO start loop on StartAssert
 	t.Cleanup(func() {
 		unindexRecorder(t, &r)
 	})
@@ -44,25 +58,45 @@ func (r *Recorder) close() error {
 	return nil
 }
 
-func (r *Recorder) resetAssertions() {
-	r.timeoutCh = make(chan struct{})
-	r.assertionWG = sync.WaitGroup{}
-	r.assertionIndex = make(map[*assertion]bool)
+func (r *Recorder) addAssertionToRound(a *assertion) {
+	r.currentRound.assertionIndex[a] = true
 }
 
-func (r *Recorder) startAssertions() {
-	for a := range r.assertionIndex {
+func (r *Recorder) startRound(timeout time.Duration) {
+	log.Printf(">>> %+v", r.currentRound.assertionIndex)
+	go func() {
+		<-time.After(timeout)
+		close(r.currentRound.timeoutCh)
+	}()
+
+	go r.forwardWritesDuringRound()
+	for a := range r.currentRound.assertionIndex {
 		go a.loop()
 	}
 }
 
-func (r *Recorder) loop() {
-	for w := range r.serverWriteCh {
-		r.serverWrites = append(r.serverWrites, w)
-		for a := range r.assertionIndex {
-			go func(a *assertion) { // we don't want to block the loop while assertions haven't started
-				a.latestWriteCh <- w
-			}(a)
+func (r *Recorder) waitForRound() {
+	r.currentRound.wg.Wait()
+}
+
+func (r *Recorder) stopRound() {
+	close(r.currentRound.doneCh)
+	r.newRound()
+}
+
+func (r *Recorder) forwardWritesDuringRound() {
+	for {
+		select {
+		case w := <-r.serverWriteCh:
+			r.serverWrites = append(r.serverWrites, w)
+			for a := range r.currentRound.assertionIndex {
+				go func(a *assertion, w any) { // we don't want to block the loop while assertions haven't started
+					a.latestWriteCh <- w
+				}(a, w)
+			}
+		case <-r.currentRound.doneCh:
+			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round
+			return
 		}
 	}
 }

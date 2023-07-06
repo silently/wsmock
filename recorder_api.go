@@ -11,7 +11,6 @@ import (
 type Finder func(index int, write any) (ok bool)
 
 func (r *Recorder) FindOne(f Finder) (found any, ok bool) {
-	r.t.Helper()
 	for i, w := range r.serverWrites {
 		if f(i, w) {
 			return w, true
@@ -21,7 +20,6 @@ func (r *Recorder) FindOne(f Finder) (found any, ok bool) {
 }
 
 func (r *Recorder) FindAll(f Finder) (founds []any, ok bool) {
-	r.t.Helper()
 	for i, w := range r.serverWrites {
 		if f(i, w) {
 			founds = append(founds, w)
@@ -32,10 +30,10 @@ func (r *Recorder) FindAll(f Finder) (founds []any, ok bool) {
 }
 
 func (r *Recorder) AssertWith(asserter Asserter) {
-	r.t.Helper()
-	a := newAssertion(r, asserter)
-	r.assertionIndex[a] = true
+	r.addAssertionToRound(newAssertion(r, asserter))
 }
+
+// Test helpers
 
 // AssertReceived checks if a message has been received (on each write).
 func (r *Recorder) AssertReceived(target any) {
@@ -226,14 +224,9 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 // At the end of RunAssertions, the recorder keeps previously received messages but assertions
 // are removed. It's then possible to add new Assert* methods and RunAssertions again.
 func (r *Recorder) RunAssertions(timeout time.Duration) {
-	r.startAssertions()
-	go func() {
-		<-time.After(timeout)
-		close(r.timeoutCh)
-	}()
-	// wait for assertions to be finished (when timeout is reached, of if all outcomes are decided before)
-	r.assertionWG.Wait()
-	r.resetAssertions()
+	r.startRound(timeout)
+	r.waitForRound()
+	r.stopRound()
 }
 
 // RunAssertions scoped to a test (t *testing.T) launches and waits for all RunAssertions of recorders

@@ -6,7 +6,7 @@ import (
 )
 
 func TestAssertReceived(t *testing.T) {
-	t.Run("joined message sent before timeout", func(t *testing.T) {
+	t.Run("succeeds when message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -30,7 +30,7 @@ func TestAssertReceived(t *testing.T) {
 		}
 	})
 
-	t.Run("timeout comes before joined message", func(t *testing.T) {
+	t.Run("fails when timeout occurs before message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -45,7 +45,7 @@ func TestAssertReceived(t *testing.T) {
 		}
 	})
 
-	t.Run("closed conn comes before joined message", func(t *testing.T) {
+	t.Run("fails when conn is closed before message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -74,7 +74,7 @@ func TestAssertReceived(t *testing.T) {
 }
 
 func TestAssertNotReceived(t *testing.T) {
-	t.Run("unexpected message not received", func(t *testing.T) {
+	t.Run("succeeds when message is not received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -89,7 +89,7 @@ func TestAssertNotReceived(t *testing.T) {
 		}
 	})
 
-	t.Run("joined message sent", func(t *testing.T) {
+	t.Run("fails when message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -106,7 +106,7 @@ func TestAssertNotReceived(t *testing.T) {
 }
 
 func TestAssertClosed(t *testing.T) {
-	t.Run("no event implying close", func(t *testing.T) {
+	t.Run("fails when conn is not closed", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -121,7 +121,7 @@ func TestAssertClosed(t *testing.T) {
 		}
 	})
 
-	t.Run("quit event implying close", func(t *testing.T) {
+	t.Run("succeeds when conn is closed server-side", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -137,7 +137,7 @@ func TestAssertClosed(t *testing.T) {
 		}
 	})
 
-	t.Run("explicit close", func(t *testing.T) {
+	t.Run("succeeds when conn is closed client-side", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)

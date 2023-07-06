@@ -14,7 +14,7 @@ func toAnySlice[T any](expecteds []T) []any {
 }
 
 func TestAssertReceivedSparseSequence(t *testing.T) {
-	t.Run("sparse sequence sent on time", func(t *testing.T) {
+	t.Run("succeeds when sparse sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -40,7 +40,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("timeout comes before sparse sequence sent", func(t *testing.T) {
+	t.Run("fails when timeout occurs before sparse sequence", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -58,7 +58,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("sparse sequence order differ", func(t *testing.T) {
+	t.Run("fails when sparse sequence order differ", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -76,7 +76,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("sparse sequence incomplete", func(t *testing.T) {
+	t.Run("fails when sparse sequence is incomplete", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -96,7 +96,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 }
 
 func TestAssertReceivedAdjacentSequence(t *testing.T) {
-	t.Run("adjacent sequence is sent before timeout", func(t *testing.T) {
+	t.Run("succeeds when adjacent sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -123,7 +123,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("adjacent sequence incomplete", func(t *testing.T) {
+	t.Run("fails when adjacent sequence is incomplete", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -143,7 +143,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 }
 
 func TestAssertReceivedExactSequence(t *testing.T) {
-	t.Run("exact sequence sent before timeout", func(t *testing.T) {
+	t.Run("succeeds when exact sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -161,7 +161,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("exact sequence differs", func(t *testing.T) {
+	t.Run("fails when sequence differs", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -179,7 +179,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		}
 	})
 
-	t.Run("exact sequence misses last message", func(t *testing.T) {
+	t.Run("fails when sequence misses last message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)

@@ -1,6 +1,7 @@
 package wsmock
 
 import (
+	"log"
 	"sync"
 	"time"
 )
@@ -19,10 +20,10 @@ func serveWsStub(conn IGorilla) {
 			if err != nil {
 				// client left (or needs to stop loop anyway)
 				return
-			} else if m.Kind == "join" {
+			} else if m.Kind == "join" { // ~100ms
 				time.Sleep(100 * time.Millisecond)
 				conn.WriteJSON(Message{"joined", m.Payload})
-			} else if m.Kind == "history" {
+			} else if m.Kind == "history" { // ~60ms
 				time.Sleep(10 * time.Millisecond)
 				conn.WriteJSON(Message{"chat", "sentence1"})
 				time.Sleep(20 * time.Millisecond)
@@ -31,7 +32,7 @@ func serveWsStub(conn IGorilla) {
 				conn.WriteJSON(Message{"chat", "sentence3"})
 				time.Sleep(20 * time.Millisecond)
 				conn.WriteJSON(Message{"chat", "sentence4"})
-			} else if m.Kind == "quit" {
+			} else if m.Kind == "quit" { // ~10ms
 				time.Sleep(10 * time.Millisecond)
 				conn.Close()
 			}
@@ -65,8 +66,9 @@ func (s *chatServerStub) handle(conn *GorillaConn) {
 			} else if m.Kind == "message" {
 				s.Lock()
 				from := s.connIndex[conn]
-				for c := range s.connIndex {
+				for c, str := range s.connIndex {
 					if c != conn {
+						log.Printf(">>>>> %v sent to %v\n", m, str)
 						c.WriteJSON(Message{from, m.Payload})
 					}
 				}

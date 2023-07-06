@@ -25,7 +25,7 @@ func hasMoreMessagesOnEndThan(count int) Asserter {
 }
 
 func TestAssertWith(t *testing.T) {
-	t.Run("with alwaysTrue custom Asserter", func(t *testing.T) {
+	t.Run("succeeds when custom Asserter does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -49,7 +49,7 @@ func TestAssertWith(t *testing.T) {
 		}
 	})
 
-	t.Run("with alwaysFalse custom Asserter", func(t *testing.T) {
+	t.Run("fails when custom Asserter does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -73,7 +73,7 @@ func TestAssertWith(t *testing.T) {
 		}
 	})
 
-	t.Run("with hasMoreMessagesOnEndThan custom Asserter", func(t *testing.T) {
+	t.Run("succeeds using hasMoreMessagesOnEndThan with enough messages", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -89,7 +89,7 @@ func TestAssertWith(t *testing.T) {
 		}
 	})
 
-	t.Run("with hasMoreMessagesOnEndThan custom Asserter, but too soon", func(t *testing.T) {
+	t.Run("fails using hasMoreMessagesOnEndThan when asked too soon", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -99,6 +99,22 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 		rec.AssertWith(hasMoreMessagesOnEndThan(3))
 		rec.RunAssertions(20 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
+		}
+	})
+
+	t.Run("fails using hasMoreMessagesOnEndThan with not enough messages", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+		rec.AssertWith(hasMoreMessagesOnEndThan(10))
+		rec.RunAssertions(70 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")

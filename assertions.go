@@ -34,7 +34,7 @@ func newAssertion(r *Recorder, asserter Asserter) *assertion {
 		asserter:      asserter,
 		latestWriteCh: make(chan any),
 	}
-	r.assertionWG.Add(1)
+	r.currentRound.wg.Add(1)
 	return &a
 }
 
@@ -49,7 +49,7 @@ func (a assertion) assertOnEnd() {
 }
 
 func (a assertion) loop() {
-	defer a.recorder.assertionWG.Done()
+	defer a.recorder.currentRound.wg.Done()
 
 	for {
 		select {
@@ -61,7 +61,7 @@ func (a assertion) loop() {
 				}
 				return
 			}
-		case <-a.recorder.timeoutCh:
+		case <-a.recorder.currentRound.timeoutCh:
 			a.assertOnEnd()
 			return
 		case <-a.recorder.closedCh:
