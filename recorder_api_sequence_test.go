@@ -54,7 +54,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		rec.RunAssertions(40 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedSparseSequence because of timeout")
+			t.Error("AssertReceivedSparseSequence shoud fail because of timeout")
 		}
 	})
 

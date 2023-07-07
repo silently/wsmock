@@ -1,7 +1,6 @@
 package wsmock
 
 import (
-	"log"
 	"sync"
 	"testing"
 	"time"
@@ -9,14 +8,13 @@ import (
 
 type round struct {
 	wg             sync.WaitGroup // track if assertions are finished
-	timeoutCh      chan struct{}
-	doneCh         chan struct{} // caused by timeout or outcome known before timeout (wg passed)
+	doneCh         chan struct{}  // caused by timeout or outcome known before timeout (wg passed)
 	assertionIndex map[*assertion]bool
 }
 
 type Recorder struct {
 	t            *testing.T
-	currentRound round
+	currentRound *round
 	// ws communication
 	serverReadCh  chan any
 	serverWriteCh chan any
@@ -27,9 +25,8 @@ type Recorder struct {
 }
 
 func (r *Recorder) newRound() {
-	r.currentRound = round{
+	r.currentRound = &round{
 		wg:             sync.WaitGroup{},
-		timeoutCh:      make(chan struct{}),
 		doneCh:         make(chan struct{}),
 		assertionIndex: make(map[*assertion]bool),
 	}
@@ -38,8 +35,8 @@ func (r *Recorder) newRound() {
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:             t,
-		serverReadCh:  make(chan any, 512),
-		serverWriteCh: make(chan any, 512),
+		serverReadCh:  make(chan any, 256),
+		serverWriteCh: make(chan any, 256),
 		closedCh:      make(chan struct{}),
 	}
 	r.newRound()
@@ -60,18 +57,16 @@ func (r *Recorder) close() error {
 
 func (r *Recorder) addAssertionToRound(a *assertion) {
 	r.currentRound.assertionIndex[a] = true
+	r.currentRound.wg.Add(1)
 }
 
 func (r *Recorder) startRound(timeout time.Duration) {
-	log.Printf(">>> %+v", r.currentRound.assertionIndex)
-	go func() {
-		<-time.After(timeout)
-		close(r.currentRound.timeoutCh)
-	}()
-
 	go r.forwardWritesDuringRound()
 	for a := range r.currentRound.assertionIndex {
-		go a.loop()
+		go func(a *assertion) {
+			defer r.currentRound.wg.Done()
+			a.loopWithTimeout(timeout)
+		}(a)
 	}
 }
 
@@ -90,9 +85,7 @@ func (r *Recorder) forwardWritesDuringRound() {
 		case w := <-r.serverWriteCh:
 			r.serverWrites = append(r.serverWrites, w)
 			for a := range r.currentRound.assertionIndex {
-				go func(a *assertion, w any) { // we don't want to block the loop while assertions haven't started
-					a.latestWriteCh <- w
-				}(a, w)
+				a.latestWriteCh <- w
 			}
 		case <-r.currentRound.doneCh:
 			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round

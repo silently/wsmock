@@ -1,7 +1,6 @@
 package wsmock
 
 import (
-	"log"
 	"sync"
 	"time"
 )
@@ -66,9 +65,8 @@ func (s *chatServerStub) handle(conn *GorillaConn) {
 			} else if m.Kind == "message" {
 				s.Lock()
 				from := s.connIndex[conn]
-				for c, str := range s.connIndex {
+				for c := range s.connIndex {
 					if c != conn {
-						log.Printf(">>>>> %v sent to %v\n", m, str)
 						c.WriteJSON(Message{from, m.Payload})
 					}
 				}

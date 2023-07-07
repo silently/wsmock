@@ -53,7 +53,7 @@ func TestAssertReceived(t *testing.T) {
 
 		conn.Send(Message{"join", "room:1"})
 		go func() {
-			<-time.After(75 * time.Millisecond)
+			time.Sleep(75 * time.Millisecond)
 			conn.Close()
 		}()
 		rec.AssertReceived(Message{"joined", "room:1"})

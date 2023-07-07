@@ -132,7 +132,7 @@ func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] sparse message sequence not received: %v", targets)
+			errorMessage = fmt.Sprintf("[wsmock] sparse sequence not received: %v", targets)
 		} else {
 			targetLength := len(targets)
 			found := 0
@@ -163,7 +163,7 @@ func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] sparse message sequence not received: %v", targets)
+			errorMessage = fmt.Sprintf("[wsmock] adjacent sequence not received: %v", targets)
 		} else {
 			targetLength := len(targets)
 			found := 0
@@ -196,7 +196,7 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
-			errorMessage = fmt.Sprintf("[wsmock] sparse message sequence not received: %v", targets)
+			errorMessage = fmt.Sprintf("[wsmock] exact sequence not received: %v", targets)
 			if len(targets) != len(allWrites) {
 				passed = false
 				return
@@ -238,8 +238,8 @@ func RunAssertions(t *testing.T, timeout time.Duration) {
 	for _, r := range recs {
 		wg.Add(1)
 		go func(r *Recorder) {
+			defer wg.Done()
 			r.RunAssertions(timeout)
-			wg.Done()
 		}(r)
 	}
 	wg.Wait()

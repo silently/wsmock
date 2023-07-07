@@ -1,5 +1,9 @@
 package wsmock
 
+import (
+	"time"
+)
+
 // Asserter functions are added to Recorders with AssertWith and are called possibly several times
 // during the same test to determine the outcome of the test.
 //
@@ -29,13 +33,11 @@ type assertion struct {
 }
 
 func newAssertion(r *Recorder, asserter Asserter) *assertion {
-	a := assertion{
+	return &assertion{
 		recorder:      r,
 		asserter:      asserter,
 		latestWriteCh: make(chan any),
 	}
-	r.currentRound.wg.Add(1)
-	return &a
 }
 
 func (a assertion) assertOnEnd() {
@@ -48,8 +50,14 @@ func (a assertion) assertOnEnd() {
 	}
 }
 
-func (a assertion) loop() {
-	defer a.recorder.currentRound.wg.Done()
+func (a assertion) loopWithTimeout(timeout time.Duration) {
+	// we found that using time.Sleep is more accurate (= less delay in addition to the specified timeout)
+	// than using <-time.After directly on a for-select case
+	timeoutCh := make(chan string, 1)
+	go func() {
+		time.Sleep(timeout)
+		timeoutCh <- "timeout"
+	}()
 
 	for {
 		select {
@@ -61,7 +69,7 @@ func (a assertion) loop() {
 				}
 				return
 			}
-		case <-a.recorder.currentRound.timeoutCh:
+		case <-timeoutCh:
 			a.assertOnEnd()
 			return
 		case <-a.recorder.closedCh:
