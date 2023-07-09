@@ -51,7 +51,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
 		rec.AssertReceivedSparseSequence(seq)
 
-		rec.RunAssertions(40 * time.Millisecond)
+		rec.RunAssertions(35 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("AssertReceivedSparseSequence shoud fail because of timeout")

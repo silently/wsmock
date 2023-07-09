@@ -51,6 +51,46 @@ func (r *Recorder) AssertReceived(target any) {
 	})
 }
 
+// AssertFirstReceived checks first message and returns
+func (r *Recorder) AssertFirstReceived(target any) {
+	r.t.Helper()
+	r.AssertWith(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
+		done = true
+		hasReceivedOne := len(allWrites) > 0
+		passed = hasReceivedOne && allWrites[0] == target
+		if passed {
+			return
+		}
+		if hasReceivedOne {
+			errorMessage = fmt.Sprintf("[wsmock] first message should be: %v, received: %v", target, allWrites[0])
+		} else {
+			errorMessage = fmt.Sprintf("[wsmock] first message should be: %v, received none", target)
+		}
+		return
+	})
+}
+
+// AssertLastReceived checks last message when recorder ends
+func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
+	r.t.Helper()
+	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+		if end {
+			done = true
+			hasReceivedOne := len(allWrites) > 0
+			passed = hasReceivedOne && latestWrite == target
+			if passed {
+				return
+			}
+			if hasReceivedOne {
+				errorMessage = fmt.Sprintf("[wsmock] last message should be: %v, received: %v", target, latestWrite)
+			} else {
+				errorMessage = fmt.Sprintf("[wsmock] last message should be: %v, received none", target)
+			}
+		}
+		return
+	})
+}
+
 // AssertNotReceived checks if a message has not been received (on timeout and close).
 func (r *Recorder) AssertNotReceived(target any) {
 	r.t.Helper()
@@ -62,31 +102,6 @@ func (r *Recorder) AssertNotReceived(target any) {
 			done = true
 			passed = false
 			errorMessage = fmt.Sprintf("[wsmock] message should not have been received: %v", target)
-		}
-		return
-	})
-}
-
-// AssertFirstReceived checks first message and returns
-func (r *Recorder) AssertFirstReceived(target any) {
-	r.t.Helper()
-	r.AssertWith(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
-		done = true
-		passed = allWrites[0] == target
-		errorMessage = fmt.Sprintf("[wsmock] first message should be: %v", target)
-		return
-	})
-}
-
-// AssertLastReceived checks last message when recorder ends
-func (r *Recorder) AssertLastReceived(target any) {
-	r.t.Helper()
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
-		if end {
-			done = true
-			hasReceivedOne := len(allWrites) > 0
-			passed = hasReceivedOne && latestWrite == target
-			errorMessage = fmt.Sprintf("[wsmock] last message should be: %v", target)
 		}
 		return
 	})
