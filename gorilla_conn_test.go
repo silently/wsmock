@@ -3,6 +3,7 @@ package wsmock
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"strings"
 	"testing"
 
@@ -69,6 +70,30 @@ func TestGorillaConnWrite(t *testing.T) {
 }
 
 func TestGorillaConnRead(t *testing.T) {
+	t.Run("NextReader can read TextMessage sent to conn", func(t *testing.T) {
+		mockT := &testing.T{}
+		conn, _ := NewGorillaMockAndRecorder(mockT)
+
+		original := "string"
+		conn.Send(original)
+
+		mType, reader, err := conn.NextReader()
+		if err != nil {
+			t.Error(err)
+		}
+		if mType != websocket.TextMessage {
+			t.Errorf("wrong message type, expected %v but got %v", websocket.BinaryMessage, mType)
+		}
+		buf := make([]byte, len(original))
+		_, err = reader.Read(buf)
+		if string(buf) != original {
+			t.Errorf("wrong message, expected %v but got %v", original, string(buf))
+		}
+		_, err = reader.Read(buf)
+		if err != io.EOF {
+			t.Error("NextReader's Read should return EOF")
+		}
+	})
 	t.Run("ReadMessage can read BinaryMessage sent to conn", func(t *testing.T) {
 		mockT := &testing.T{}
 		conn, _ := NewGorillaMockAndRecorder(mockT)

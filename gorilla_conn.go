@@ -45,19 +45,35 @@ type GorillaConn struct {
 	closedCh chan struct{}
 }
 
-type gorillaWriter struct {
+type gorillaWriteCloser struct {
 	messageType int
 	conn        *GorillaConn
 	data        []byte
 }
 
-func (w *gorillaWriter) Write(data []byte) (n int, err error) {
+type gorillaReader struct {
+	data      []byte
+	readIndex int64
+}
+
+func (w *gorillaWriteCloser) Write(data []byte) (n int, err error) {
 	w.data = append(w.data, data...)
 	return len(data), nil
 }
 
-func (w *gorillaWriter) Close() error {
+func (w *gorillaWriteCloser) Close() error {
 	return w.conn.WriteMessage(w.messageType, w.data)
+}
+
+func (r *gorillaReader) Read(p []byte) (n int, err error) {
+	if r.readIndex >= int64(len(r.data)) {
+		err = io.EOF
+		return
+	}
+
+	n = copy(p, r.data[r.readIndex:])
+	r.readIndex += int64(n)
+	return
 }
 
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
@@ -83,6 +99,17 @@ func (conn *GorillaConn) Send(message any) {
 }
 
 // Stub API (used by server)
+
+func (conn *GorillaConn) Close() error {
+	conn.recorder.t.Helper()
+
+	if !conn.closed {
+		conn.closed = true
+		close(conn.closedCh)
+		conn.recorder.close()
+	}
+	return nil
+}
 
 // Parses as JSON the first message available on conn and stores the result in the value pointed to by v
 // While waiting for it, it can return sooner if conn is closed
@@ -136,6 +163,18 @@ func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
 	}
 }
 
+func (conn *GorillaConn) NextReader() (messageType int, r io.Reader, err error) {
+	messageType, p, err := conn.ReadMessage()
+	r = &gorillaReader{p, 0}
+	return
+}
+
+func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
+	conn.recorder.t.Helper()
+
+	return &gorillaWriteCloser{messageType, conn, nil}, nil
+}
+
 func (conn *GorillaConn) WriteJSON(m any) error {
 	conn.recorder.t.Helper()
 
@@ -160,23 +199,6 @@ func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 	return nil
 }
 
-func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
-	conn.recorder.t.Helper()
-
-	return &gorillaWriter{messageType, conn, nil}, nil
-}
-
-func (conn *GorillaConn) Close() error {
-	conn.recorder.t.Helper()
-
-	if !conn.closed {
-		conn.closed = true
-		close(conn.closedCh)
-		conn.recorder.close()
-	}
-	return nil
-}
-
 // IGorilla noop implementations
 
 func (conn *GorillaConn) CloseHandler() func(code int, text string) error {
@@ -187,9 +209,6 @@ func (conn *GorillaConn) CloseHandler() func(code int, text string) error {
 func (conn *GorillaConn) EnableWriteCompression(enable bool) {}
 func (conn *GorillaConn) LocalAddr() net.Addr {
 	return &net.IPAddr{}
-}
-func (conn *GorillaConn) NextReader() (messageType int, r io.Reader, err error) {
-	return 1, &io.PipeReader{}, nil
 }
 func (conn *GorillaConn) PingHandler() func(appData string) error {
 	return func(appData string) error {
