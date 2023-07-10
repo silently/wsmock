@@ -84,9 +84,7 @@ Once you have Go up and running, you can download, build and run the example
 using the following commands.
 
     $ go examples/chat/
-    $ go run !(*_test).go
-		or
-		$ go run $(ls -1 *.go | grep -v _test.go)
+    $ go test .
 
 To use the chat example, open http://localhost:8080/ in your browser.
 

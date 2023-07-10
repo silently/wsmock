@@ -334,6 +334,33 @@ func TestAssertReceivedContains(t *testing.T) {
 		}
 	})
 
+	t.Run("succeeds when containing bytes is received before timeout", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsBytes(conn)
+
+		// script
+		conn.Send("logs")
+
+		// assert
+		rec.AssertReceivedContains("log")
+		rec.AssertReceivedContains("log1")
+		before := time.Now()
+		rec.Run(300 * time.Millisecond) // it's a max
+		after := time.Now()
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedContains should succeed, mockT output is:", getTestOutput(mockT))
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 150*time.Millisecond {
+				t.Errorf("AssertReceivedContains should succeed faster")
+			}
+		}
+	})
+
 	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}

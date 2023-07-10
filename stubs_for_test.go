@@ -3,6 +3,8 @@ package wsmock
 import (
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Message struct {
@@ -53,6 +55,28 @@ func serveWsStrings(conn IGorilla) {
 				conn.WriteJSON("log2")
 				conn.WriteJSON("log3")
 				conn.WriteJSON("log4")
+			}
+		}
+	}()
+}
+
+func serveWsBytes(conn IGorilla) {
+	go func() {
+		for {
+			var m string
+			err := conn.ReadJSON(&m)
+			if err != nil {
+				// client left (or needs to stop loop anyway)
+				return
+			} else if m == "logs" {
+				w, err := conn.NextWriter(websocket.TextMessage)
+				if err != nil {
+					return
+				}
+				w.Write([]byte("log1"))
+				if err := w.Close(); err != nil {
+					return
+				}
 			}
 		}
 	}()

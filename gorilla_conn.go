@@ -61,6 +61,8 @@ func (w *gorillaWriter) Close() error {
 }
 
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
+	t.Helper()
+
 	recorder := newRecorder(t)
 	conn := &GorillaConn{
 		recorder: recorder,
@@ -75,6 +77,8 @@ func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 // Send does not make any asumption on its message argument type (and does not serializes it),
 // this will be decided upon what Read* function is used to retrieve it
 func (conn *GorillaConn) Send(message any) {
+	conn.recorder.t.Helper()
+
 	conn.recorder.serverReadCh <- message
 }
 
@@ -83,6 +87,8 @@ func (conn *GorillaConn) Send(message any) {
 // Parses as JSON the first message available on conn and stores the result in the value pointed to by v
 // While waiting for it, it can return sooner if conn is closed
 func (conn *GorillaConn) ReadJSON(v any) error {
+	conn.recorder.t.Helper()
+
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
 		return errors.New("ReadJSON: argument should be a pointer")
@@ -107,6 +113,8 @@ func (conn *GorillaConn) ReadJSON(v any) error {
 // - other message types are JSON marshalled
 // While waiting for a message, it can return sooner if conn is closed
 func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
+	conn.recorder.t.Helper()
+
 	for {
 		select {
 		case read := <-conn.recorder.serverReadCh:
@@ -123,12 +131,14 @@ func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
 				return websocket.TextMessage, b, nil
 			}
 		case <-conn.closedCh:
-			return -1, nil, nil
+			return -1, nil, errors.New("[wsmock] conn closed while reading")
 		}
 	}
 }
 
 func (conn *GorillaConn) WriteJSON(m any) error {
+	conn.recorder.t.Helper()
+
 	if conn.closed {
 		return errors.New("[wsmock] conn closed while writing")
 	}
@@ -137,6 +147,8 @@ func (conn *GorillaConn) WriteJSON(m any) error {
 }
 
 func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
+	conn.recorder.t.Helper()
+
 	if conn.closed {
 		return errors.New("[wsmock] conn closed while writing")
 	}
@@ -149,10 +161,14 @@ func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 }
 
 func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
+	conn.recorder.t.Helper()
+
 	return &gorillaWriter{messageType, conn, nil}, nil
 }
 
 func (conn *GorillaConn) Close() error {
+	conn.recorder.t.Helper()
+
 	if !conn.closed {
 		conn.closed = true
 		close(conn.closedCh)

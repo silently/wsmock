@@ -33,6 +33,8 @@ import (
 // }
 
 func (r *Recorder) AssertWith(asserter Asserter) {
+	r.t.Helper()
+
 	r.addAssertionToRound(newAssertion(r, asserter))
 }
 
@@ -41,6 +43,7 @@ func (r *Recorder) AssertWith(asserter Asserter) {
 // AssertReceived checks if a message has been received (on each write).
 func (r *Recorder) AssertReceived(target any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -57,6 +60,7 @@ func (r *Recorder) AssertReceived(target any) {
 // AssertFirstReceived checks first message and returns
 func (r *Recorder) AssertFirstReceived(target any) {
 	r.t.Helper()
+
 	r.AssertWith(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		done = true
 		hasReceivedOne := len(allWrites) > 0
@@ -76,6 +80,7 @@ func (r *Recorder) AssertFirstReceived(target any) {
 // AssertLastReceived checks last message when recorder ends
 func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -97,6 +102,7 @@ func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 // AssertNotReceived checks if a message has not been received (on timeout and close).
 func (r *Recorder) AssertNotReceived(target any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -114,7 +120,10 @@ func (r *Recorder) AssertNotReceived(target any) {
 // Messages that can't be converted to strings are JSON-marshalled
 func (r *Recorder) AssertReceivedContains(substr string) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+		r.t.Helper()
+
 		if end {
 			done = true
 			passed = false
@@ -140,6 +149,7 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 // AssertClosed checks if conn has been closed (on timeout and close)
 func (r *Recorder) AssertClosed() {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			passed = r.closed
@@ -155,6 +165,7 @@ func (r *Recorder) AssertClosed() {
 // (1, 2, 3, 5) or (2, 4), but neither (2, 4, 1) nor (1, 2, 6).
 func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -186,6 +197,7 @@ func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 // (2, 3, 4, 5) or (1, 2), but neither (1, 3) nor (4, 5, 6).
 func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -220,6 +232,7 @@ func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 // If the messages received are (1, 2, 3, 4, 5), the only valid sequence is (1, 2, 3, 4, 5).
 func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 	r.t.Helper()
+
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -251,6 +264,8 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 // At the end of Run, the recorder keeps previously received messages but assertions
 // are removed. It's then possible to add new Assert* methods and Run again.
 func (r *Recorder) Run(timeout time.Duration) {
+	r.t.Helper()
+
 	r.startRound(timeout)
 	r.waitForRound()
 	r.stopRound()
@@ -259,12 +274,16 @@ func (r *Recorder) Run(timeout time.Duration) {
 // Run scoped to a test (t *testing.T) launches and waits for all Run of recorders
 // that belong to this test.
 func Run(t *testing.T, timeout time.Duration) {
+	t.Helper()
+
 	recs := getIndexedRecorders(t)
 	wg := sync.WaitGroup{}
 
 	for _, r := range recs {
 		wg.Add(1)
 		go func(r *Recorder) {
+			r.t.Helper()
+
 			defer wg.Done()
 			r.Run(timeout)
 		}(r)

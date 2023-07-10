@@ -33,6 +33,8 @@ type assertion struct {
 }
 
 func newAssertion(r *Recorder, asserter Asserter) *assertion {
+	r.t.Helper()
+
 	return &assertion{
 		recorder:      r,
 		asserter:      asserter,
@@ -41,6 +43,8 @@ func newAssertion(r *Recorder, asserter Asserter) *assertion {
 }
 
 func (a assertion) assertOnEnd() {
+	a.recorder.t.Helper()
+
 	latest, _ := Last(a.recorder.serverWrites)
 	// on end, done is considered true anyway
 	_, passed, errorMessage := a.asserter(true, latest, a.recorder.serverWrites)
@@ -51,10 +55,14 @@ func (a assertion) assertOnEnd() {
 }
 
 func (a assertion) loopWithTimeout(timeout time.Duration) {
+	a.recorder.t.Helper()
+
 	// we found that using time.Sleep is more accurate (= less delay in addition to the specified timeout)
 	// than using <-time.After directly on a for-select case
 	timeoutCh := make(chan string, 1)
 	go func() {
+		a.recorder.t.Helper()
+
 		time.Sleep(timeout)
 		timeoutCh <- "timeout"
 	}()

@@ -13,6 +13,8 @@ type recorderStore struct {
 }
 
 func indexRecorder(t *testing.T, r *Recorder) {
+	t.Helper()
+
 	store.Lock()
 	defer store.Unlock()
 
@@ -24,6 +26,8 @@ func indexRecorder(t *testing.T, r *Recorder) {
 }
 
 func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
+	t.Helper()
+
 	store.Lock()
 	defer store.Unlock()
 
@@ -35,6 +39,8 @@ func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
 }
 
 func unindexRecorder(t *testing.T, r *Recorder) {
+	t.Helper()
+
 	store.Lock()
 	defer store.Unlock()
 

@@ -25,6 +25,8 @@ type Recorder struct {
 }
 
 func (r *Recorder) newRound() {
+	r.t.Helper()
+
 	r.currentRound = &round{
 		wg:             sync.WaitGroup{},
 		doneCh:         make(chan struct{}),
@@ -33,6 +35,8 @@ func (r *Recorder) newRound() {
 }
 
 func newRecorder(t *testing.T) *Recorder {
+	t.Helper()
+
 	r := Recorder{
 		t:             t,
 		serverReadCh:  make(chan any, 256),
@@ -48,6 +52,8 @@ func newRecorder(t *testing.T) *Recorder {
 }
 
 func (r *Recorder) close() error {
+	r.t.Helper()
+
 	if !r.closed {
 		r.closed = true
 		close(r.closedCh)
@@ -56,14 +62,20 @@ func (r *Recorder) close() error {
 }
 
 func (r *Recorder) addAssertionToRound(a *assertion) {
+	r.t.Helper()
+
 	r.currentRound.assertionIndex[a] = true
 	r.currentRound.wg.Add(1)
 }
 
 func (r *Recorder) startRound(timeout time.Duration) {
+	r.t.Helper()
+
 	go r.forwardWritesDuringRound()
 	for a := range r.currentRound.assertionIndex {
 		go func(a *assertion) {
+			a.recorder.t.Helper()
+
 			defer r.currentRound.wg.Done()
 			a.loopWithTimeout(timeout)
 		}(a)
@@ -71,15 +83,21 @@ func (r *Recorder) startRound(timeout time.Duration) {
 }
 
 func (r *Recorder) waitForRound() {
+	r.t.Helper()
+
 	r.currentRound.wg.Wait()
 }
 
 func (r *Recorder) stopRound() {
+	r.t.Helper()
+
 	close(r.currentRound.doneCh)
 	r.newRound()
 }
 
 func (r *Recorder) forwardWritesDuringRound() {
+	r.t.Helper()
+
 	for {
 		select {
 		case w := <-r.serverWriteCh:
