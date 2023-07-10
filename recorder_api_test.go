@@ -1,6 +1,8 @@
 package wsmock
 
 import (
+	"log"
+	"strings"
 	"testing"
 	"time"
 )
@@ -113,9 +115,30 @@ func TestAssertFirstReceived(t *testing.T) {
 			t.Error("AssertFirstReceived should fail because of timeout")
 		}
 	})
+
+	t.Run("fails when first message differs", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		conn.Send(Message{"history", ""})
+		rec.AssertFirstReceived(Message{"chat", "sentence2"})
+		rec.RunAssertions(20 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertFirstReceived should fail")
+		} else {
+			log.Println(getTestOutput(mockT))
+			output := getTestOutput(mockT)
+			if !strings.Contains(output, "should be: {chat sentence2}, received: {chat sentence1}") {
+				t.Errorf("AssertFirstReceived unexpected error message: \"%v\"", output)
+			}
+		}
+	})
 }
 
-func TestAssertAssertLastReceivedOnTimeout(t *testing.T) {
+func TestAssertLastReceivedOnTimeout(t *testing.T) {
 	t.Run("succeeds when last message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -155,6 +178,27 @@ func TestAssertAssertLastReceivedOnTimeout(t *testing.T) {
 			t.Error("AssertLastReceived should fail because of timeout")
 		}
 	})
+
+	t.Run("fails when last message differs", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		conn.Send(Message{"history", ""})
+		rec.AssertLastReceivedOnTimeout(Message{"chat", "sentence5"})
+		rec.RunAssertions(300 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertLastReceivedOnTimeout should fail")
+		} else {
+			log.Println(getTestOutput(mockT))
+			output := getTestOutput(mockT)
+			if !strings.Contains(output, "should be: {chat sentence5}, received: {chat sentence4}") {
+				t.Errorf("AssertLastReceivedOnTimeout unexpected error message: \"%v\"", output)
+			}
+		}
+	})
 }
 
 func TestAssertNotReceived(t *testing.T) {
@@ -185,6 +229,62 @@ func TestAssertNotReceived(t *testing.T) {
 
 		if !mockT.Failed() { // fail expected
 			t.Error("AssertNotReceived should fail (message is received)")
+		}
+	})
+}
+
+func TestAssertReceivedContains(t *testing.T) {
+	t.Run("succeeds when containing message is received before timeout", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		// script
+		conn.Send(Message{"join", "room:1"})
+		rec.AssertReceivedContains("room:")
+		before := time.Now()
+		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		after := time.Now()
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedContains should succeed, mockT output is:", getTestOutput(mockT))
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 150*time.Millisecond {
+				t.Errorf("AssertReceivedContains should succeed faster")
+			}
+		}
+	})
+
+	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		conn.Send(Message{"join", "room:1"})
+		rec.AssertReceivedContains("room:")
+		rec.RunAssertions(75 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertReceivedContains should fail because of timeout")
+		}
+	})
+
+	t.Run("fails when no containing message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		conn.Send(Message{"join", "room:1"})
+		rec.AssertReceivedContains("notfound")
+		rec.RunAssertions(300 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertReceivedContains should fail because substr is not found")
 		}
 	})
 }

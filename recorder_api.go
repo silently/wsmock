@@ -1,6 +1,7 @@
 package wsmock
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -108,17 +109,26 @@ func (r *Recorder) AssertNotReceived(target any) {
 }
 
 // AssertReceivedContains checks if a received message contains a given string (on each write).
-func (r *Recorder) AssertReceivedContains(target string) {
+// Messages that can't be converted to strings are JSON-marshalled
+func (r *Recorder) AssertReceivedContains(substr string) {
 	r.t.Helper()
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] no message containing: %v", target)
+			errorMessage = fmt.Sprintf("[wsmock] no message containing: %v", substr)
 		} else if str, ok := latestWrite.(string); ok {
-			if strings.Contains(str, target) {
+			if strings.Contains(str, substr) {
 				done = true
 				passed = true
+			}
+		} else {
+			b, err := json.Marshal(latestWrite)
+			if err == nil {
+				if strings.Contains(string(b), substr) {
+					done = true
+					passed = true
+				}
 			}
 		}
 		return
