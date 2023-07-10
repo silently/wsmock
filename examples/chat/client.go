@@ -9,9 +9,9 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"wsmock"
 
 	"github.com/gorilla/websocket"
+	"github.com/silently/wsmock"
 )
 
 const (

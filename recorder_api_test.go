@@ -218,6 +218,28 @@ func TestAssertLastReceivedOnTimeout(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("fails when no message received", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStub(conn)
+
+		// script: nothing
+
+		// assert
+		rec.AssertLastReceivedOnTimeout(Message{"chat", "sentence1"})
+		rec.Run(100 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertLastReceivedOnTimeout should fail")
+		} else {
+			output := getTestOutput(mockT)
+			if !strings.Contains(output, "should be: {chat sentence1}, received none") {
+				t.Errorf("AssertLastReceivedOnTimeout unexpected error message: \"%v\"", output)
+			}
+		}
+	})
 }
 
 func TestAssertNotReceived(t *testing.T) {
@@ -285,6 +307,33 @@ func TestAssertReceivedContains(t *testing.T) {
 		}
 	})
 
+	t.Run("succeeds when containing string is received before timeout", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStrings(conn)
+
+		// script
+		conn.Send("logs")
+
+		// assert
+		rec.AssertReceivedContains("log")
+		rec.AssertReceivedContains("log1")
+		before := time.Now()
+		rec.Run(300 * time.Millisecond) // it's a max
+		after := time.Now()
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedContains should succeed, mockT output is:", getTestOutput(mockT))
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 150*time.Millisecond {
+				t.Errorf("AssertReceivedContains should succeed faster")
+			}
+		}
+	})
+
 	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -311,6 +360,24 @@ func TestAssertReceivedContains(t *testing.T) {
 
 		// script
 		conn.Send(Message{"join", "room:1"})
+
+		// assert
+		rec.AssertReceivedContains("notfound")
+		rec.Run(300 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertReceivedContains should fail because substr is not found")
+		}
+	})
+
+	t.Run("fails when no containing string", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsStrings(conn)
+
+		// script
+		conn.Send("logs")
 
 		// assert
 		rec.AssertReceivedContains("notfound")

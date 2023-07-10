@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"wsmock"
+	"github.com/silently/wsmock"
 )
 
 type Message struct {

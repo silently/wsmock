@@ -39,6 +39,25 @@ func serveWsStub(conn IGorilla) {
 	}()
 }
 
+// stub for single conn tests
+func serveWsStrings(conn IGorilla) {
+	go func() {
+		for {
+			var m string
+			err := conn.ReadJSON(&m)
+			if err != nil {
+				// client left (or needs to stop loop anyway)
+				return
+			} else if m == "logs" {
+				conn.WriteJSON("log1")
+				conn.WriteJSON("log2")
+				conn.WriteJSON("log3")
+				conn.WriteJSON("log4")
+			}
+		}
+	}()
+}
+
 // stub for multi conn tests
 type chatServerStub struct {
 	sync.Mutex
