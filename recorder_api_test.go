@@ -20,7 +20,7 @@ func TestAssertReceived(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceived should succeed")
+			t.Error("AssertReceived should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -89,7 +89,7 @@ func TestAssertFirstReceived(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertFirstReceived should succeed")
+			t.Error("AssertFirstReceived should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -131,7 +131,7 @@ func TestAssertAssertLastReceivedOnTimeout(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertLastReceived should succeed")
+			t.Error("AssertLastReceivedOnTimeout should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -169,7 +169,7 @@ func TestAssertNotReceived(t *testing.T) {
 		rec.RunAssertions(110 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertNotReceived should succeed")
+			t.Error("AssertNotReceived should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -217,7 +217,7 @@ func TestAssertClosed(t *testing.T) {
 		rec.RunAssertions(200 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertClosed succeed because of serveWsStub logic")
+			t.Error("AssertClosed should succeed because of serveWsStub logic, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -233,7 +233,7 @@ func TestAssertClosed(t *testing.T) {
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertClosed succeed because of explicit conn Close")
+			t.Error("AssertClosed should succeed because of explicit conn Close, mockT output is:", getTestOutput(mockT))
 		}
 	})
 }

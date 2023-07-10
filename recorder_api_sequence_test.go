@@ -30,7 +30,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedSparseSequence should succeed")
+			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -113,7 +113,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedAdjacentSequence should succeed")
+			t.Error("AssertReceivedAdjacentSequence should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -157,7 +157,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		rec.RunAssertions(300 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedExactSequence should succeed")
+			t.Error("AssertReceivedExactSequence should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 

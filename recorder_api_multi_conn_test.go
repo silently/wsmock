@@ -40,7 +40,7 @@ func TestMultiConn_Chat(t *testing.T) {
 		log.Println("rec3", rec3.serverWrites)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("unexpected messages in chat room")
+			t.Error("unexpected messages in chat room, mockT output is:", getTestOutput(mockT))
 		}
 	})
 }

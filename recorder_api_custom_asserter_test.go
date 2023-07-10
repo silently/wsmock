@@ -39,7 +39,7 @@ func TestAssertWith(t *testing.T) {
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertWith should have custom finder alwaysTrue succeed")
+			t.Error("AssertWith should have custom finder alwaysTrue succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -85,7 +85,7 @@ func TestAssertWith(t *testing.T) {
 		rec.RunAssertions(70 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed")
+			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
