@@ -33,9 +33,11 @@ func TestAssertWith(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
+
+		// assert
 		rec.AssertWith(alwaysTrue)
 		before := time.Now()
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.Run(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -57,9 +59,11 @@ func TestAssertWith(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
+
+		// assert
 		rec.AssertWith(alwaysFalse)
 		before := time.Now()
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.Run(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
@@ -81,8 +85,10 @@ func TestAssertWith(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
+
+		// assert
 		rec.AssertWith(hasMoreMessagesOnEndThan(3))
-		rec.RunAssertions(70 * time.Millisecond)
+		rec.Run(70 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
@@ -97,8 +103,10 @@ func TestAssertWith(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
+
+		// assert
 		rec.AssertWith(hasMoreMessagesOnEndThan(3))
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.Run(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
@@ -113,8 +121,10 @@ func TestAssertWith(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
+
+		// assert
 		rec.AssertWith(hasMoreMessagesOnEndThan(10))
-		rec.RunAssertions(70 * time.Millisecond)
+		rec.Run(70 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")

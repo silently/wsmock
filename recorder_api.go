@@ -9,26 +9,28 @@ import (
 	"time"
 )
 
-type Finder func(index int, write any) (ok bool)
+// type Finder func(index int, write any) (ok bool)
 
-func (r *Recorder) FindOne(f Finder) (found any, ok bool) {
-	for i, w := range r.serverWrites {
-		if f(i, w) {
-			return w, true
-		}
-	}
-	return nil, false
-}
+// func (r *Recorder) FindOneAfter(f Finder, timeout time.Duration) (found any, ok bool) {
+// 	time.Sleep(timeout)
+// 	for i, w := range r.serverWrites {
+// 		if f(i, w) {
+// 			return w, true
+// 		}
+// 	}
+// 	return nil, false
+// }
 
-func (r *Recorder) FindAll(f Finder) (founds []any, ok bool) {
-	for i, w := range r.serverWrites {
-		if f(i, w) {
-			founds = append(founds, w)
-			ok = true
-		}
-	}
-	return
-}
+// func (r *Recorder) FindAllAfter(f Finder, timeout time.Duration) (founds []any, ok bool) {
+// 	time.Sleep(timeout)
+// 	for i, w := range r.serverWrites {
+// 		if f(i, w) {
+// 			founds = append(founds, w)
+// 			ok = true
+// 		}
+// 	}
+// 	return
+// }
 
 func (r *Recorder) AssertWith(asserter Asserter) {
 	r.addAssertionToRound(newAssertion(r, asserter))
@@ -238,7 +240,7 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 	})
 }
 
-// RunAssertions runs all Assert* methods that have been previously added
+// Run runs all Assert* methods that have been previously added
 // on this recorder, with a timeout.
 //
 // If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.
@@ -246,17 +248,17 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 // For instance, some assertions (like AssertNotReceived) always need to wait until the timeout has been reached
 // to assert success, but may fail sooner.
 //
-// At the end of RunAssertions, the recorder keeps previously received messages but assertions
-// are removed. It's then possible to add new Assert* methods and RunAssertions again.
-func (r *Recorder) RunAssertions(timeout time.Duration) {
+// At the end of Run, the recorder keeps previously received messages but assertions
+// are removed. It's then possible to add new Assert* methods and Run again.
+func (r *Recorder) Run(timeout time.Duration) {
 	r.startRound(timeout)
 	r.waitForRound()
 	r.stopRound()
 }
 
-// RunAssertions scoped to a test (t *testing.T) launches and waits for all RunAssertions of recorders
+// Run scoped to a test (t *testing.T) launches and waits for all Run of recorders
 // that belong to this test.
-func RunAssertions(t *testing.T, timeout time.Duration) {
+func Run(t *testing.T, timeout time.Duration) {
 	recs := getIndexedRecorders(t)
 	wg := sync.WaitGroup{}
 
@@ -264,7 +266,7 @@ func RunAssertions(t *testing.T, timeout time.Duration) {
 		wg.Add(1)
 		go func(r *Recorder) {
 			defer wg.Done()
-			r.RunAssertions(timeout)
+			r.Run(timeout)
 		}(r)
 	}
 	wg.Wait()

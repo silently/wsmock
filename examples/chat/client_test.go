@@ -60,7 +60,7 @@ func TestRunClient(t *testing.T) {
 		rec2.AssertReceivedContains("two")
 
 		// run all previously declared assertions with a timeout
-		wsmock.RunAssertions(t, 100*time.Millisecond)
+		wsmock.Run(t, 100*time.Millisecond)
 	})
 
 	t.Run("two clients on same hub receive own and other messages (custom finder)", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestRunClient(t *testing.T) {
 		rec2.AssertWith(hasReceivedAutoSplit("one"))
 
 		// run all previously declared assertions with a timeout
-		wsmock.RunAssertions(t, 100*time.Millisecond)
+		wsmock.Run(t, 100*time.Millisecond)
 	})
 
 }

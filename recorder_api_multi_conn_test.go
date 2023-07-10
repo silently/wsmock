@@ -1,7 +1,6 @@
 package wsmock
 
 import (
-	"log"
 	"testing"
 	"time"
 )
@@ -18,26 +17,26 @@ func TestMultiConn_Chat(t *testing.T) {
 		server.handle(conn2)
 		server.handle(conn3)
 
+		// script
 		conn1.Send(Message{"join", "user1"})
-		rec1.AssertReceived(Message{"joined", "user1"})
 		conn1.Send(Message{"message", "hello"})
+
+		// assert
+		rec1.AssertReceived(Message{"joined", "user1"})
 		rec2.AssertNotReceived(Message{"user1", "hello"}) // user2 has not joined
+		Run(mockT, 110*time.Millisecond)
 
-		RunAssertions(mockT, 110*time.Millisecond)
-
+		// script
 		conn2.Send(Message{"join", "user2"})
 		time.Sleep(10 * time.Millisecond) // ensure user2 join is processed before user3's
 		conn3.Send(Message{"join", "user3"})
-
 		conn3.Send(Message{"message", "hi"})
+
+		// assert
 		rec1.AssertReceived(Message{"user3", "hi"})
 		rec2.AssertReceived(Message{"user3", "hi"})
 		rec3.AssertNotReceived(Message{"user3", "hi"})
-		RunAssertions(mockT, 110*time.Millisecond)
-
-		log.Println("rec1", rec1.serverWrites)
-		log.Println("rec2", rec2.serverWrites)
-		log.Println("rec3", rec3.serverWrites)
+		Run(mockT, 110*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in chat room, mockT output is:", getTestOutput(mockT))

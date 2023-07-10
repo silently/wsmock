@@ -117,7 +117,7 @@ func TestWs(t *testing.T) {
     // the next assertion is "not received" (supposing chat history is not implemented)
     rec2.AssertNotReceived(Message{"incoming", "Bonjour"})
     // run all previously declared assertions with a timeout
-    wsmock.RunAssertions(t, 100 * time.Millisecond)
+    wsmock.Run(t, 100 * time.Millisecond)
   })
 }
 ```
