@@ -1,8 +1,20 @@
 # wsmock
 
-Golang library for websocket testing.
+Golang library to help with WebSocket testing, writing tests like:
 
-A typical websocket handler based on [gorilla](https://github.com/gorilla/websocket) looks like:
+```golang
+conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)  // get mocked Conn and server writes recorder...
+conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)  // ...similarly to httptest NewRequest and NewRecorder
+runWs(conn1)                                        // WebSocket handler -> target of the test
+runWs(conn2)
+conn1.Send("rock")                                  // client-side scripting
+conn2.Send("paper")
+rec1.AssertNotReceived("won")                       // declare assertions
+rec2.AssertReceived("won")
+wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *testing.T, with a timeout
+```
+
+Where `runWs` is a typical WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket):
 
 ```golang
 
@@ -13,27 +25,25 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func serveWs(w http.ResponseWriter, r *http.Request) { // HTTP handler
-    conn, err := upgrader.Upgrade(w, r, nil) // creates a Gorilla websocket.Conn
+func serveWs(w http.ResponseWriter, r *http.Request) {  // HTTP handler
+    conn, err := upgrader.Upgrade(w, r, nil)            // creates a Gorilla websocket.Conn
     if err != nil {
         log.Println(err)
     }
-    runPeer(conn) // WebSocket handler, the target of a wsmock test
+    runWs(conn)                                         // WebSocket handler -> target of the test
 }
 ```
-
-The package wsmock provides utilities to:
-
-- mock `websocket.Conn`, and give the mock an extra `Send` method to send messages to `runPeer` (or whatever implementation interacts with the connection), like you would in JS with `ws.send(...)`
-- set assertions defining the server handler expected behaviour through its responses, mirroring what would happen in JS with `ws.onmessage(...)`
-- give assertions a timeout (that will only be waited if their outcome can't be decided sooner)
-- have several mocked connections interacting (through the server handler/s) in the same test
 
 ## Status
 
 wsmock is in an early stage of development, API may change.
 
-Currently, only Gorilla websocket mocks are provided (more could be added) and they only provide the following implementations: `ReadJSON`, `WriteJSON`, `Close` (more to be added).
+Currently, only Gorilla WebSocket mocks are provided (more WebSocket implementation mocks could be added) with a focus on reading from and writing to the Conn:
+
+- that's why we provide mock implementations for the methods: `Close`, `ReadJSON`, `ReadMessage`, `NextReader`, `NextWriter`, `WriteJSON`, `WriteMessage`
+- but other methods (like  `CloseHandler`, `EnableWriteCompression`...) from Gorilla `websocket.Conn` are blank/noop
+
+*(wsmock itself has a good test coverage, but does not reach 100% because of these blank/noop implementations, which will only be tested when properly implemented)*
 
 ## Installation
 
@@ -43,46 +53,46 @@ go get github.com/silently/wsmock
 
 ## Prerequesite
 
-If we go on with our `runPeer` websocket handler, the main gotcha to make it usable in our tests is being able to pass it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
+Going on with our `runWs` WebSocket handler, the main gotcha to target it in our tests is being able to pass it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
 
-That's why if runPeer has this signature:
+If `runWs` has this signature:
 
 ```golang
-func runPeer(conn *websocket.Conn) {}
+func runWs(conn *websocket.Conn) {}
 ```
 
 ...we need to update it with an interface implemented both by Gorilla `websocket.Conn` and `wsmock.GorillaConn`.
 
-*(This approach is similar to [httptest](https://pkg.go.dev/net/http/httptest#example-ResponseRecorder) relying on `ResponseRecorder`, "an implementation of `http.ResponseWriter`; that records its mutations for later inspection in tests")*
+*(This approach is similar to [httptest](https://pkg.go.dev/net/http/httptest#example-ResponseRecorder) that relies on `ResponseRecorder`, "an implementation of `http.ResponseWriter`; that records its mutations for later inspection in tests")*
 
-Depending on what methods are used by `runPeer` we could go with as little as:
+Depending on what methods are used by `runWs` we could go with as little as:
 
 ```golang
 type IConn interface {
 	ReadJSON(any) error
 	WriteJSON(any) error
 	Close() error
-  // add more methods if needed by runPeer implementation
+  // add more methods if needed by runWs implementation
 }
 
-func runPeer(conn *IConn) {}
+func runWs(conn *IConn) {}
 ```
 
-Now `runPeer` can receive Gorilla `websocket.Conn` in real usage and `wsmock.GorillaConn` when testing.
+Now `runWs` can receive Gorilla `websocket.Conn` in real usage and `wsmock.GorillaConn` when testing.
 
-Alternatively, instead of defining your own `IConn`, you can rely on `wsmock.IGorilla` interface: it declares all methods available on Gorilla [websocket.Conn](https://pkg.go.dev/github.com/gorilla/websocket#Conn):
+Alternatively and instead of defining your own `IConn`, you can rely on `wsmock.IGorilla` interface: it declares all methods available on Gorilla [websocket.Conn](https://pkg.go.dev/github.com/gorilla/websocket#Conn):
 
 ```golang
 import (
 	ws "github.com/silently/wsmock"
 )
 
-func runPeer(conn *ws.IGorilla) {}
+func runWs(conn *ws.IGorilla) {}
 ```
 
 ## Usage and assertions
 
-Once `runPeer` accepts `wsmock.GorillaConn` as an argument, a test may look like:
+Once `runWs` accepts `wsmock.GorillaConn` as an argument, a test looks like:
 
 ```golang
 package mypackage
@@ -100,12 +110,12 @@ type Message struct {
 }
 
 func TestWs(t *testing.T) {
-  // runPeer is the target of this test, supposedly implemented elsewhere in mypackage
+  // runWs is the target of this test, supposedly implemented elsewhere in mypackage
   t.Run("two peers can connect and exchange hellos", func(t *testing.T) {
     conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
     conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
-    runPeer(conn1) 
-    runPeer(conn2)
+    runWs(conn1) 
+    runWs(conn2)
 
     // script events (Johnny connects too late to receive Micheline's greeting)
     conn1.Send(Message{"join", "Micheline"})
@@ -122,31 +132,59 @@ func TestWs(t *testing.T) {
 }
 ```
 
-We can see that `wsmock.NewGorillaConnAndRecorder` returns two structs:
+`wsmock.NewGorillaConnAndRecorder` returns two structs:
 
-- `wsmock.GorillaConn` used as the mocked websocket connection given to `runPeer`
-- `wsmock.Recorder` that records server responses and is used to define assertions
+- `wsmock.GorillaConn`, the mocked WebSocket connection given to `runWs`
+- `wsmock.Recorder`, server writes recorder used to define assertions
 
 The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are:
 
-- `Send` to script sent messages
-- `Close` if you want to explicitely close connections "client-side" within a test (alternatively, wsmock will close them when test ends)
+- `Send(message any)` to script sent messages
+- `Close()` if you want to explicitely close connections "client-side" (alternatively, wsmock will close them when test ends)
 
-Here are the assertions provided by `wsmock.Recorder`:
+The assertions provided by `wsmock.Recorder` are [documented here](TODO add godoc)
 
-- `AssertReceived`
-- `AssertReceivedSparseSequence`
-- `AssertReceivedAdjacentSequence`
-- `AssertReceivedExactSequence`
-- `AssertNotReceived`
-- `AssertClosed`
+## Custom Assertions
 
-And generic assertions that needs a finder:
+You can define custom assertions with `func (r *Recorder) AssertWith(asserter Asserter)` where `Asserter` type is:
 
-- `AssertOnWrite`
-- `AssertOnTimeoutOrClose`
+```golang
+type Asserter func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string)
+```
 
-Please note `*Received` assertions rely on the equality operator `==` (spec [here](https://go.dev/ref/spec#Comparison_operators)).
+With the following behaviour:
+- when a write occurs (from the WebSocket server handler, like `runWs` previously), `Asserter` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, also return the test outcome (`passed`) and possibly an error message
+- when assertions timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. The return value `done` is considered true whatever is returned, and `passed` and `errorMessage` give the test outcome 
+ 
+For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
+
+```golang
+func (r *Recorder) AssertReceived(target any) {
+	r.t.Helper()
+
+	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+		if end { // timeout has been reached
+			done = true
+			passed = false // if hasn't passed before, must be failing
+			errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
+		} else if latestWrite == target {
+			done = true
+			passed = true
+		}
+		return
+	})
+}
+```
+
+## Gotchas
+
+- `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on several conns will be processed in the same order
+- all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
+
+A typical flow of messages in a test goes like (considering a `runWs` server handler):
+- `conn.Send("input")` -> recorder serverReadCh channel -> read by `runWs` (typically with `ReadJSON` or `ReadMessage`)
+- `runWs` processes the input message
+- `runWs` writes an output (typically with `WriteJSON` or `WriteMessage`) -> recorder serverWriteCh channel -> forwarded by the recorder to each assertion defined on it
 
 ## For wsmock developers
 
@@ -162,3 +200,5 @@ CGO_ENABLED=0 go test -v -coverprofile cover.out
 go tool cover -html cover.out -o cover.html
 open cover.html
 ```
+
+Currently wsmock coverage is 100% if we exclude blank/noop methods on `GorillaConn`.
