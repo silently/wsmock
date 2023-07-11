@@ -18,7 +18,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -45,7 +45,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -64,7 +64,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -83,7 +83,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -104,7 +104,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -132,7 +132,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -153,7 +153,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -172,7 +172,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -191,7 +191,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})

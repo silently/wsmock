@@ -11,7 +11,7 @@ func TestAssertReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -37,7 +37,7 @@ func TestAssertReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -55,7 +55,7 @@ func TestAssertReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -87,7 +87,7 @@ func TestAssertFirstReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -113,7 +113,7 @@ func TestAssertFirstReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -131,7 +131,7 @@ func TestAssertFirstReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -156,7 +156,7 @@ func TestAssertLastReceivedOnTimeout(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -182,7 +182,7 @@ func TestAssertLastReceivedOnTimeout(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -200,7 +200,7 @@ func TestAssertLastReceivedOnTimeout(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -223,7 +223,7 @@ func TestAssertLastReceivedOnTimeout(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script: nothing
 
@@ -247,7 +247,7 @@ func TestAssertNotReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -265,7 +265,7 @@ func TestAssertNotReceived(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -285,7 +285,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -311,7 +311,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStrings(conn)
+		serveWsLogStrings(conn)
 
 		// script
 		conn.Send("logs")
@@ -338,7 +338,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsBytes(conn)
+		serveWsLogBytes(conn)
 
 		// script
 		conn.Send("logs")
@@ -365,7 +365,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -383,7 +383,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -401,7 +401,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStrings(conn)
+		serveWsLogStrings(conn)
 
 		// script
 		conn.Send("logs")
@@ -421,7 +421,7 @@ func TestAssertClosed(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		rec.AssertClosed()
@@ -438,7 +438,7 @@ func TestAssertClosed(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"quit", ""})
@@ -448,7 +448,7 @@ func TestAssertClosed(t *testing.T) {
 		rec.Run(200 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertClosed should succeed because of serveWsStub logic, mockT output is:", getTestOutput(mockT))
+			t.Error("AssertClosed should succeed because of serveWsHistory logic, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -456,7 +456,7 @@ func TestAssertClosed(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -477,7 +477,7 @@ func TestNoAssertion(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})

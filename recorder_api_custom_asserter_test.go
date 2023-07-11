@@ -29,7 +29,7 @@ func TestAssertWith(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -55,7 +55,7 @@ func TestAssertWith(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -81,7 +81,7 @@ func TestAssertWith(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -99,7 +99,7 @@ func TestAssertWith(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -117,7 +117,7 @@ func TestAssertWith(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
-		serveWsStub(conn)
+		serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})

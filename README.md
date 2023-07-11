@@ -14,7 +14,7 @@ rec2.AssertReceived("won")
 wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *testing.T, with a timeout
 ```
 
-Where `runWs` is a typical WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket):
+Where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
 
 ```golang
 
@@ -43,7 +43,7 @@ Currently, only Gorilla WebSocket mocks are provided (more WebSocket implementat
 - that's why we provide mock implementations for the methods: `Close`, `ReadJSON`, `ReadMessage`, `NextReader`, `NextWriter`, `WriteJSON`, `WriteMessage`
 - but other methods (like  `CloseHandler`, `EnableWriteCompression`...) from Gorilla `websocket.Conn` are blank/noop
 
-*(wsmock itself has a good test coverage, but does not reach 100% because of these blank/noop implementations, which will only be tested when properly implemented)*
+*(wsmock itself has a good test coverage, but does not reach 100% because of these blank/noop implementations: they will only be tested when a proper implementation is considered)*
 
 ## Installation
 
@@ -53,7 +53,7 @@ go get github.com/silently/wsmock
 
 ## Prerequesite
 
-Going on with our `runWs` WebSocket handler, the main gotcha to target it in our tests is being able to pass it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
+Going on with our `runWs` WebSocket handler, the main gotcha to test it is: being able to give it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
 
 If `runWs` has this signature:
 
@@ -126,11 +126,17 @@ func TestWs(t *testing.T) {
     rec1.AssertReceived(Message{"incoming", "Hello"})
     // the next assertion is "not received" (supposing chat history is not implemented)
     rec2.AssertNotReceived(Message{"incoming", "Bonjour"})
-    // run all previously declared assertions with a timeout
+    // run all assertions in this test, with a timeout
     wsmock.Run(t, 100 * time.Millisecond)
+    // or run per recorder: rec1.Run(100 * time.Millisecond)
   })
 }
 ```
+
+Assertions are run either:
+
+- per recorder, for instance `rec1.Run(100 * time.Millisecond)` followed by `rec2.Run(100 * time.Millisecond)`
+- per test: `wsmock.Run(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 `wsmock.NewGorillaConnAndRecorder` returns two structs:
 
@@ -142,7 +148,21 @@ The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are
 - `Send(message any)` to script sent messages
 - `Close()` if you want to explicitely close connections "client-side" (alternatively, wsmock will close them when test ends)
 
-The assertions provided by `wsmock.Recorder` are [documented here](TODO add godoc)
+Assertions provided by `wsmock.Recorder` are (check the [API documentation here](TODO add godoc)) :
+
+```golang
+func (r *Recorder) AssertReceived(target any)
+func (r *Recorder) AssertFirstReceived(target any)
+func (r *Recorder) AssertLastReceivedOnTimeout(target any)
+func (r *Recorder) AssertNotReceived(target any)
+func (r *Recorder) AssertReceivedContains(substr string)
+func (r *Recorder) AssertClosed()
+func (r *Recorder) AssertReceivedSparseSequence(targets []any)   // 2,4 is a sparse sequence within 1,2,3,4
+func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) // 3,4 is an adjacent sequence within 1,2,3,4
+func (r *Recorder) AssertReceivedExactSequence(targets []any)    // only 1,2,3,4 is an exact match of 1,2,3,4
+```
+
+*(assertions rely on the equality operator `==`, see [spec](https://go.dev/ref/spec#Comparison_operators))*
 
 ## Custom Assertions
 
@@ -190,7 +210,7 @@ A typical flow of messages in a test goes like (considering a `runWs` server han
 
 Run wsmock own tests with:
 ```sh
-CGO_ENABLED=0 go test
+CGO_ENABLED=0 go test .
 ```
 
 Generate coverage reports:
@@ -200,5 +220,3 @@ CGO_ENABLED=0 go test -v -coverprofile cover.out
 go tool cover -html cover.out -o cover.html
 open cover.html
 ```
-
-Currently wsmock coverage is 100% if we exclude blank/noop methods on `GorillaConn`.
