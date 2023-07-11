@@ -196,15 +196,18 @@ func (r *Recorder) AssertReceived(target any) {
 }
 ```
 
-## Gotchas
-
-- `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on several conns will be processed in the same order
-- all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
+## Implementation specifics
 
 A typical flow of messages in a test goes like (considering a `runWs` server handler):
 - `conn.Send("input")` -> recorder serverReadCh channel -> read by `runWs` (typically with `ReadJSON` or `ReadMessage`)
-- `runWs` processes the input message
-- `runWs` writes an output (typically with `WriteJSON` or `WriteMessage`) -> recorder serverWriteCh channel -> forwarded by the recorder to each assertion defined on it
+- then `runWs` processes the input message
+- then `runWs` possibly writes a message (typically with `WriteJSON` or `WriteMessage`) -> recorder serverWriteCh channel -> forwarded by the recorder to each assertion defined on it
+
+Here are some gotchas:
+- `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order the were sent
+- all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
+- the `Recorder` stores all the messages written by the server handler: indeed some assertions needs to know the complete history of messages to decide their outcome
+- **but** the message history is cleared after each run (`wsmock.Run(t, timeout)` or `rec.Run(timeout)`)
 
 ## For wsmock developers
 

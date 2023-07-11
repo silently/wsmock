@@ -80,6 +80,51 @@ func TestAssertReceived(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("succeeds twice in same Run", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+
+		// assert
+		rec.AssertReceived(Message{"chat", "sentence1"})
+		rec.AssertReceived(Message{"chat", "sentence1"}) // twice
+
+		rec.Run(50 * time.Millisecond) // it's a max
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceived should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
+	t.Run("succeeds once on two RunS", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+
+		// assert
+		rec.AssertReceived(Message{"chat", "sentence1"})
+		rec.Run(50 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceived should succeed, mockT output is:", getTestOutput(mockT))
+		}
+
+		rec.AssertReceived(Message{"chat", "sentence1"})
+		rec.Run(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertReceived should fail for second Run", getTestOutput(mockT))
+		}
+	})
 }
 
 func TestAssertFirstReceived(t *testing.T) {

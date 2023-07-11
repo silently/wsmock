@@ -97,6 +97,52 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 			t.Error("AssertReceivedSparseSequence should fail")
 		}
 	})
+
+	t.Run("succeeds twice in same Run", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+
+		// assert
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		rec.AssertReceivedSparseSequence(seq)
+		rec.AssertReceivedSparseSequence(seq) // twice
+		rec.Run(150 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
+	t.Run("succeeds once on two Runs", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+
+		// assert
+		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		rec.AssertReceivedSparseSequence(seq)
+		rec.Run(150 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
+		}
+
+		rec.AssertReceivedSparseSequence(seq)
+		rec.Run(150 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertReceivedSparseSequence should fail for second Run")
+		}
+	})
 }
 
 func TestAssertReceivedAdjacentSequence(t *testing.T) {

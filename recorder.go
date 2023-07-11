@@ -27,6 +27,7 @@ type Recorder struct {
 func (r *Recorder) newRound() {
 	r.t.Helper()
 
+	r.serverWrites = nil
 	r.currentRound = &round{
 		wg:             sync.WaitGroup{},
 		doneCh:         make(chan struct{}),
