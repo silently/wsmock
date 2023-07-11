@@ -5,23 +5,22 @@ import (
 )
 
 // Asserter functions are added to Recorders with AssertWith and are called possibly several times
-// during the same test to determine the outcome of the test.
+// during the same Run to determine the outcome of the test.
 //
-// Case 1: when a new write occurs (on the underlying Conn, and thus on the associated Recorder),
-// Asserter is called with the following arguments: false, latestWrite, allWritesIncludingLatest.
+// Case 1: when a write occurs (on the underlying Conn, and thus on the associated Recorder),
+// Asserter is called with (false, latestWrite, allWritesIncludingLatest)
 //
 // Possible outcomes of Case 1 are:
 // - if a decision can't be made about the assertion being true or not (e.g. if more data or timeout needed)
 // *done* is false and the other return values don't matter
-// - the test succeeds, *done* and *passed* are true, *errorMessage* does not matter
-// - the test fails, *done* is true, *passed* is false and *errorMessage* will be used to print an error
+// - if the test succeeds, *done* and *passed* are true, *errorMessage* does not matter
+// - if test fails, *done* is true, *passed* is false and *errorMessage* will be used to print an error
 //
-// Case 2: when the recorder ends (the underlying Conn is closed or the test times out),
-// Asserter is called with the following arguments: true, latestWrite, allWritesIncludingLatest. Contrary to Case 1,
+// Case 2: when timeout is reached (the underlying Conn is closed or the Run times out),
+// Asserter is called one last time (true, latestWrite, allWritesIncludingLatest). Contrary to Case 1,
 // we don't know if there was indeed a *latestWrite* (could be nil, like *allWritesIncludingLatest*).
 //
-// Case 2 is the last time Asserter will be called (*done* return value should not be taken into account, but considered true),
-// *passed* gives the test outcome and *errorMessage* is used if test failed.
+// The return value `done` is considered true whatever is returned, and `passed` and `errorMessage` give the test outcome.
 type Asserter func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string)
 
 type assertion struct {
@@ -45,7 +44,7 @@ func newAssertion(r *Recorder, asserter Asserter) *assertion {
 func (a assertion) assertOnEnd() {
 	a.recorder.t.Helper()
 
-	latest, _ := Last(a.recorder.serverWrites)
+	latest, _ := last(a.recorder.serverWrites)
 	// on end, done is considered true anyway
 	_, passed, errorMessage := a.asserter(true, latest, a.recorder.serverWrites)
 

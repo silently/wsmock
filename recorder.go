@@ -12,6 +12,8 @@ type round struct {
 	assertionIndex map[*assertion]bool
 }
 
+// Used in conjunction with a WebSocket connection mock, a Recorder stores all messages written by
+// the server to the mock, and its API (Assert* methods) is used to make assertions about these messages.
 type Recorder struct {
 	t            *testing.T
 	currentRound *round

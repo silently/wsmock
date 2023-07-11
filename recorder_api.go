@@ -32,6 +32,7 @@ import (
 // 	return
 // }
 
+// Adds custom assertions
 func (r *Recorder) AssertWith(asserter Asserter) {
 	r.t.Helper()
 
@@ -40,7 +41,7 @@ func (r *Recorder) AssertWith(asserter Asserter) {
 
 // Test helpers
 
-// AssertReceived checks if a message has been received (on each write).
+// Asserts if a message has been received by recorder
 func (r *Recorder) AssertReceived(target any) {
 	r.t.Helper()
 
@@ -57,7 +58,7 @@ func (r *Recorder) AssertReceived(target any) {
 	})
 }
 
-// AssertFirstReceived checks first message and returns
+// Asserts first message (times out only if no message is received)
 func (r *Recorder) AssertFirstReceived(target any) {
 	r.t.Helper()
 
@@ -77,7 +78,7 @@ func (r *Recorder) AssertFirstReceived(target any) {
 	})
 }
 
-// AssertLastReceived checks last message when recorder ends
+// Asserts last message (always times out)
 func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 	r.t.Helper()
 
@@ -99,7 +100,7 @@ func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 	})
 }
 
-// AssertNotReceived checks if a message has not been received (on timeout and close).
+// Asserts if a message has not been received by recorder
 func (r *Recorder) AssertNotReceived(target any) {
 	r.t.Helper()
 
@@ -116,7 +117,7 @@ func (r *Recorder) AssertNotReceived(target any) {
 	})
 }
 
-// AssertReceivedContains checks if a received message contains a given string (on each write).
+// Asserts if a message received by recorder contains a given string.
 // Messages that can't be converted to strings are JSON-marshalled
 func (r *Recorder) AssertReceivedContains(substr string) {
 	r.t.Helper()
@@ -146,7 +147,7 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 	})
 }
 
-// AssertClosed checks if conn has been closed (on timeout and close)
+// Asserts if conn has been closed (on timeout and close)
 func (r *Recorder) AssertClosed() {
 	r.t.Helper()
 
@@ -159,7 +160,7 @@ func (r *Recorder) AssertClosed() {
 	})
 }
 
-// AssertReceivedSparseSequence checks if a sparse sequence has been received (on each write).
+// Asserts if a sparse sequence has been received.
 //
 // If the messages received are (1, 2, 3, 4, 5), included sparse sequences are for instance
 // (1, 2, 3, 5) or (2, 4), but neither (2, 4, 1) nor (1, 2, 6).
@@ -191,7 +192,7 @@ func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 	})
 }
 
-// AssertReceivedAdjacentSequence checks if an adjacent sequence has been received (on each write).
+// Asserts if an adjacent sequence has been received.
 //
 // If the messages received are (1, 2, 3, 4, 5), included adjacent sequences are for instance
 // (2, 3, 4, 5) or (1, 2), but neither (1, 3) nor (4, 5, 6).
@@ -227,7 +228,7 @@ func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 	})
 }
 
-// AssertReceivedExactSequence checks if this exact sequence has been received (on timeout and close).
+// Asserts if this exact sequence has been received (always times out).
 //
 // If the messages received are (1, 2, 3, 4, 5), the only valid sequence is (1, 2, 3, 4, 5).
 func (r *Recorder) AssertReceivedExactSequence(targets []any) {
@@ -253,15 +254,14 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any) {
 	})
 }
 
-// Run runs all Assert* methods that have been previously added
-// on this recorder, with a timeout.
+// Runs all Assert* methods that have been previously added on this recorder, with a timeout.
 //
 // If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.
 //
 // For instance, some assertions (like AssertNotReceived) always need to wait until the timeout has been reached
 // to assert success, but may fail sooner.
 //
-// At the end of Run, the recorder keeps previously received messages but assertions
+// At the end of Run, the recorder previously received messages are flushed and assertions
 // are removed. It's then possible to add new Assert* methods and Run again.
 func (r *Recorder) Run(timeout time.Duration) {
 	r.t.Helper()
@@ -271,8 +271,8 @@ func (r *Recorder) Run(timeout time.Duration) {
 	r.stopRound()
 }
 
-// Run scoped to a test (t *testing.T) launches and waits for all Run of recorders
-// that belong to this test.
+// Launches and waits (till timeout) for the outcome of all assertions added to all recorders
+// of this test.
 func Run(t *testing.T, timeout time.Duration) {
 	t.Helper()
 

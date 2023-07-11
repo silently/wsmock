@@ -12,6 +12,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Interface satisfied both by Gorilla websocket.Conn and wsmock.GorillaConn,
+// enabling the possibility to pass the latter in place of the former for testing purposes.
+//
+// It declares all methods available on https://pkg.go.dev/github.com/gorilla/websocket#Conn
 type IGorilla interface {
 	Close() error
 	CloseHandler() func(code int, text string) error
@@ -39,6 +43,7 @@ type IGorilla interface {
 	WritePreparedMessage(pm *websocket.PreparedMessage) error
 }
 
+// Mock for Gorilla websocket.Conn
 type GorillaConn struct {
 	recorder *Recorder
 	closed   bool
@@ -76,6 +81,11 @@ func (r *gorillaReader) Read(p []byte) (n int, err error) {
 	return
 }
 
+// Returns a mock to be used in place of a Gorilla websocket.Conn in tests. GorillaConn has an extra Send()
+// method to simulate client-side sent messages, and *Recorder provides an API to declare assertions about
+// what is written by the server to the mock.
+//
+// Binding these resources to a given *testing.T helps cleaning them when the test is over.
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 	t.Helper()
 
@@ -100,6 +110,7 @@ func (conn *GorillaConn) Send(message any) {
 
 // Stub API (used by server)
 
+// Close the conn, preventing further reads or writes.
 func (conn *GorillaConn) Close() error {
 	conn.recorder.t.Helper()
 
@@ -163,18 +174,21 @@ func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
 	}
 }
 
+// Returns an io.Reader used to Read the next data message
 func (conn *GorillaConn) NextReader() (messageType int, r io.Reader, err error) {
 	messageType, p, err := conn.ReadMessage()
 	r = &gorillaReader{p, 0}
 	return
 }
 
+// Returns an io.WriteCloser used to Write the next data message
 func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
 	conn.recorder.t.Helper()
 
 	return &gorillaWriteCloser{messageType, conn, nil}, nil
 }
 
+// Writes the JSON encoding of m as a message to its recorder, but returns an error if conn is closed.
 func (conn *GorillaConn) WriteJSON(m any) error {
 	conn.recorder.t.Helper()
 
@@ -185,6 +199,7 @@ func (conn *GorillaConn) WriteJSON(m any) error {
 	return nil
 }
 
+// Writes a []byte msg to its recorder, but returns an error if conn is closed.
 func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 	conn.recorder.t.Helper()
 
@@ -201,50 +216,83 @@ func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 
 // IGorilla noop implementations
 
+// Mock not implemented yet
 func (conn *GorillaConn) CloseHandler() func(code int, text string) error {
 	return func(code int, text string) error {
 		return conn.Close()
 	}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) EnableWriteCompression(enable bool) {}
+
+// Mock not implemented yet
 func (conn *GorillaConn) LocalAddr() net.Addr {
 	return &net.IPAddr{}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) PingHandler() func(appData string) error {
 	return func(appData string) error {
 		return errors.New("")
 	}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) PongHandler() func(appData string) error {
 	return func(appData string) error {
 		return nil
 	}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) RemoteAddr() net.Addr {
 	return &net.IPAddr{}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetCloseHandler(h func(code int, text string) error) {}
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetCompressionLevel(level int) error {
 	return nil
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetPingHandler(h func(appData string) error) {}
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetPongHandler(h func(appData string) error) {}
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetReadDeadline(t time.Time) error {
 	return nil
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetReadLimit(limit int64) {}
+
+// Mock not implemented yet
 func (conn *GorillaConn) SetWriteDeadline(t time.Time) error {
 	return nil
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) Subprotocol() string {
 	return ""
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) UnderlyingConn() net.Conn {
 	return &net.TCPConn{}
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) WriteControl(messageType int, data []byte, deadline time.Time) error {
 	return nil
 }
+
+// Mock not implemented yet
 func (conn *GorillaConn) WritePreparedMessage(pm *websocket.PreparedMessage) error {
 	return nil
 }

@@ -148,7 +148,7 @@ The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are
 - `Send(message any)` to script sent messages
 - `Close()` if you want to explicitely close connections "client-side" (alternatively, wsmock will close them when test ends)
 
-Assertions provided by `wsmock.Recorder` are (check the [API documentation here](TODO add godoc)) :
+Assertions provided by `wsmock.Recorder` are (check the [API documentation here](https://pkg.go.dev/github.com/silently/wsmock#Recorder)) :
 
 ```golang
 func (r *Recorder) AssertReceived(target any)
@@ -174,7 +174,7 @@ type Asserter func(end bool, latestWrite any, allWrites []any) (done, passed boo
 
 With the following behaviour:
 - when a write occurs (from the WebSocket server handler, like `runWs` previously), `Asserter` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, also return the test outcome (`passed`) and possibly an error message
-- when assertions timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. The return value `done` is considered true whatever is returned, and `passed` and `errorMessage` give the test outcome 
+- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. The return value `done` is considered true whatever is returned, and `passed` and `errorMessage` give the test outcome 
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 

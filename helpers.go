@@ -1,6 +1,6 @@
 package wsmock
 
-func Last[T any](slice []T) (T, bool) {
+func last[T any](slice []T) (T, bool) {
 	if len(slice) == 0 {
 		var zero T
 		return zero, false
