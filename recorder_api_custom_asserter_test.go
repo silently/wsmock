@@ -10,14 +10,14 @@ func alwaysTrue(_ bool, _ any, _ []any) (done, passed bool, errorMessage string)
 	return true, true, ""
 }
 
-func alwaysFalse(_ bool, _ any, _ []any) (done, passed bool, errorMessage string) {
-	return true, false, "[wsmock] always false"
+func alwaysFalseWithEmptyError(_ bool, _ any, _ []any) (done, passed bool, errorMessage string) {
+	return true, false, ""
 }
 
 func hasMoreMessagesOnEndThan(count int) Asserter {
 	return func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
-			errorMessage = fmt.Sprintf("[wsmock] on end, the number of messages should be strictly more than: %v", count)
+			errorMessage = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
 			return true, len(allWrites) > count, errorMessage
 		}
 		return
@@ -61,7 +61,7 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(alwaysFalse)
+		rec.AssertWith(alwaysFalseWithEmptyError)
 		before := time.Now()
 		rec.Run(100 * time.Millisecond)
 		after := time.Now()

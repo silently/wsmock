@@ -9,6 +9,17 @@ import (
 	"time"
 )
 
+func join(data []any) string {
+	var output string
+	for i, d := range data {
+		output += fmt.Sprintf("%+v", d)
+		if i != len(data)-1 {
+			output += "\n"
+		}
+	}
+	return output
+}
+
 // type Finder func(index int, write any) (ok bool)
 
 // func (r *Recorder) FindOneAfter(f Finder, timeout time.Duration) (found any, ok bool) {
@@ -34,8 +45,6 @@ import (
 
 // Adds custom assertions
 func (r *Recorder) AssertWith(asserter Asserter) {
-	r.t.Helper()
-
 	r.addAssertionToRound(newAssertion(r, asserter))
 }
 
@@ -43,13 +52,11 @@ func (r *Recorder) AssertWith(asserter Asserter) {
 
 // Asserts if a message has been received by recorder
 func (r *Recorder) AssertReceived(target any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
+			errorMessage = fmt.Sprintf("message not received\nexpected: %+v", target)
 		} else if latestWrite == target {
 			done = true
 			passed = true
@@ -60,8 +67,6 @@ func (r *Recorder) AssertReceived(target any) {
 
 // Asserts first message (times out only if no message is received)
 func (r *Recorder) AssertFirstReceived(target any) {
-	r.t.Helper()
-
 	r.AssertWith(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		done = true
 		hasReceivedOne := len(allWrites) > 0
@@ -70,9 +75,9 @@ func (r *Recorder) AssertFirstReceived(target any) {
 			return
 		}
 		if hasReceivedOne {
-			errorMessage = fmt.Sprintf("[wsmock] first message should be: %v, received: %v", target, allWrites[0])
+			errorMessage = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived: %+v", target, allWrites[0])
 		} else {
-			errorMessage = fmt.Sprintf("[wsmock] first message should be: %v, received none", target)
+			errorMessage = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived none", target)
 		}
 		return
 	})
@@ -80,8 +85,6 @@ func (r *Recorder) AssertFirstReceived(target any) {
 
 // Asserts last message (always times out)
 func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -91,9 +94,9 @@ func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 				return
 			}
 			if hasReceivedOne {
-				errorMessage = fmt.Sprintf("[wsmock] last message should be: %v, received: %v", target, latestWrite)
+				errorMessage = fmt.Sprintf("incorrect last message on timeout\nexpected: %+v\nreceived: %+v", target, latestWrite)
 			} else {
-				errorMessage = fmt.Sprintf("[wsmock] last message should be: %v, received none", target)
+				errorMessage = fmt.Sprintf("incorrect last message on timeout\nexpected: %+v\nreceived none", target)
 			}
 		}
 		return
@@ -102,8 +105,6 @@ func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 
 // Asserts if a message has not been received by recorder
 func (r *Recorder) AssertNotReceived(target any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
@@ -111,7 +112,7 @@ func (r *Recorder) AssertNotReceived(target any) {
 		} else if latestWrite == target {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] message should not have been received: %v", target)
+			errorMessage = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
 		}
 		return
 	})
@@ -120,15 +121,11 @@ func (r *Recorder) AssertNotReceived(target any) {
 // Asserts if a message received by recorder contains a given string.
 // Messages that can't be converted to strings are JSON-marshalled
 func (r *Recorder) AssertReceivedContains(substr string) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
-		r.t.Helper()
-
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] no message containing: %v", substr)
+			errorMessage = fmt.Sprintf("no message containing string\nexpected: %v", substr)
 		} else if str, ok := latestWrite.(string); ok {
 			if strings.Contains(str, substr) {
 				done = true
@@ -149,12 +146,10 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 
 // Asserts if conn has been closed (on timeout and close)
 func (r *Recorder) AssertClosed() {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			passed = r.closed
-			errorMessage = "[wsmock] should be closed"
+			errorMessage = "conn should be closed"
 		}
 		return
 	})
@@ -165,13 +160,11 @@ func (r *Recorder) AssertClosed() {
 // If the messages received are (1, 2, 3, 4, 5), included sparse sequences are for instance
 // (1, 2, 3, 5) or (2, 4), but neither (2, 4, 1) nor (1, 2, 6).
 func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] sparse sequence not received: %v", targets)
+			errorMessage = "sparse sequence not received\n" + join(targets)
 		} else {
 			targetLength := len(targets)
 			found := 0
@@ -197,13 +190,11 @@ func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 // If the messages received are (1, 2, 3, 4, 5), included adjacent sequences are for instance
 // (2, 3, 4, 5) or (1, 2), but neither (1, 3) nor (4, 5, 6).
 func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] adjacent sequence not received: %v", targets)
+			errorMessage = "adjacent sequence not received\n" + join(targets)
 		} else {
 			targetLength := len(targets)
 			found := 0
@@ -232,12 +223,10 @@ func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 //
 // If the messages received are (1, 2, 3, 4, 5), the only valid sequence is (1, 2, 3, 4, 5).
 func (r *Recorder) AssertReceivedExactSequence(targets []any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
-			errorMessage = fmt.Sprintf("[wsmock] exact sequence not received: %v", targets)
+			errorMessage = "exact sequence not received\n" + join(targets)
 			if len(targets) != len(allWrites) {
 				passed = false
 				return
@@ -274,16 +263,12 @@ func (r *Recorder) Run(timeout time.Duration) {
 // Launches and waits (till timeout) for the outcome of all assertions added to all recorders
 // of this test.
 func Run(t *testing.T, timeout time.Duration) {
-	t.Helper()
-
 	recs := getIndexedRecorders(t)
 	wg := sync.WaitGroup{}
 
 	for _, r := range recs {
 		wg.Add(1)
 		go func(r *Recorder) {
-			r.t.Helper()
-
 			defer wg.Done()
 			r.Run(timeout)
 		}(r)

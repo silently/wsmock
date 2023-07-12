@@ -14,7 +14,7 @@ rec2.AssertReceived("won")
 wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *testing.T, with a timeout
 ```
 
-Where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
+...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
 
 ```golang
 
@@ -180,8 +180,6 @@ For instance here is `AssertReceived` implementation, please note it can return 
 
 ```golang
 func (r *Recorder) AssertReceived(target any) {
-	r.t.Helper()
-
 	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end { // timeout has been reached
 			done = true

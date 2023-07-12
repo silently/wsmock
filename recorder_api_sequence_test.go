@@ -5,14 +5,6 @@ import (
 	"time"
 )
 
-func toAnySlice[T any](expecteds []T) []any {
-	expectedsAny := make([]any, len(expecteds))
-	for i, v := range expecteds {
-		expectedsAny[i] = v
-	}
-	return expectedsAny
-}
-
 func TestAssertReceivedSparseSequence(t *testing.T) {
 	t.Run("succeeds when sparse sequence is received before timeout", func(t *testing.T) {
 		// init
@@ -24,7 +16,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
 		rec.AssertReceivedSparseSequence(seq)
 		before := time.Now()
 		rec.Run(300 * time.Millisecond)
@@ -51,7 +43,7 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
 		rec.AssertReceivedSparseSequence(seq)
 		rec.Run(35 * time.Millisecond)
 
@@ -70,7 +62,8 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence1"}})
+		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence1"}}
+
 		rec.AssertReceivedSparseSequence(seq)
 		rec.Run(100 * time.Millisecond)
 
@@ -89,7 +82,13 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}, {"chat", "sentence5"}})
+		seq := []any{
+			Message{"chat", "sentence1"},
+			Message{"chat", "sentence2"},
+			Message{"chat", "sentence3"},
+			Message{"chat", "sentence4"},
+			Message{"chat", "sentence5"},
+		}
 		rec.AssertReceivedSparseSequence(seq)
 		rec.Run(100 * time.Millisecond)
 
@@ -108,7 +107,8 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
+
 		rec.AssertReceivedSparseSequence(seq)
 		rec.AssertReceivedSparseSequence(seq) // twice
 		rec.Run(150 * time.Millisecond)
@@ -128,7 +128,8 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
+
 		rec.AssertReceivedSparseSequence(seq)
 		rec.Run(150 * time.Millisecond)
 
@@ -156,7 +157,7 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence3"}}
 		rec.AssertReceivedAdjacentSequence(seq)
 
 		before := time.Now()
@@ -184,7 +185,8 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence2"}, {"chat", "sentence4"}})
+		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence4"}}
+
 		rec.AssertReceivedAdjacentSequence(seq)
 		rec.Run(100 * time.Millisecond)
 
@@ -205,7 +207,12 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence4"}})
+		seq := []any{
+			Message{"chat", "sentence1"},
+			Message{"chat", "sentence2"},
+			Message{"chat", "sentence3"},
+			Message{"chat", "sentence4"},
+		}
 		rec.AssertReceivedExactSequence(seq)
 		rec.Run(300 * time.Millisecond)
 
@@ -224,7 +231,13 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}, {"chat", "sentence5"}})
+		seq := []any{
+			Message{"chat", "sentence1"},
+			Message{"chat", "sentence2"},
+			Message{"chat", "sentence3"},
+			Message{"chat", "sentence5"},
+		}
+
 		rec.AssertReceivedExactSequence(seq)
 		rec.Run(100 * time.Millisecond)
 
@@ -243,7 +256,7 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		seq := toAnySlice([]Message{{"chat", "sentence1"}, {"chat", "sentence2"}, {"chat", "sentence3"}})
+		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence2"}, Message{"chat", "sentence3"}}
 		rec.AssertReceivedExactSequence(seq)
 		rec.Run(100 * time.Millisecond)
 

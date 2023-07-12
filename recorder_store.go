@@ -5,18 +5,16 @@ import (
 	"testing"
 )
 
-var store recorderStore = recorderStore{sync.Mutex{}, make(map[*testing.T]map[*Recorder]bool)}
+var store recorderStore = recorderStore{sync.RWMutex{}, make(map[*testing.T]map[*Recorder]bool)}
 
 type recorderStore struct {
-	sync.Mutex
+	mu    sync.RWMutex
 	index map[*testing.T]map[*Recorder]bool
 }
 
 func indexRecorder(t *testing.T, r *Recorder) {
-	t.Helper()
-
-	store.Lock()
-	defer store.Unlock()
+	store.mu.Lock()
+	defer store.mu.Unlock()
 
 	if _, ok := store.index[t]; !ok {
 		store.index[t] = make(map[*Recorder]bool)
@@ -26,10 +24,8 @@ func indexRecorder(t *testing.T, r *Recorder) {
 }
 
 func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
-	t.Helper()
-
-	store.Lock()
-	defer store.Unlock()
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 
 	for r := range store.index[t] {
 		recorders = append(recorders, r)
@@ -39,10 +35,8 @@ func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
 }
 
 func unindexRecorder(t *testing.T, r *Recorder) {
-	t.Helper()
-
-	store.Lock()
-	defer store.Unlock()
+	store.mu.Lock()
+	defer store.mu.Unlock()
 
 	delete(store.index[t], r)
 }

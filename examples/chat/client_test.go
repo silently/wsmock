@@ -53,7 +53,7 @@ func TestRunClient(t *testing.T) {
 		conn2.Send("two")
 		// - assertions: client may queue and bundle messages together, that's why we check
 		//   if message is contained in a wider bundled message
-		// - alternatively: check next test with a custom Asserter
+		// - alternatively: check next test with a custom Asserter (see next test)
 		rec1.AssertReceivedContains("one")
 		rec1.AssertReceivedContains("two")
 		rec2.AssertReceivedContains("one")
@@ -63,7 +63,7 @@ func TestRunClient(t *testing.T) {
 		wsmock.Run(t, 100*time.Millisecond)
 	})
 
-	t.Run("two clients on same hub receive own and other messages (custom finder)", func(t *testing.T) {
+	t.Run("two clients on same hub receive own and other messages (with custom Asserter)", func(t *testing.T) {
 		hub := runNewHub()
 		conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
 		conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
@@ -80,5 +80,4 @@ func TestRunClient(t *testing.T) {
 		// run all previously declared assertions with a timeout
 		wsmock.Run(t, 100*time.Millisecond)
 	})
-
 }

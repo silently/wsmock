@@ -87,8 +87,6 @@ func (r *gorillaReader) Read(p []byte) (n int, err error) {
 //
 // Binding these resources to a given *testing.T helps cleaning them when the test is over.
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
-	t.Helper()
-
 	recorder := newRecorder(t)
 	conn := &GorillaConn{
 		recorder: recorder,
@@ -103,8 +101,6 @@ func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 // Send does not make any asumption on its message argument type (and does not serializes it),
 // this will be decided upon what Read* function is used to retrieve it
 func (conn *GorillaConn) Send(message any) {
-	conn.recorder.t.Helper()
-
 	conn.recorder.serverReadCh <- message
 }
 
@@ -112,8 +108,6 @@ func (conn *GorillaConn) Send(message any) {
 
 // Close the conn, preventing further reads or writes.
 func (conn *GorillaConn) Close() error {
-	conn.recorder.t.Helper()
-
 	if !conn.closed {
 		conn.closed = true
 		close(conn.closedCh)
@@ -125,8 +119,6 @@ func (conn *GorillaConn) Close() error {
 // Parses as JSON the first message available on conn and stores the result in the value pointed to by v
 // While waiting for it, it can return sooner if conn is closed
 func (conn *GorillaConn) ReadJSON(v any) error {
-	conn.recorder.t.Helper()
-
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
 		return errors.New("ReadJSON: argument should be a pointer")
@@ -151,8 +143,6 @@ func (conn *GorillaConn) ReadJSON(v any) error {
 // - other message types are JSON marshalled
 // While waiting for a message, it can return sooner if conn is closed
 func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
-	conn.recorder.t.Helper()
-
 	for {
 		select {
 		case read := <-conn.recorder.serverReadCh:
@@ -183,15 +173,11 @@ func (conn *GorillaConn) NextReader() (messageType int, r io.Reader, err error) 
 
 // Returns an io.WriteCloser used to Write the next data message
 func (conn *GorillaConn) NextWriter(messageType int) (io.WriteCloser, error) {
-	conn.recorder.t.Helper()
-
 	return &gorillaWriteCloser{messageType, conn, nil}, nil
 }
 
 // Writes the JSON encoding of m as a message to its recorder, but returns an error if conn is closed.
 func (conn *GorillaConn) WriteJSON(m any) error {
-	conn.recorder.t.Helper()
-
 	if conn.closed {
 		return errors.New("[wsmock] conn closed while writing")
 	}
@@ -201,8 +187,6 @@ func (conn *GorillaConn) WriteJSON(m any) error {
 
 // Writes a []byte msg to its recorder, but returns an error if conn is closed.
 func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
-	conn.recorder.t.Helper()
-
 	if conn.closed {
 		return errors.New("[wsmock] conn closed while writing")
 	}
