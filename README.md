@@ -5,7 +5,7 @@ Golang library to help with WebSocket testing, writing tests like:
 ```golang
 conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)  // get mocked Conn and server writes recorder...
 conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)  // ...similarly to httptest NewRequest and NewRecorder
-runWs(conn1)                                        // WebSocket handler -> target of the test
+runWs(conn1)                                        // runWs WebSocket handler -> target of the test
 runWs(conn2)
 conn1.Send("rock")                                  // client-side scripting
 conn2.Send("paper")

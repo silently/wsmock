@@ -380,6 +380,25 @@ func TestAssertReceivedContains(t *testing.T) {
 		}
 	})
 
+	t.Run("succeeds when containing JSON message is received", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"join", "room:1"})
+
+		// assert
+		rec.AssertReceivedContains("kind") // json field is lowercased
+		rec.AssertReceivedContains("joined")
+		rec.Run(200 * time.Millisecond) // it's a max
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedContains should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
 	t.Run("succeeds when containing string is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -567,7 +586,7 @@ func TestNoAssertion(t *testing.T) {
 // this test should be skipped, it's only there to inspect wsmock failing output
 func TestFailing(t *testing.T) {
 	t.Run("should fail", func(t *testing.T) {
-		// t.Skip()
+		t.Skip()
 		conn, rec := NewGorillaMockAndRecorder(t)
 		serveWsHistory(conn)
 

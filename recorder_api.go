@@ -133,6 +133,7 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 			}
 		} else {
 			b, err := json.Marshal(latestWrite)
+
 			if err == nil {
 				if strings.Contains(string(b), substr) {
 					done = true
