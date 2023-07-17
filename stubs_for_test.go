@@ -37,6 +37,9 @@ func serveWsHistory(conn IGorilla) {
 			} else if m.Kind == "quit" { // ~10ms
 				time.Sleep(10 * time.Millisecond)
 				conn.Close()
+			} else if m.Kind == "pointer" { // ~10ms
+				time.Sleep(10 * time.Millisecond)
+				conn.WriteJSON(&Message{"pointer", "sent"})
 			}
 		}
 	}()

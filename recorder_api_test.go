@@ -380,7 +380,7 @@ func TestAssertReceivedContains(t *testing.T) {
 		}
 	})
 
-	t.Run("succeeds when containing JSON message is received", func(t *testing.T) {
+	t.Run("succeeds when containing JSON message is written", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -392,6 +392,27 @@ func TestAssertReceivedContains(t *testing.T) {
 		// assert
 		rec.AssertReceivedContains("kind") // json field is lowercased
 		rec.AssertReceivedContains("joined")
+		rec.Run(200 * time.Millisecond) // it's a max
+
+		if mockT.Failed() { // fail not expected
+			t.Error("AssertReceivedContains should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
+	t.Run("succeeds when containing JSON message pointer is written", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"pointer", ""})
+
+		// assert
+		rec.AssertReceivedContains("kind") // json field is lowercased
+		rec.AssertReceivedContains("pointer")
+		rec.AssertReceivedContains("payload")
+		rec.AssertReceivedContains("sent")
 		rec.Run(200 * time.Millisecond) // it's a max
 
 		if mockT.Failed() { // fail not expected
