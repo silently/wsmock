@@ -28,6 +28,7 @@ func (rd *round) stop() error {
 // the server to the mock, and its API (Assert* methods) is used to make assertions about these messages.
 type Recorder struct {
 	t            *testing.T
+	index        int // used in logs
 	currentRound *round
 	// ws communication
 	serverReadCh  chan any
@@ -57,8 +58,8 @@ func newRecorder(t *testing.T) *Recorder {
 		serverWriteCh: make(chan any, 256),
 		doneCh:        make(chan struct{}),
 	}
+	r.index = indexRecorder(t, &r)
 	r.newRound()
-	indexRecorder(t, &r)
 	return &r
 }
 
@@ -94,8 +95,8 @@ func (r *Recorder) startRound(timeout time.Duration) {
 	}
 }
 
-func formatErrorSection[T any](label string, items []T) string {
-	output := label + "\n"
+func formatErrorSection[T any](r *Recorder, label string, items []T) string {
+	output := fmt.Sprintf("Recorder#%v ", r.index) + label + "\n"
 	for _, item := range items {
 		output = fmt.Sprintf("%v\t%+v\n", output, item)
 	}
@@ -107,10 +108,17 @@ func (r *Recorder) error(errorMessage string, isFirst bool) {
 
 	errorParts := strings.Split(errorMessage, "\n")
 	label, rest := errorParts[0], errorParts[1:]
-	errorOutput := formatErrorSection("Error: "+label, rest)
+	errorOutput := formatErrorSection(r, "error: "+label, rest)
 
 	if isFirst {
-		stateOutput := formatErrorSection("Received messages:", r.serverWrites)
+		num := len(r.serverWrites)
+		label := fmt.Sprintf("%v messages received:", num)
+		if num == 0 {
+			label = "no message received"
+		} else if num == 1 {
+			label = "1 message received:"
+		}
+		stateOutput := formatErrorSection(r, label, r.serverWrites)
 		r.t.Log("\n" + stateOutput)
 	}
 

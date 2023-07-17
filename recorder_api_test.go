@@ -567,7 +567,7 @@ func TestNoAssertion(t *testing.T) {
 // this test should be skipped, it's only there to inspect wsmock failing output
 func TestFailing(t *testing.T) {
 	t.Run("should fail", func(t *testing.T) {
-		t.Skip()
+		// t.Skip()
 		conn, rec := NewGorillaMockAndRecorder(t)
 		serveWsHistory(conn)
 

@@ -12,19 +12,24 @@ type recorderStore struct {
 	index map[*testing.T][]*Recorder
 }
 
-func indexRecorder(t *testing.T, r *Recorder) {
+// returns the index/position of recorder for the given *testing.T test
+func indexRecorder(t *testing.T, r *Recorder) (index int) {
 	t.Helper()
 
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
-	if len(store.index[t]) == 0 { // do it once
+	length := len(store.index[t])
+
+	if length == 0 { // do it once
 		t.Cleanup(func() {
 			unindexRecorders(t)
 		})
 	}
 
 	store.index[t] = append(store.index[t], r)
+
+	return length
 }
 
 func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {

@@ -207,6 +207,32 @@ Here are some gotchas:
 - the `Recorder` stores all the messages written by the server handler: indeed some assertions needs to know the complete history of messages to decide their outcome
 - **but** the message history is cleared after each run (`wsmock.Run(t, timeout)` or `rec.Run(timeout)`)
 
+## wsmock output
+
+In case of a failing test, the output looks like:
+
+```
+--- FAIL: TestFailing (0.01s)
+    --- FAIL: TestFailing/should_fail (0.01s)
+        recorder_api_test.go:588: 
+            Recorder#0 1 message received:
+                {Kind:chat Payload:sentence1}
+            
+        recorder_api_test.go:588: 
+            Recorder#0 error: message should not be received
+                unexpected: {Kind:chat Payload:sentence1}
+            
+        recorder_api_test.go:588: 
+            Recorder#0 error: incorrect first message
+                expected: {Kind:chat Payload:notfound}
+                received: {Kind:chat Payload:sentence1}
+```
+
+Where:
+
+- `Recorder#0` serves as a unique identifier of the failing recorder within the test `TestFailing` (the index `#0` maps the creation order of the recorder in `TestFailing`)
+- if there is at least one error for `Recorder#0`, the introductory log `Recorder#0 1 message received:` helps understand the  errors that follow
+
 ## For wsmock developers
 
 Run wsmock own tests with:
