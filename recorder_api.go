@@ -144,11 +144,11 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 	})
 }
 
-// Asserts if conn has been closed (on timeout and close)
+// Asserts if conn has been closed
 func (r *Recorder) AssertClosed() {
 	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
-			passed = r.closed
+			passed = r.done // conn closed => recorder done
 			errorMessage = "conn should be closed"
 		}
 		return
@@ -263,12 +263,16 @@ func (r *Recorder) Run(timeout time.Duration) {
 // Launches and waits (till timeout) for the outcome of all assertions added to all recorders
 // of this test.
 func Run(t *testing.T, timeout time.Duration) {
+	t.Helper()
+
 	recs := getIndexedRecorders(t)
 	wg := sync.WaitGroup{}
 
 	for _, r := range recs {
 		wg.Add(1)
 		go func(r *Recorder) {
+			t.Helper()
+
 			defer wg.Done()
 			r.Run(timeout)
 		}(r)

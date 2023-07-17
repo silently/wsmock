@@ -10,8 +10,18 @@ import (
 
 type round struct {
 	wg             sync.WaitGroup // track if assertions are finished
-	doneCh         chan struct{}  // caused by timeout or outcome known before timeout (wg passed)
+	done           bool
+	doneCh         chan struct{} // caused by timeout or outcome known before timeout (wg passed)
 	assertionIndex map[*assertion]bool
+}
+
+// closed when corresponding conn is
+func (rd *round) stop() error {
+	if !rd.done {
+		rd.done = true
+		close(rd.doneCh)
+	}
+	return nil
 }
 
 // Used in conjunction with a WebSocket connection mock, a Recorder stores all messages written by
@@ -22,8 +32,8 @@ type Recorder struct {
 	// ws communication
 	serverReadCh  chan any
 	serverWriteCh chan any
-	closed        bool
-	closedCh      chan struct{}
+	done          bool
+	doneCh        chan struct{}
 	// messages queue
 	serverWrites []any
 	// fails
@@ -45,20 +55,18 @@ func newRecorder(t *testing.T) *Recorder {
 		t:             t,
 		serverReadCh:  make(chan any, 256),
 		serverWriteCh: make(chan any, 256),
-		closedCh:      make(chan struct{}),
+		doneCh:        make(chan struct{}),
 	}
 	r.newRound()
 	indexRecorder(t, &r)
-	t.Cleanup(func() {
-		unindexRecorder(t, &r)
-	})
 	return &r
 }
 
-func (r *Recorder) close() error {
-	if !r.closed {
-		r.closed = true
-		close(r.closedCh)
+// closed when corresponding conn is
+func (r *Recorder) stop() error {
+	if !r.done {
+		r.done = true
+		close(r.doneCh)
 	}
 	return nil
 }
@@ -73,6 +81,7 @@ func (r *Recorder) addError(errorMessage string) {
 	defer r.mu.Unlock()
 
 	r.errors = append(r.errors, errorMessage)
+	r.currentRound.stop()
 }
 
 func (r *Recorder) startRound(timeout time.Duration) {
@@ -123,7 +132,7 @@ func (r *Recorder) waitForRound() {
 }
 
 func (r *Recorder) stopRound() {
-	close(r.currentRound.doneCh)
+	r.currentRound.stop()
 	r.newRound()
 }
 

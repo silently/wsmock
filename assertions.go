@@ -68,10 +68,13 @@ func (a assertion) loopWithTimeout(timeout time.Duration) {
 				}
 				return
 			}
-		case <-timeoutCh:
+		case <-a.recorder.currentRound.doneCh: // round is done because of another failing assertion
 			a.assertOnEnd()
 			return
-		case <-a.recorder.closedCh:
+		case <-a.recorder.doneCh: // conn is closed
+			a.assertOnEnd()
+			return
+		case <-timeoutCh: // timeout is reached
 			a.assertOnEnd()
 			return
 		}

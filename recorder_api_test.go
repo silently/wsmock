@@ -126,6 +126,35 @@ func TestAssertReceived(t *testing.T) {
 	})
 }
 
+func TestAssertReceivedNotReceived(t *testing.T) {
+	t.Run("should fail fast", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+
+		// assert
+		rec.AssertReceived(Message{"chat", "sentence4"})
+		rec.AssertNotReceived(Message{"chat", "sentence1"}) // failing assertion
+		before := time.Now()
+		rec.Run(300 * time.Millisecond) // it's a max
+		after := time.Now()
+
+		if !mockT.Failed() { // fail expected
+			t.Error("AssertNotReceived should fail")
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 100*time.Millisecond {
+				t.Errorf("AssertNotReceived should fail faster")
+			}
+		}
+	})
+}
+
 func TestAssertFirstReceived(t *testing.T) {
 	t.Run("succeeds when first message is received before timeout", func(t *testing.T) {
 		// init

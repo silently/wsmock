@@ -111,7 +111,7 @@ func (conn *GorillaConn) Close() error {
 	if !conn.closed {
 		conn.closed = true
 		close(conn.closedCh)
-		conn.recorder.close()
+		conn.recorder.stop()
 	}
 	return nil
 }
