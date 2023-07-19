@@ -17,7 +17,6 @@ wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *test
 ...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
 
 ```golang
-
 import (
 	"log"
 	"net/http"
@@ -141,7 +140,7 @@ Assertions are run either:
 `wsmock.NewGorillaConnAndRecorder` returns two structs:
 
 - `wsmock.GorillaConn`, the mocked WebSocket connection given to `runWs`
-- `wsmock.Recorder`, server writes recorder used to define assertions
+- `wsmock.Recorder`, that records what is written by `runWs` to `GorillaConn` and propose an API to define assertions on these writes
 
 The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are:
 
@@ -173,8 +172,8 @@ type Asserter func(end bool, latestWrite any, allWrites []any) (done, passed boo
 ```
 
 With the following behaviour:
-- when a write occurs (from the WebSocket server handler, like `runWs` previously), `Asserter` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, also return the test outcome (`passed`) and possibly an error message
-- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. The return value `done` is considered true whatever is returned, and `passed` and `errorMessage` give the test outcome 
+- when a write occurs (from the WebSocket server handler, like `runWs` previously), `Asserter` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
+- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. Regarding return values: `done` is considered true (by `AssertWith`) whatever is returned, and `passed` and `errorMessage` give the test outcome 
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
@@ -202,10 +201,10 @@ A typical flow of messages in a test goes like (considering a `runWs` server han
 - then `runWs` possibly writes a message (typically with `WriteJSON` or `WriteMessage`) -> recorder serverWriteCh channel -> forwarded by the recorder to each assertion defined on it
 
 Here are some gotchas:
-- `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order the were sent
+- `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent
 - all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
-- the `Recorder` stores all the messages written by the server handler: indeed some assertions needs to know the complete history of messages to decide their outcome
-- **but** the message history is cleared after each run (`wsmock.Run(t, timeout)` or `rec.Run(timeout)`)
+- the `Recorder` stores all the messages written by the server handler: indeed some assertions need to know the complete history of messages to decide their outcome
+- **but** the message history is cleared after each run (`wsmock.Run(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
 ## wsmock output
 
