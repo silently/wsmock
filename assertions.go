@@ -29,6 +29,8 @@ type assertion struct {
 	asserter Asserter
 	// events
 	latestWriteCh chan any
+	// state
+	done bool
 }
 
 func newAssertion(r *Recorder, asserter Asserter) *assertion {
@@ -36,10 +38,11 @@ func newAssertion(r *Recorder, asserter Asserter) *assertion {
 		recorder:      r,
 		asserter:      asserter,
 		latestWriteCh: make(chan any),
+		done:          false,
 	}
 }
 
-func (a assertion) assertOnEnd() {
+func (a *assertion) assertOnEnd() {
 	latest, _ := last(a.recorder.serverWrites)
 	// on end, done is considered true anyway
 	_, passed, errorMessage := a.asserter(true, latest, a.recorder.serverWrites)
@@ -47,9 +50,11 @@ func (a assertion) assertOnEnd() {
 	if !passed {
 		a.recorder.addError(errorMessage)
 	}
+
+	a.done = true
 }
 
-func (a assertion) loopWithTimeout(timeout time.Duration) {
+func (a *assertion) loopWithTimeout(timeout time.Duration) {
 	// we found that using time.Sleep is more accurate (= less delay in addition to the specified timeout)
 	// than using <-time.After directly on a for-select case
 	timeoutCh := make(chan string, 1)
@@ -66,6 +71,7 @@ func (a assertion) loopWithTimeout(timeout time.Duration) {
 				if !passed {
 					a.recorder.addError(errorMessage)
 				}
+				a.done = true
 				return
 			}
 		case <-a.recorder.currentRound.doneCh: // round is done because of another failing assertion

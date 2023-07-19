@@ -151,7 +151,9 @@ func (r *Recorder) forwardWritesDuringRound() {
 			r.serverWrites = append(r.serverWrites, w)
 
 			for a := range r.currentRound.assertionIndex {
-				a.latestWriteCh <- w
+				if !a.done { // to prevent blocking channel
+					a.latestWriteCh <- w
+				}
 			}
 		case <-r.currentRound.doneCh:
 			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round

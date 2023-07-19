@@ -585,8 +585,31 @@ func TestAssertClosed(t *testing.T) {
 	})
 }
 
+func TestMultiAssertion(t *testing.T) {
+	t.Run("should succeed without blocking", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := NewGorillaMockAndRecorder(mockT)
+		serveWsHistory(conn)
+
+		// script
+		conn.Send(Message{"history", ""})
+		rec.AssertReceived(Message{"chat", "sentence1"})
+		rec.AssertReceived(Message{"chat", "sentence2"})
+		rec.AssertReceived(Message{"chat", "sentence3"})
+		rec.AssertReceived(Message{"chat", "sentence4"})
+
+		// no assertion!
+		rec.Run(100 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("several AssertReceived should not fail")
+		}
+	})
+}
+
 func TestNoAssertion(t *testing.T) {
-	t.Run("should succeed", func(t *testing.T) {
+	t.Run("no assertion should succeed", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -598,7 +621,7 @@ func TestNoAssertion(t *testing.T) {
 		// no assertion!
 		rec.Run(10 * time.Millisecond)
 
-		if mockT.Failed() { // fail expected
+		if mockT.Failed() { // fail not expected
 			t.Error("NoAssertion can't fail")
 		}
 	})
