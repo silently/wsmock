@@ -14,7 +14,7 @@ func alwaysFalseWithEmptyError(_ bool, _ any, _ []any) (done, passed bool, error
 	return true, false, ""
 }
 
-func hasMoreMessagesOnEndThan(count int) Asserter {
+func hasMoreMessagesOnEndThan(count int) AsserterFunc {
 	return func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			errorMessage = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
@@ -24,7 +24,7 @@ func hasMoreMessagesOnEndThan(count int) Asserter {
 	}
 }
 
-func TestAssertWith(t *testing.T) {
+func TestAssert(t *testing.T) {
 	t.Run("succeeds when custom Asserter does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -35,18 +35,18 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(alwaysTrue)
+		rec.Assert(alwaysTrue)
 		before := time.Now()
 		rec.Run(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertWith should have custom finder alwaysTrue succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("Assert should have custom finder alwaysTrue succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed >= 30*time.Millisecond {
-				t.Error("AssertWith should be faster with alwaysTrue")
+				t.Error("Assert should be faster with alwaysTrue")
 			}
 		}
 	})
@@ -61,18 +61,18 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(alwaysFalseWithEmptyError)
+		rec.Assert(alwaysFalseWithEmptyError)
 		before := time.Now()
 		rec.Run(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertWith should have custom finder alwaysFalse fail")
+			t.Error("Assert should have custom finder alwaysFalse fail")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed >= 30*time.Millisecond {
-				t.Error("AssertWith should be faster with alwaysFalse")
+				t.Error("Assert should be faster with alwaysFalse")
 			}
 		}
 	})
@@ -87,7 +87,7 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(hasMoreMessagesOnEndThan(3))
+		rec.Assert(hasMoreMessagesOnEndThan(3))
 		rec.Run(70 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -105,7 +105,7 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(hasMoreMessagesOnEndThan(3))
+		rec.Assert(hasMoreMessagesOnEndThan(3))
 		rec.Run(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -123,7 +123,7 @@ func TestAssertWith(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.AssertWith(hasMoreMessagesOnEndThan(10))
+		rec.Assert(hasMoreMessagesOnEndThan(10))
 		rec.Run(70 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

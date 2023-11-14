@@ -165,21 +165,21 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any)    // only 1,2,3,4
 
 ## Custom Assertions
 
-You can define custom assertions with `func (r *Recorder) AssertWith(asserter Asserter)` where `Asserter` type is:
+You can define custom assertions with `func (r *Recorder) Assert(f AsserterFunc)` where `AsserterFunc` type is:
 
 ```golang
-type Asserter func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string)
+type AsserterFunc func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string)
 ```
 
 With the following behaviour:
-- when a write occurs (from the WebSocket server handler, like `runWs` previously), `Asserter` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
-- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. Regarding return values: `done` is considered true (by `AssertWith`) whatever is returned, and `passed` and `errorMessage` give the test outcome 
+- when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
+- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `errorMessage` do give the test outcome 
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
 ```golang
 func (r *Recorder) AssertReceived(target any) {
-	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end { // timeout has been reached
 			done = true
 			passed = false // if hasn't passed before, must be failing

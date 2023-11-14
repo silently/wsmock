@@ -20,39 +20,16 @@ func join(data []any) string {
 	return output
 }
 
-// type Finder func(index int, write any) (ok bool)
-
-// func (r *Recorder) FindOneAfter(f Finder, timeout time.Duration) (found any, ok bool) {
-// 	time.Sleep(timeout)
-// 	for i, w := range r.serverWrites {
-// 		if f(i, w) {
-// 			return w, true
-// 		}
-// 	}
-// 	return nil, false
-// }
-
-// func (r *Recorder) FindAllAfter(f Finder, timeout time.Duration) (founds []any, ok bool) {
-// 	time.Sleep(timeout)
-// 	for i, w := range r.serverWrites {
-// 		if f(i, w) {
-// 			founds = append(founds, w)
-// 			ok = true
-// 		}
-// 	}
-// 	return
-// }
-
 // Adds custom assertions
-func (r *Recorder) AssertWith(asserter Asserter) {
-	r.addAssertionToRound(newAssertion(r, asserter))
+func (r *Recorder) Assert(f AsserterFunc) {
+	r.addToRound(newAssertionJob(r, f))
 }
 
 // Test helpers
 
 // Asserts if a message has been received by recorder
 func (r *Recorder) AssertReceived(target any) {
-	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
@@ -67,7 +44,7 @@ func (r *Recorder) AssertReceived(target any) {
 
 // Asserts first message (times out only if no message is received)
 func (r *Recorder) AssertFirstReceived(target any) {
-	r.AssertWith(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(_ bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		done = true
 		hasReceivedOne := len(allWrites) > 0
 		passed = hasReceivedOne && allWrites[0] == target
@@ -85,7 +62,7 @@ func (r *Recorder) AssertFirstReceived(target any) {
 
 // Asserts last message (always times out)
 func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			hasReceivedOne := len(allWrites) > 0
@@ -105,7 +82,7 @@ func (r *Recorder) AssertLastReceivedOnTimeout(target any) {
 
 // Asserts if a message has not been received by recorder
 func (r *Recorder) AssertNotReceived(target any) {
-	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = true
@@ -121,7 +98,7 @@ func (r *Recorder) AssertNotReceived(target any) {
 // Asserts if a message received by recorder contains a given string.
 // Messages that can't be converted to strings are JSON-marshalled
 func (r *Recorder) AssertReceivedContains(substr string) {
-	r.AssertWith(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
@@ -147,7 +124,7 @@ func (r *Recorder) AssertReceivedContains(substr string) {
 
 // Asserts if conn has been closed
 func (r *Recorder) AssertClosed() {
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			passed = r.done // conn closed => recorder done
 			errorMessage = "conn should be closed"
@@ -161,7 +138,7 @@ func (r *Recorder) AssertClosed() {
 // If the messages received are (1, 2, 3, 4, 5), included sparse sequences are for instance
 // (1, 2, 3, 5) or (2, 4), but neither (2, 4, 1) nor (1, 2, 6).
 func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
-	r.AssertWith(func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
@@ -191,7 +168,7 @@ func (r *Recorder) AssertReceivedSparseSequence(targets []any) {
 // If the messages received are (1, 2, 3, 4, 5), included adjacent sequences are for instance
 // (2, 3, 4, 5) or (1, 2), but neither (1, 3) nor (4, 5, 6).
 func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			passed = false
@@ -224,7 +201,7 @@ func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) {
 //
 // If the messages received are (1, 2, 3, 4, 5), the only valid sequence is (1, 2, 3, 4, 5).
 func (r *Recorder) AssertReceivedExactSequence(targets []any) {
-	r.AssertWith(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
+	r.Assert(func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string) {
 		if end {
 			done = true
 			errorMessage = "exact sequence not received\n" + join(targets)

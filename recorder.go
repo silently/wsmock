@@ -9,10 +9,10 @@ import (
 )
 
 type round struct {
-	wg             sync.WaitGroup // track if assertions are finished
-	done           bool
-	doneCh         chan struct{} // caused by timeout or outcome known before timeout (wg passed)
-	assertionIndex map[*assertion]bool
+	wg       sync.WaitGroup // track if assertions are finished
+	done     bool
+	doneCh   chan struct{} // caused by timeout or outcome known before timeout (wg passed)
+	jobIndex map[*assertionJob]bool
 }
 
 // closed when corresponding conn is
@@ -45,9 +45,9 @@ type Recorder struct {
 func (r *Recorder) newRound() {
 	r.serverWrites = nil
 	r.currentRound = &round{
-		wg:             sync.WaitGroup{},
-		doneCh:         make(chan struct{}),
-		assertionIndex: make(map[*assertion]bool),
+		wg:       sync.WaitGroup{},
+		doneCh:   make(chan struct{}),
+		jobIndex: make(map[*assertionJob]bool),
 	}
 }
 
@@ -72,8 +72,8 @@ func (r *Recorder) stop() error {
 	return nil
 }
 
-func (r *Recorder) addAssertionToRound(a *assertion) {
-	r.currentRound.assertionIndex[a] = true
+func (r *Recorder) addToRound(a *assertionJob) {
+	r.currentRound.jobIndex[a] = true
 	r.currentRound.wg.Add(1)
 }
 
@@ -87,11 +87,11 @@ func (r *Recorder) addError(errorMessage string) {
 
 func (r *Recorder) startRound(timeout time.Duration) {
 	go r.forwardWritesDuringRound()
-	for a := range r.currentRound.assertionIndex {
-		go func(a *assertion) {
+	for job := range r.currentRound.jobIndex {
+		go func(job *assertionJob) {
 			defer r.currentRound.wg.Done()
-			a.loopWithTimeout(timeout)
-		}(a)
+			job.loopWithTimeout(timeout)
+		}(job)
 	}
 }
 
@@ -150,9 +150,9 @@ func (r *Recorder) forwardWritesDuringRound() {
 		case w := <-r.serverWriteCh:
 			r.serverWrites = append(r.serverWrites, w)
 
-			for a := range r.currentRound.assertionIndex {
-				if !a.done { // to prevent blocking channel
-					a.latestWriteCh <- w
+			for job := range r.currentRound.jobIndex {
+				if !job.done { // to prevent blocking channel
+					job.latestWriteCh <- w
 				}
 			}
 		case <-r.currentRound.doneCh:

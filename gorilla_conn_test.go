@@ -86,6 +86,9 @@ func TestGorillaConnRead(t *testing.T) {
 		}
 		buf := make([]byte, len(original))
 		_, err = reader.Read(buf)
+		if err != nil {
+			t.Errorf("error while reading buffer")
+		}
 		if string(buf) != original {
 			t.Errorf("wrong message, expected %v but got %v", original, string(buf))
 		}

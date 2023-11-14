@@ -22,7 +22,7 @@ func runNewHub() *Hub {
 
 // Custom Asserter that splits received writes into several messages if separated by "\n"
 // and then test if one of them is target
-func hasReceivedAutoSplit(target string) wsmock.Asserter {
+func hasReceivedAutoSplit(target string) wsmock.AsserterFunc {
 	return func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
 		if end {
 			passed = false
@@ -74,8 +74,8 @@ func TestRunClient(t *testing.T) {
 		conn1.Send("one")
 		conn2.Send("two")
 		// use a custom Asserter that splits messages around newlines (check client.go line 108)
-		rec1.AssertWith(hasReceivedAutoSplit("one"))
-		rec2.AssertWith(hasReceivedAutoSplit("one"))
+		rec1.Assert(hasReceivedAutoSplit("one"))
+		rec2.Assert(hasReceivedAutoSplit("one"))
 
 		// run all previously declared assertions with a timeout
 		wsmock.Run(t, 100*time.Millisecond)
