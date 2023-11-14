@@ -8,28 +8,28 @@ The original code in `client.go` was:
 
 ```golang
 type Client struct {
-	hub *Hub
+  hub *Hub
 
-	// The websocket connection.
-	conn *websocket.Conn
+  // The websocket connection.
+  conn *websocket.Conn
 
-	// Buffered channel of outbound messages.
-	send chan []byte
+  // Buffered channel of outbound messages.
+  send chan []byte
 }
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
+  conn, err := upgrader.Upgrade(w, r, nil)
+  if err != nil {
+    log.Println(err)
+    return
+  }
+  client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+  client.hub.register <- client
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
+  // Allow collection of memory referenced by the caller by doing all work in
+  // new goroutines.
+  go client.writePump()
+  go client.readPump()
 }
 ```
 
@@ -37,30 +37,30 @@ It has been updated to:
 
 ```golang
 type Client struct {
-	hub *Hub
+  hub *Hub
 
-	// The websocket connection.
-	conn wsmock.IGorilla // wsmock 1/3 -> conn type has been updated
+  // The websocket connection.
+  conn wsmock.IGorilla // wsmock 1/3 -> conn type has been updated
 
-	// Buffered channel of outbound messages.
-	send chan []byte
+  // Buffered channel of outbound messages.
+  send chan []byte
 }
 
 // wsmock 2/3 -> function to encapsulate Client creation and loops
 func runClient(hub *Hub, conn wsmock.IGorilla) {
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	hub.register <- client
-	go client.writePump()
-	go client.readPump()
+  client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+  hub.register <- client
+  go client.writePump()
+  go client.readPump()
 }
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	runClient(hub, conn)  // wsmock 3/3 -> use runClient function
+  conn, err := upgrader.Upgrade(w, r, nil)
+  if err != nil {
+    log.Println(err)
+    return
+  }
+  runClient(hub, conn)  // wsmock 3/3 -> use runClient function
 }
 ```
 

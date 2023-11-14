@@ -18,10 +18,10 @@ wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *test
 
 ```golang
 import (
-	"log"
-	"net/http"
+  "log"
+  "net/http"
 
-	"github.com/gorilla/websocket"
+  "github.com/gorilla/websocket"
 )
 
 func serveWs(w http.ResponseWriter, r *http.Request) {  // HTTP handler
@@ -68,9 +68,9 @@ Depending on what methods are used by `runWs` we could go with as little as:
 
 ```golang
 type IConn interface {
-	ReadJSON(any) error
-	WriteJSON(any) error
-	Close() error
+  ReadJSON(any) error
+  WriteJSON(any) error
+  Close() error
   // add more methods if needed by runWs implementation
 }
 
@@ -83,7 +83,7 @@ Alternatively and instead of defining your own `IConn`, you can rely on `wsmock.
 
 ```golang
 import (
-	ws "github.com/silently/wsmock"
+  ws "github.com/silently/wsmock"
 )
 
 func runWs(conn *ws.IGorilla) {}
@@ -104,8 +104,8 @@ import (
 )
 
 type Message struct {
-	Kind    string `json:"kind"`
-	Payload any    `json:"payload"`
+  Kind    string `json:"kind"`
+  Payload any    `json:"payload"`
 }
 
 func TestWs(t *testing.T) {
@@ -179,17 +179,17 @@ For instance here is `AssertReceived` implementation, please note it can return 
 
 ```golang
 func (r *Recorder) AssertReceived(target any) {
-	r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
-		if end { // timeout has been reached
-			done = true
-			passed = false // if hasn't passed before, must be failing
-			errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
-		} else if latestWrite == target {
-			done = true
-			passed = true
-		}
-		return
-	})
+  r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+    if end { // timeout has been reached
+      done = true
+      passed = false // if hasn't passed before, must be failing
+      errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
+    } else if latestWrite == target {
+      done = true
+      passed = true
+    }
+    return
+  })
 }
 ```
 
