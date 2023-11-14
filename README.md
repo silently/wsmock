@@ -25,11 +25,11 @@ import (
 )
 
 func serveWs(w http.ResponseWriter, r *http.Request) {  // HTTP handler
-    conn, err := upgrader.Upgrade(w, r, nil)            // creates a Gorilla websocket.Conn
-    if err != nil {
-        log.Println(err)
-    }
-    runWs(conn)                                         // WebSocket handler -> target of the test
+  conn, err := upgrader.Upgrade(w, r, nil)            // creates a Gorilla websocket.Conn
+  if err != nil {
+    log.Println(err)
+  }
+  runWs(conn)                                         // WebSocket handler -> target of the test
 }
 ```
 
