@@ -52,7 +52,7 @@ go get github.com/silently/wsmock
 
 ## Prerequesite
 
-Going on with our `runWs` WebSocket handler, the main gotcha to test it is: being able to give it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
+Going on with our `runWs` WebSocket handler, the main gotcha is: being able to give it a mocked `conn` argument, meaning one that is not of Gorilla `websocket.Conn` type.
 
 If `runWs` has this signature:
 
@@ -64,7 +64,7 @@ func runWs(conn *websocket.Conn) {}
 
 *(This approach is similar to [httptest](https://pkg.go.dev/net/http/httptest#example-ResponseRecorder) that relies on `ResponseRecorder`, "an implementation of `http.ResponseWriter`; that records its mutations for later inspection in tests")*
 
-Depending on what methods are used by `runWs` we could go with as little as:
+Depending on what methods are used within `runWs` we could go with as little as:
 
 ```golang
 type IConn interface {
@@ -77,7 +77,7 @@ type IConn interface {
 func runWs(conn *IConn) {}
 ```
 
-Now `runWs` can receive Gorilla `websocket.Conn` in real usage and `wsmock.GorillaConn` when testing.
+Now `runWs` can both receive Gorilla `websocket.Conn` in real usage and `wsmock.GorillaConn` when testing.
 
 Alternatively and instead of defining your own `IConn`, you can rely on `wsmock.IGorilla` interface: it declares all methods available on Gorilla [websocket.Conn](https://pkg.go.dev/github.com/gorilla/websocket#Conn):
 
