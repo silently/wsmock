@@ -3,15 +3,25 @@
 Golang library to help with WebSocket testing, writing tests like:
 
 ```golang
-conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)  // get mocked Conn and server writes recorder...
-conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)  // ...similarly to httptest NewRequest and NewRecorder
-runWs(conn1)                                        // runWs WebSocket handler -> target of the test
+// initialize with mocked Conns and server-sent messages recorder
+// (similarly to httptest NewRequest and NewRecorder)
+conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
+conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
+
+// test targets, prefer "go runWs(...)" if they are blocking
+runWs(conn1)
 runWs(conn2)
-conn1.Send("rock")                                  // client-side scripting
+
+// script
+conn1.Send("rock")
 conn2.Send("paper")
-rec1.AssertNotReceived("won")                       // declare assertions
-rec2.AssertReceived("won")
-wsmock.Run(t, 100*time.Millisecond)                 // run assertions on a *testing.T, with a timeout
+
+// add assertions
+rec1.NotToReceive("won")
+rec2.ToReceive("won")
+
+// run assertions on a *testing.T, with a timeout
+wsmock.RunAssertions(t, 100*time.Millisecond)       
 ```
 
 ...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
@@ -24,12 +34,12 @@ import (
   "github.com/gorilla/websocket"
 )
 
-func serveWs(w http.ResponseWriter, r *http.Request) {  // HTTP handler
-  conn, err := upgrader.Upgrade(w, r, nil)            // creates a Gorilla websocket.Conn
+func serveWs(w http.ResponseWriter, r *http.Request) { // HTTP handler
+  conn, err := upgrader.Upgrade(w, r, nil)             // creates a Gorilla websocket.Conn
   if err != nil {
     log.Println(err)
   }
-  runWs(conn)                                         // WebSocket handler -> target of the test
+  runWs(conn)                                          // WebSocket handler -> target of the test
 }
 ```
 
@@ -122,11 +132,11 @@ func TestWs(t *testing.T) {
     conn2.Send(Message{"join", "Johnny"})
     conn2.Send(Message{"send", "Hello"})
 
-    rec1.AssertReceived(Message{"incoming", "Hello"})
+    rec1.ToReceive(Message{"incoming", "Hello"})
     // the next assertion is "not received" (supposing chat history is not implemented)
-    rec2.AssertNotReceived(Message{"incoming", "Bonjour"})
+    rec2.NotToReceive(Message{"incoming", "Bonjour"})
     // run all assertions in this test, with a timeout
-    wsmock.Run(t, 100 * time.Millisecond)
+    wsmock.RunAssertions(t, 100 * time.Millisecond)
     // or run per recorder: rec1.Run(100 * time.Millisecond)
   })
 }
@@ -135,7 +145,7 @@ func TestWs(t *testing.T) {
 Assertions are run either:
 
 - per recorder, for instance `rec1.Run(100 * time.Millisecond)` followed by `rec2.Run(100 * time.Millisecond)`
-- per test: `wsmock.Run(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
+- per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 `wsmock.NewGorillaConnAndRecorder` returns two structs:
 
@@ -150,15 +160,15 @@ The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are
 Assertions provided by `wsmock.Recorder` are (check the [API documentation here](https://pkg.go.dev/github.com/silently/wsmock#Recorder)) :
 
 ```golang
-func (r *Recorder) AssertReceived(target any)
-func (r *Recorder) AssertFirstReceived(target any)
-func (r *Recorder) AssertLastReceivedOnTimeout(target any)
-func (r *Recorder) AssertNotReceived(target any)
-func (r *Recorder) AssertReceivedContains(substr string)
-func (r *Recorder) AssertClosed()
-func (r *Recorder) AssertReceivedSparseSequence(targets []any)   // 2,4 is a sparse sequence within 1,2,3,4
-func (r *Recorder) AssertReceivedAdjacentSequence(targets []any) // 3,4 is an adjacent sequence within 1,2,3,4
-func (r *Recorder) AssertReceivedExactSequence(targets []any)    // only 1,2,3,4 is an exact match of 1,2,3,4
+func (r *Recorder) ToReceive(target any)
+func (r *Recorder) ToReceiveFirst(target any)
+func (r *Recorder) ToReceiveLast(target any)
+func (r *Recorder) ToReceiveContaining(substr string)
+func (r *Recorder) NotToReceive(target any)
+func (r *Recorder) ToBeClosed()
+func (r *Recorder) ToReceiveSparseSequence(targets []any)   // 2,4 is a sparse sequence within 1,2,3,4
+func (r *Recorder) ToReceiveSequence(targets []any) // 3,4 is an adjacent sequence within 1,2,3,4
+func (r *Recorder) ToReceiveOnlySequence(targets []any)    // only 1,2,3,4 is an exact match of 1,2,3,4
 ```
 
 *(assertions rely on the equality operator `==`, see [spec](https://go.dev/ref/spec#Comparison_operators))*
@@ -168,23 +178,23 @@ func (r *Recorder) AssertReceivedExactSequence(targets []any)    // only 1,2,3,4
 You can define custom assertions with `func (r *Recorder) Assert(f AsserterFunc)` where `AsserterFunc` type is:
 
 ```golang
-type AsserterFunc func(end bool, latestWrite any, allWrites []any) (done, passed bool, errorMessage string)
+type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, errorMessage string)
 ```
 
 With the following behaviour:
-- when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latestWrite, allWritesIncludingLatest)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
-- when timeout is reached, `Asserter` is called one last time with `(true, latestWrite, allWritesIncludingLatest)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `errorMessage` do give the test outcome 
+- when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
+- when timeout is reached, `Asserter` is called one last time with `(true, latest, all)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `errorMessage` do give the test outcome 
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
-```golang
-func (r *Recorder) AssertReceived(target any) {
-  r.Assert(func(end bool, latestWrite any, _ []any) (done, passed bool, errorMessage string) {
+```golang TODO
+func (r *Recorder) ToReceive(target any) {
+  r.AddAsserter(func(end bool, latest any, _ []any) (done, passed bool, errorMessage string) {
     if end { // timeout has been reached
       done = true
       passed = false // if hasn't passed before, must be failing
       errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
-    } else if latestWrite == target {
+    } else if latest == target {
       done = true
       passed = true
     }
@@ -204,7 +214,7 @@ Here are some gotchas:
 - `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent
 - all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
 - the `Recorder` stores all the messages written by the server handler: indeed some assertions need to know the complete history of messages to decide their outcome
-- **but** the message history is cleared after each run (`wsmock.Run(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
+- **but** the message history is cleared after each run (`wsmock.RunAssertions(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
 ## wsmock output
 

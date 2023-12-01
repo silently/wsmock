@@ -15,10 +15,10 @@ func alwaysFalseWithEmptyError(_ bool, _ any, _ []any) (done, passed bool, error
 }
 
 func hasMoreMessagesOnEndThan(count int) AsserterFunc {
-	return func(end bool, _ any, allWrites []any) (done, passed bool, errorMessage string) {
+	return func(end bool, _ any, all []any) (done, passed bool, errorMessage string) {
 		if end {
 			errorMessage = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
-			return true, len(allWrites) > count, errorMessage
+			return true, len(all) > count, errorMessage
 		}
 		return
 	}
@@ -35,9 +35,9 @@ func TestAssert(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert(alwaysTrue)
+		rec.AddAsserterFunc(alwaysTrue)
 		before := time.Now()
-		rec.Run(100 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -61,9 +61,9 @@ func TestAssert(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert(alwaysFalseWithEmptyError)
+		rec.AddAsserterFunc(alwaysFalseWithEmptyError)
 		before := time.Now()
-		rec.Run(100 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
@@ -87,8 +87,8 @@ func TestAssert(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert(hasMoreMessagesOnEndThan(3))
-		rec.Run(70 * time.Millisecond)
+		rec.AddAsserterFunc(hasMoreMessagesOnEndThan(3))
+		rec.RunAssertions(70 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
@@ -105,8 +105,8 @@ func TestAssert(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert(hasMoreMessagesOnEndThan(3))
-		rec.Run(20 * time.Millisecond)
+		rec.AddAsserterFunc(hasMoreMessagesOnEndThan(3))
+		rec.RunAssertions(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
@@ -123,8 +123,8 @@ func TestAssert(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert(hasMoreMessagesOnEndThan(10))
-		rec.Run(70 * time.Millisecond)
+		rec.AddAsserterFunc(hasMoreMessagesOnEndThan(10))
+		rec.RunAssertions(70 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")

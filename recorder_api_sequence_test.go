@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestAssertReceivedSparseSequence(t *testing.T) {
+func TestToReceiveSparseSequence(t *testing.T) {
 	t.Run("succeeds when sparse sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -17,18 +17,18 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 
 		// assert
 		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
-		rec.AssertReceivedSparseSequence(seq)
+		rec.ToReceiveSparseSequence(seq)
 		before := time.Now()
-		rec.Run(300 * time.Millisecond)
+		rec.RunAssertions(300 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("ToReceiveSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Error("AssertReceivedSparseSequence should succeed faster")
+				t.Error("ToReceiveSparseSequence should succeed faster")
 			}
 		}
 	})
@@ -44,11 +44,11 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 
 		// assert
 		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
-		rec.AssertReceivedSparseSequence(seq)
-		rec.Run(35 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.RunAssertions(35 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedSparseSequence shoud fail because of timeout")
+			t.Error("ToReceiveSparseSequence shoud fail because of timeout")
 		}
 	})
 
@@ -64,11 +64,11 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// assert
 		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence1"}}
 
-		rec.AssertReceivedSparseSequence(seq)
-		rec.Run(100 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedSparseSequence should fail")
+			t.Error("ToReceiveSparseSequence should fail")
 		}
 	})
 
@@ -89,11 +89,11 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 			Message{"chat", "sentence4"},
 			Message{"chat", "sentence5"},
 		}
-		rec.AssertReceivedSparseSequence(seq)
-		rec.Run(100 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedSparseSequence should fail")
+			t.Error("ToReceiveSparseSequence should fail")
 		}
 	})
 
@@ -109,12 +109,12 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// assert
 		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
 
-		rec.AssertReceivedSparseSequence(seq)
-		rec.AssertReceivedSparseSequence(seq) // twice
-		rec.Run(150 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.ToReceiveSparseSequence(seq) // twice
+		rec.RunAssertions(150 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("ToReceiveSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -130,23 +130,23 @@ func TestAssertReceivedSparseSequence(t *testing.T) {
 		// assert
 		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence3"}}
 
-		rec.AssertReceivedSparseSequence(seq)
-		rec.Run(150 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.RunAssertions(150 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("ToReceiveSparseSequence should succeed, mockT output is:", getTestOutput(mockT))
 		}
 
-		rec.AssertReceivedSparseSequence(seq)
-		rec.Run(150 * time.Millisecond)
+		rec.ToReceiveSparseSequence(seq)
+		rec.RunAssertions(150 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedSparseSequence should fail for second Run")
+			t.Error("ToReceiveSparseSequence should fail for second Run")
 		}
 	})
 }
 
-func TestAssertReceivedAdjacentSequence(t *testing.T) {
+func TestToReceiveSequence(t *testing.T) {
 	t.Run("succeeds when adjacent sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -158,19 +158,19 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 
 		// assert
 		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence3"}}
-		rec.AssertReceivedAdjacentSequence(seq)
+		rec.ToReceiveSequence(seq)
 
 		before := time.Now()
-		rec.Run(300 * time.Millisecond)
+		rec.RunAssertions(300 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedAdjacentSequence should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("ToReceiveSequence should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Error("AssertReceivedAdjacentSequence should succeed faster")
+				t.Error("ToReceiveSequence should succeed faster")
 			}
 		}
 	})
@@ -187,16 +187,16 @@ func TestAssertReceivedAdjacentSequence(t *testing.T) {
 		// assert
 		seq := []any{Message{"chat", "sentence2"}, Message{"chat", "sentence4"}}
 
-		rec.AssertReceivedAdjacentSequence(seq)
-		rec.Run(100 * time.Millisecond)
+		rec.ToReceiveSequence(seq)
+		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedAdjacentSequence should fail")
+			t.Error("ToReceiveSequence should fail")
 		}
 	})
 }
 
-func TestAssertReceivedExactSequence(t *testing.T) {
+func TestToReceiveOnlySequence(t *testing.T) {
 	t.Run("succeeds when exact sequence is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -213,11 +213,11 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 			Message{"chat", "sentence3"},
 			Message{"chat", "sentence4"},
 		}
-		rec.AssertReceivedExactSequence(seq)
-		rec.Run(300 * time.Millisecond)
+		rec.ToReceiveOnlySequence(seq)
+		rec.RunAssertions(300 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("AssertReceivedExactSequence should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("ToReceiveOnlySequence should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -238,11 +238,11 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 			Message{"chat", "sentence5"},
 		}
 
-		rec.AssertReceivedExactSequence(seq)
-		rec.Run(100 * time.Millisecond)
+		rec.ToReceiveOnlySequence(seq)
+		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedExactSequence should fail")
+			t.Error("ToReceiveOnlySequence should fail")
 		}
 	})
 
@@ -257,11 +257,11 @@ func TestAssertReceivedExactSequence(t *testing.T) {
 
 		// assert
 		seq := []any{Message{"chat", "sentence1"}, Message{"chat", "sentence2"}, Message{"chat", "sentence3"}}
-		rec.AssertReceivedExactSequence(seq)
-		rec.Run(100 * time.Millisecond)
+		rec.ToReceiveOnlySequence(seq)
+		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertReceivedExactSequence should fail")
+			t.Error("ToReceiveOnlySequence should fail")
 		}
 	})
 }
