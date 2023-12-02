@@ -23,10 +23,10 @@ func runNewHub() *Hub {
 // Custom Asserter that splits received writes into several messages if separated by "\n"
 // and then test if one of them is target
 func hasReceivedAutoSplit(target string) wsmock.AsserterFunc {
-	return func(end bool, latest any, _ []any) (done, passed bool, errorMessage string) {
+	return func(end bool, latest any, _ []any) (done, passed bool, err string) {
 		if end {
 			passed = false
-			errorMessage = fmt.Sprintf("[wsmock] no message received containing: %v", target)
+			err = fmt.Sprintf("[wsmock] no message received containing: %v", target)
 		} else if str, ok := latest.(string); ok {
 			for _, w := range strings.Split(str, "\n") {
 				if w == target {

@@ -175,22 +175,22 @@ func (r *Recorder) ConnClosed()
 You can define custom assertions with `func (r *Recorder) RunChecks(f AsserterFunc)` where `AsserterFunc` type is:
 
 ```golang
-type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, errorMessage string)
+type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, err string)
 ```
 
 With the following behaviour:
 - when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
-- when timeout is reached, `Asserter` is called one last time with `(true, latest, all)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `errorMessage` do give the test outcome 
+- when timeout is reached, `Asserter` is called one last time with `(true, latest, all)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `err` do give the test outcome 
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
 ```golang TODO
 func (r *Recorder) OneToBe(target any) {
-  r.AddAsserter(func(end bool, latest any, _ []any) (done, passed bool, errorMessage string) {
+  r.AddAsserter(func(end bool, latest any, _ []any) (done, passed bool, err string) {
     if end { // timeout has been reached
       done = true
       passed = false // if hasn't passed before, must be failing
-      errorMessage = fmt.Sprintf("[wsmock] message not received: %v", target)
+      err = fmt.Sprintf("[wsmock] message not received: %v", target)
     } else if latest == target {
       done = true
       passed = true

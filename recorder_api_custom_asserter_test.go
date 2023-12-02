@@ -6,19 +6,19 @@ import (
 	"time"
 )
 
-func alwaysTrue(_ bool, _ any, _ []any) (done, passed bool, errorMessage string) {
+func alwaysTrue(_ bool, _ any, _ []any) (done, passed bool, err string) {
 	return true, true, ""
 }
 
-func alwaysFalseWithEmptyError(_ bool, _ any, _ []any) (done, passed bool, errorMessage string) {
+func alwaysFalseWithEmptyError(_ bool, _ any, _ []any) (done, passed bool, err string) {
 	return true, false, ""
 }
 
 func hasMoreMessagesOnEndThan(count int) AsserterFunc {
-	return func(end bool, _ any, all []any) (done, passed bool, errorMessage string) {
+	return func(end bool, _ any, all []any) (done, passed bool, err string) {
 		if end {
-			errorMessage = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
-			return true, len(all) > count, errorMessage
+			err = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
+			return true, len(all) > count, err
 		}
 		return
 	}

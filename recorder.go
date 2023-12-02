@@ -76,11 +76,11 @@ func (r *Recorder) addToRound(c *Checklist) {
 	r.currentRound.wg.Add(1)
 }
 
-func (r *Recorder) addError(errorMessage string) {
+func (r *Recorder) addError(err string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.errors = append(r.errors, errorMessage)
+	r.errors = append(r.errors, err)
 	r.currentRound.stop()
 }
 
@@ -102,10 +102,10 @@ func formatErrorSection[T any](r *Recorder, label string, items []T) string {
 	return output
 }
 
-func (r *Recorder) error(errorMessage string, isFirst bool) {
+func (r *Recorder) error(err string, isFirst bool) {
 	r.t.Helper()
 
-	errorParts := strings.Split(errorMessage, "\n")
+	errorParts := strings.Split(err, "\n")
 	label, rest := errorParts[0], errorParts[1:]
 	errorOutput := formatErrorSection(r, "error: "+label, rest)
 
@@ -131,8 +131,8 @@ func (r *Recorder) waitForRound() {
 
 	if len(r.errors) > 0 {
 		r.mu.RLock()
-		for i, errorMessage := range r.errors {
-			r.error(errorMessage, i == 0)
+		for i, err := range r.errors {
+			r.error(err, i == 0)
 		}
 		r.mu.RUnlock()
 	}

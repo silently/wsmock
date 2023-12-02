@@ -14,10 +14,10 @@ type assertionJob struct {
 	done         bool // means finished, as a success OR failure
 	currentIndex int
 	// optional
-	errorMessage string
+	err string
 }
 
-func newAssertionJob(r *Recorder, c *Checklist, errorMessage ...string) *assertionJob {
+func newAssertionJob(r *Recorder, c *Checklist, err ...string) *assertionJob {
 	job := &assertionJob{
 		r:             r,
 		c:             c,
@@ -25,8 +25,8 @@ func newAssertionJob(r *Recorder, c *Checklist, errorMessage ...string) *asserti
 		done:          false,
 		currentIndex:  0,
 	}
-	if len(errorMessage) == 1 {
-		job.errorMessage = errorMessage[0]
+	if len(err) == 1 {
+		job.err = err[0]
 	}
 	return job
 }
@@ -46,16 +46,16 @@ func (j *assertionJob) currentAsserter() Asserter {
 func (job *assertionJob) assertOnEnd() {
 	latest, _ := last(job.r.serverWrites)
 	// on end, done is considered true anyway
-	_, passed, errorMessage := job.currentAsserter().Try(true, latest, job.r.serverWrites)
+	_, passed, err := job.currentAsserter().Try(true, latest, job.r.serverWrites)
 	job.done = true
 
 	if passed {
 		job.incPassed()
 	} else {
-		if len(errorMessage) == 0 {
-			errorMessage = job.errorMessage
+		if len(err) == 0 {
+			err = job.err
 		}
-		job.r.addError(errorMessage)
+		job.r.addError(err)
 	}
 }
 
@@ -71,7 +71,7 @@ func (job *assertionJob) loopWithTimeout(timeout time.Duration) {
 	for {
 		select {
 		case latest := <-job.latestWriteCh:
-			done, passed, errorMessage := job.currentAsserter().Try(false, latest, job.r.serverWrites)
+			done, passed, err := job.currentAsserter().Try(false, latest, job.r.serverWrites)
 			if done {
 				job.done = true
 				if passed { // current passed
@@ -80,7 +80,7 @@ func (job *assertionJob) loopWithTimeout(timeout time.Duration) {
 						return
 					}
 				} else {
-					job.r.addError(errorMessage)
+					job.r.addError(err)
 					return
 				}
 			}

@@ -77,7 +77,7 @@ func (c *Checklist) OneToContain(sub string) *Checklist {
 // First*
 
 func (c *Checklist) FirstToBe(target any) *Checklist {
-	return c.Check(func(_ bool, _ any, all []any) (done, passed bool, errorMessage string) {
+	return c.Check(func(_ bool, _ any, all []any) (done, passed bool, err string) {
 		done = true
 		hasReceivedOne := len(all) > 0
 		passed = hasReceivedOne && all[0] == target
@@ -85,9 +85,9 @@ func (c *Checklist) FirstToBe(target any) *Checklist {
 			return
 		}
 		if hasReceivedOne {
-			errorMessage = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived: %+v", target, all[0])
+			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived: %+v", target, all[0])
 		} else {
-			errorMessage = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived none", target)
+			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived none", target)
 		}
 		return
 	})
@@ -106,14 +106,14 @@ func (c *Checklist) LastToBe(target any) *Checklist {
 // OneNot*
 // Asserts if a message has not been received by recorder (can fail before time out)
 func (c *Checklist) OneNotToBe(target any) *Checklist {
-	return c.Check(func(end bool, latest any, _ []any) (done, passed bool, errorMessage string) {
+	return c.Check(func(end bool, latest any, _ []any) (done, passed bool, err string) {
 		if end {
 			done = true
 			passed = true
 		} else if latest == target {
 			done = true
 			passed = false
-			errorMessage = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
+			err = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
 		}
 		return
 	})
@@ -123,10 +123,10 @@ func (c *Checklist) OneNotToBe(target any) *Checklist {
 
 // Asserts if conn has been closed
 func (c *Checklist) ConnClosed() *Checklist {
-	return c.Check(func(end bool, latest any, all []any) (done, passed bool, errorMessage string) {
+	return c.Check(func(end bool, latest any, all []any) (done, passed bool, err string) {
 		if end {
 			passed = c.r.done // conn closed => recorder done
-			errorMessage = "conn should be closed"
+			err = "conn should be closed"
 		}
 		return
 	})
