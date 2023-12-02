@@ -13,9 +13,9 @@ func TestMultiConn_Chat(t *testing.T) {
 		conn1, rec1 := NewGorillaMockAndRecorder(mockT)
 		conn2, rec2 := NewGorillaMockAndRecorder(mockT)
 		conn3, rec3 := NewGorillaMockAndRecorder(mockT)
-		server.handle(conn1)
-		server.handle(conn2)
-		server.handle(conn3)
+		go server.handle(conn1)
+		go server.handle(conn2)
+		go server.handle(conn3)
 
 		// script
 		conn1.Send(Message{"join", "user1"})
@@ -51,8 +51,8 @@ func TestMultiConn_RPSt(t *testing.T) {
 		server := newRpsWsStub()
 		conn1, rec1 := NewGorillaMockAndRecorder(mockT)
 		conn2, rec2 := NewGorillaMockAndRecorder(mockT)
-		server.handle(conn1)
-		server.handle(conn2)
+		go server.handle(conn1)
+		go server.handle(conn2)
 
 		// script
 		conn1.Send("paper")

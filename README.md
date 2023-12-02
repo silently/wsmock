@@ -3,25 +3,27 @@
 Golang library to help with WebSocket testing, writing tests like:
 
 ```golang
-// initialize with mocked Conns and server-sent messages recorder
-// (similarly to httptest NewRequest and NewRecorder)
-conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
-conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
+func TestRockPaperScissors(t *testing.T) {
+  // initialize with mocked Conns and server-sent messages recorder
+  // (similarly to httptest NewRequest and NewRecorder)
+  conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
+  conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
 
-// test targets, prefer "go runWs(...)" if they are blocking
-runWs(conn1)
-runWs(conn2)
+  // runWs behaviour is the test target
+  go runWs(conn1)
+  go runWs(conn2)
 
-// script
-conn1.Send("paper")
-conn2.Send("rock")
+  // script
+  conn1.Send("paper")
+  conn2.Send("rock")
 
-// add assertions
-rec1.OneToBe("won")
-rec2.OneNotToBe("won")
+  // add assertions on recorded messages
+  rec1.OneToBe("won")
+  rec2.OneNotToBe("won")
 
-// run assertions on a *testing.T, with a timeout
-wsmock.RunAssertions(t, 100*time.Millisecond)       
+  // run assertions with a timeout
+  wsmock.RunAssertions(t, 100*time.Millisecond) 
+}      
 ```
 
 ...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
@@ -123,8 +125,8 @@ func TestWs(t *testing.T) {
   t.Run("two peers can connect and exchange hellos", func(t *testing.T) {
     conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
     conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
-    runWs(conn1) 
-    runWs(conn2)
+    go runWs(conn1) 
+    go runWs(conn2)
 
     // script events (Johnny connects too late to receive Micheline's greeting)
     conn1.Send(Message{"join", "Micheline"})
@@ -137,7 +139,7 @@ func TestWs(t *testing.T) {
     rec2.OneNotToBe(Message{"incoming", "Bonjour"})
     // run all assertions in this test, with a timeout
     wsmock.RunAssertions(t, 100 * time.Millisecond)
-    // or run per recorder: rec1.Run(100 * time.Millisecond)
+    // or run per recorder: `rec1.Run(100 * time.Millisecond)` and `rec2.Run(100 * time.Millisecond)`
   })
 }
 ```

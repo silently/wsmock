@@ -98,30 +98,28 @@ func newChatWsStub() *chatWsStub {
 }
 
 func (s *chatWsStub) handle(conn *GorillaConn) {
-	go func() {
-		for {
-			var m Message
-			err := conn.ReadJSON(&m)
-			if err != nil {
-				// client left (or needs to stop loop anyway)
-				return
-			} else if m.Kind == "join" {
-				s.Lock()
-				s.connIndex[conn] = m.Payload
-				s.Unlock()
-				conn.WriteJSON(Message{"joined", m.Payload})
-			} else if m.Kind == "message" {
-				s.Lock()
-				from := s.connIndex[conn]
-				for c := range s.connIndex {
-					if c != conn {
-						c.WriteJSON(Message{from, m.Payload})
-					}
+	for {
+		var m Message
+		err := conn.ReadJSON(&m)
+		if err != nil {
+			// client left (or needs to stop loop anyway)
+			return
+		} else if m.Kind == "join" {
+			s.Lock()
+			s.connIndex[conn] = m.Payload
+			s.Unlock()
+			conn.WriteJSON(Message{"joined", m.Payload})
+		} else if m.Kind == "message" {
+			s.Lock()
+			from := s.connIndex[conn]
+			for c := range s.connIndex {
+				if c != conn {
+					c.WriteJSON(Message{from, m.Payload})
 				}
-				s.Unlock()
 			}
+			s.Unlock()
 		}
-	}()
+	}
 }
 
 // rps stub for multi conn tests
