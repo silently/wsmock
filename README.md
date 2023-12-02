@@ -21,7 +21,7 @@ rec1.OneToBe("won")
 rec2.OneNotToBe("won")
 
 // run assertions on a *testing.T, with a timeout
-wsmock.RunChecks(t, 100*time.Millisecond)       
+wsmock.RunAssertions(t, 100*time.Millisecond)       
 ```
 
 ...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
@@ -136,7 +136,7 @@ func TestWs(t *testing.T) {
     // the next assertion is "not received" (supposing chat history is not implemented)
     rec2.OneNotToBe(Message{"incoming", "Bonjour"})
     // run all assertions in this test, with a timeout
-    wsmock.RunChecks(t, 100 * time.Millisecond)
+    wsmock.RunAssertions(t, 100 * time.Millisecond)
     // or run per recorder: rec1.Run(100 * time.Millisecond)
   })
 }
@@ -145,7 +145,7 @@ func TestWs(t *testing.T) {
 Assertions are run either:
 
 - per recorder, for instance `rec1.Run(100 * time.Millisecond)` followed by `rec2.Run(100 * time.Millisecond)`
-- per test: `wsmock.RunChecks(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
+- per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 `wsmock.NewGorillaConnAndRecorder` returns two structs:
 
@@ -172,7 +172,7 @@ func (r *Recorder) ConnClosed()
 
 ## Custom Assertions
 
-You can define custom assertions with `func (r *Recorder) RunChecks(f AsserterFunc)` where `AsserterFunc` type is:
+You can define custom assertions with `func (r *Recorder) RunAssertions(f AsserterFunc)` where `AsserterFunc` type is:
 
 ```golang
 type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, err string)
@@ -184,19 +184,9 @@ With the following behaviour:
  
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
-```golang TODO
+```golang
 func (r *Recorder) OneToBe(target any) {
-  r.AddAsserter(func(end bool, latest any, _ []any) (done, passed bool, err string) {
-    if end { // timeout has been reached
-      done = true
-      passed = false // if hasn't passed before, must be failing
-      err = fmt.Sprintf("[wsmock] message not received: %v", target)
-    } else if latest == target {
-      done = true
-      passed = true
-    }
-    return
-  })
+ TODO
 }
 ```
 
@@ -211,7 +201,7 @@ Here are some gotchas:
 - `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent
 - all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
 - the `Recorder` stores all the messages written by the server handler: indeed some assertions need to know the complete history of messages to decide their outcome
-- **but** the message history is cleared after each run (`wsmock.RunChecks(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
+- **but** the message history is cleared after each run (`wsmock.RunAssertions(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
 ## wsmock output
 

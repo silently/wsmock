@@ -25,7 +25,7 @@ func TestChainOneToBe(t *testing.T) {
 			OneToBe(Message{"chat", "sentence2"}).
 			OneToBe(Message{"chat", "sentence3"})
 
-		rec.RunChecks(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(300 * time.Millisecond) // it's a max
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToBe*s* should succeed, mockT output is:", getTestOutput(mockT))

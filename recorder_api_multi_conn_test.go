@@ -24,7 +24,7 @@ func TestMultiConn_Chat(t *testing.T) {
 		// assert
 		rec1.OneToBe(Message{"joined", "user1"})
 		rec2.OneNotToBe(Message{"user1", "hello"}) // user2 has not joined
-		RunChecks(mockT, 110*time.Millisecond)
+		RunAssertions(mockT, 110*time.Millisecond)
 
 		// script
 		conn2.Send(Message{"join", "user2"})
@@ -36,7 +36,7 @@ func TestMultiConn_Chat(t *testing.T) {
 		rec1.OneToBe(Message{"user3", "hi"})
 		rec2.OneToBe(Message{"user3", "hi"})
 		rec3.OneNotToBe(Message{"user3", "hi"})
-		RunChecks(mockT, 110*time.Millisecond)
+		RunAssertions(mockT, 110*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in chat room, mockT output is:", getTestOutput(mockT))
@@ -62,7 +62,7 @@ func TestMultiConn_RPSt(t *testing.T) {
 		rec1.OneToBe("won")
 		rec2.OneToBe("lost")
 		rec2.OneNotToBe("won")
-		RunChecks(mockT, 50*time.Millisecond)
+		RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))
@@ -76,7 +76,7 @@ func TestMultiConn_RPSt(t *testing.T) {
 		rec1.OneToBe("won")
 		rec1.OneNotToBe("lost")
 		rec2.OneToBe("lost")
-		RunChecks(mockT, 50*time.Millisecond)
+		RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))
@@ -91,7 +91,7 @@ func TestMultiConn_RPSt(t *testing.T) {
 		rec1.OneNotToBe("won")
 		rec1.OneNotToBe("lost")
 		rec2.OneToBe("draw")
-		RunChecks(mockT, 50*time.Millisecond)
+		RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))

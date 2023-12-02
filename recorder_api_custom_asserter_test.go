@@ -24,7 +24,7 @@ func hasMoreMessagesOnEndThan(count int) AsserterFunc {
 	}
 }
 
-func TestRunChecks(t *testing.T) {
+func TestRunAssertions(t *testing.T) {
 	t.Run("succeeds when custom Asserter does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -35,23 +35,23 @@ func TestRunChecks(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Check(alwaysTrue)
+		rec.AddAssert(alwaysTrue)
 		before := time.Now()
-		rec.RunChecks(100 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("RunChecks should have custom finder alwaysTrue succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("RunAssertions should have custom finder alwaysTrue succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed >= 30*time.Millisecond {
-				t.Error("RunChecks should be faster with alwaysTrue")
+				t.Error("RunAssertions should be faster with alwaysTrue")
 			}
 		}
 	})
 
-	t.Run("fails when custom RunCheckser does", func(t *testing.T) {
+	t.Run("fails when custom RunAssertionser does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := NewGorillaMockAndRecorder(mockT)
@@ -61,18 +61,18 @@ func TestRunChecks(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Check(alwaysFalseWithEmptyError)
+		rec.AddAssert(alwaysFalseWithEmptyError)
 		before := time.Now()
-		rec.RunChecks(100 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("RunChecks should have custom finder alwaysFalse fail")
+			t.Error("RunAssertions should have custom finder alwaysFalse fail")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed >= 30*time.Millisecond {
-				t.Error("RunChecks should be faster with alwaysFalse")
+				t.Error("RunAssertions should be faster with alwaysFalse")
 			}
 		}
 	})
@@ -87,11 +87,11 @@ func TestRunChecks(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Check(hasMoreMessagesOnEndThan(3))
-		rec.RunChecks(70 * time.Millisecond)
+		rec.AddAssert(hasMoreMessagesOnEndThan(3))
+		rec.RunAssertions(70 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("should have custom RunCheckser hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("should have custom RunAssertionser hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -105,8 +105,8 @@ func TestRunChecks(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Check(hasMoreMessagesOnEndThan(3))
-		rec.RunChecks(20 * time.Millisecond)
+		rec.AddAssert(hasMoreMessagesOnEndThan(3))
+		rec.RunAssertions(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
@@ -123,8 +123,8 @@ func TestRunChecks(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Check(hasMoreMessagesOnEndThan(10))
-		rec.RunChecks(70 * time.Millisecond)
+		rec.AddAssert(hasMoreMessagesOnEndThan(10))
+		rec.RunAssertions(70 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")

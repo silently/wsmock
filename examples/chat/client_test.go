@@ -60,7 +60,7 @@ func TestRunClient(t *testing.T) {
 		rec2.OneToContain("two")
 
 		// run all previously declared assertions with a timeout
-		wsmock.RunChecks(t, 250*time.Millisecond)
+		wsmock.RunAssertions(t, 250*time.Millisecond)
 	})
 
 	t.Run("two clients on same hub receive own and other messages (with custom Asserter)", func(t *testing.T) {
@@ -74,10 +74,10 @@ func TestRunClient(t *testing.T) {
 		conn1.Send("one")
 		conn2.Send("two")
 		// use a custom Asserter that splits messages around newlines (check client.go line 108)
-		rec1.AddAsserter(hasReceivedAutoSplit("one"))
-		rec2.AddAsserter(hasReceivedAutoSplit("one"))
+		rec1.AddAssert(hasReceivedAutoSplit("one"))
+		rec2.AddAssert(hasReceivedAutoSplit("one"))
 
 		// run all previously declared assertions with a timeout
-		wsmock.RunChecks(t, 100*time.Millisecond)
+		wsmock.RunAssertions(t, 100*time.Millisecond)
 	})
 }

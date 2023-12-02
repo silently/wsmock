@@ -12,7 +12,7 @@ type round struct {
 	wg       sync.WaitGroup // track if assertions are finished
 	done     bool
 	doneCh   chan struct{} // caused by timeout or outcome known before timeout (wg passed)
-	jobIndex map[*assertionJob]bool
+	jobIndex map[*patternJob]bool
 }
 
 // closed when corresponding conn is
@@ -46,7 +46,7 @@ func (r *Recorder) newRound() {
 	r.currentRound = &round{
 		wg:       sync.WaitGroup{},
 		doneCh:   make(chan struct{}),
-		jobIndex: make(map[*assertionJob]bool),
+		jobIndex: make(map[*patternJob]bool),
 	}
 }
 
@@ -70,8 +70,8 @@ func (r *Recorder) stop() error {
 	return nil
 }
 
-func (r *Recorder) addToRound(c *Checklist) {
-	j := newAssertionJob(r, c)
+func (r *Recorder) addToRound(p *Pattern) {
+	j := newAssertionJob(r, p)
 	r.currentRound.jobIndex[j] = true
 	r.currentRound.wg.Add(1)
 }
@@ -86,11 +86,11 @@ func (r *Recorder) addError(err string) {
 
 func (r *Recorder) startRound(timeout time.Duration) {
 	go r.forwardWritesDuringRound()
-	for job := range r.currentRound.jobIndex {
-		go func(job *assertionJob) {
+	for j := range r.currentRound.jobIndex {
+		go func(j *patternJob) {
 			defer r.currentRound.wg.Done()
-			job.loopWithTimeout(timeout)
-		}(job)
+			j.loopWithTimeout(timeout)
+		}(j)
 	}
 }
 

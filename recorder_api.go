@@ -1,63 +1,63 @@
 package wsmock
 
 import (
+	"regexp"
 	"sync"
 	"testing"
 	"time"
 )
 
-func (r *Recorder) NewChecklist() *Checklist {
-	c := &Checklist{r: r}
+func (r *Recorder) NewPattern() *Pattern {
+	c := &Pattern{r: r}
 	r.addToRound(c)
 	return c
 }
 
-// Adds custom Asserter
-func (r *Recorder) AddAsserter(a Asserter) {
-	r.NewChecklist().AddAsserter(a)
-}
-
 // Adds custom AsserterFunc
-func (r *Recorder) Check(f AsserterFunc) {
-	r.NewChecklist().Check(f)
+func (r *Recorder) AddAssert(f AsserterFunc) {
+	r.NewPattern().AddAssert(f)
 }
 
 // Test helpers
 
 // Adds asserter that may succeed on receiving message, and fails if it dit not happen on end
-func (r *Recorder) OneToCheck(f FailOnEnd) *Checklist {
-	return r.NewChecklist().OneToCheck(f)
+func (r *Recorder) OneToCheck(f FailOnEnd) *Pattern {
+	return r.NewPattern().OneToCheck(f)
 }
 
 // Asserts if a message has been received by recorder
-func (r *Recorder) OneToBe(target any) *Checklist {
-	return r.NewChecklist().OneToBe(target)
+func (r *Recorder) OneToBe(target any) *Pattern {
+	return r.NewPattern().OneToBe(target)
 }
 
 // Asserts if a message received by recorder contains a given string.
 // Messages that can't be converted to strings are JSON-marshalled
-func (r *Recorder) OneToContain(sub string) *Checklist {
-	return r.NewChecklist().OneToContain(sub)
+func (r *Recorder) OneToContain(sub string) *Pattern {
+	return r.NewPattern().OneToContain(sub)
+}
+
+func (r *Recorder) OneToMatch(re regexp.Regexp) *Pattern {
+	return r.NewPattern().OneToMatch(re)
 }
 
 // Asserts first message (times out only if no message is received)
-func (r *Recorder) FirstToBe(target any) *Checklist {
-	return r.NewChecklist().FirstToBe(target)
+func (r *Recorder) FirstToBe(target any) *Pattern {
+	return r.NewPattern().FirstToBe(target)
 }
 
 // Asserts last message (always times out)
-func (r *Recorder) LastToBe(target any) *Checklist {
-	return r.NewChecklist().LastToBe(target)
+func (r *Recorder) LastToBe(target any) *Pattern {
+	return r.NewPattern().LastToBe(target)
 }
 
 // Asserts if a message has not been received by recorder (can fail before time out)
-func (r *Recorder) OneNotToBe(target any) *Checklist {
-	return r.NewChecklist().OneNotToBe(target)
+func (r *Recorder) OneNotToBe(target any) *Pattern {
+	return r.NewPattern().OneNotToBe(target)
 }
 
 // Asserts if conn has been closed
-func (r *Recorder) ConnClosed() *Checklist {
-	return r.NewChecklist().ConnClosed()
+func (r *Recorder) ConnClosed() *Pattern {
+	return r.NewPattern().ConnClosed()
 }
 
 // Runs all Assert* methods that have been previously added on this recorder, with a timeout.
@@ -69,7 +69,7 @@ func (r *Recorder) ConnClosed() *Checklist {
 //
 // At the end of Run, the recorder previously received messages are flushed and assertions
 // are removed. It's then possible to add new Assert* methods and Run again.
-func (r *Recorder) RunChecks(timeout time.Duration) {
+func (r *Recorder) RunAssertions(timeout time.Duration) {
 	r.t.Helper()
 
 	r.startRound(timeout)
@@ -79,7 +79,7 @@ func (r *Recorder) RunChecks(timeout time.Duration) {
 
 // Launches and waits (till timeout) for the outcome of all assertions added to all recorders
 // of this test.
-func RunChecks(t *testing.T, timeout time.Duration) {
+func RunAssertions(t *testing.T, timeout time.Duration) {
 	t.Helper()
 
 	recs := getIndexedRecorders(t)
@@ -91,7 +91,7 @@ func RunChecks(t *testing.T, timeout time.Duration) {
 			t.Helper()
 
 			defer wg.Done()
-			r.RunChecks(timeout)
+			r.RunAssertions(timeout)
 		}(r)
 	}
 	wg.Wait()
