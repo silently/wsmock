@@ -14,7 +14,7 @@ func removeSpaces(s string) (out string) {
 	return
 }
 
-func TestToReceive(t *testing.T) {
+func TestOneToBe(t *testing.T) {
 	t.Run("succeeds when message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -25,18 +25,18 @@ func TestToReceive(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceive(Message{"joined", "room:1"})
+		rec.OneToBe(Message{"joined", "room:1"})
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunChecks(300 * time.Millisecond) // it's a max
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceive should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Errorf("ToReceive should succeed faster")
+				t.Errorf("OneToBe should succeed faster")
 			}
 		}
 	})
@@ -51,11 +51,11 @@ func TestToReceive(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceive(Message{"joined", "room:1"})
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.OneToBe(Message{"joined", "room:1"})
+		rec.RunChecks(75 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceive should fail because of timeout")
+			t.Error("OneToBe should fail because of timeout")
 		}
 	})
 
@@ -73,18 +73,18 @@ func TestToReceive(t *testing.T) {
 		}()
 
 		// assert
-		rec.ToReceive(Message{"joined", "room:1"})
+		rec.OneToBe(Message{"joined", "room:1"})
 		before := time.Now()
-		rec.RunAssertions(200 * time.Millisecond)
+		rec.RunChecks(200 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceive should fail because of Close")
+			t.Error("OneToBe should fail because of Close")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 100*time.Millisecond {
-				t.Error("ToReceive should fail faster because of Close")
+				t.Error("OneToBe should fail faster because of Close")
 			}
 		}
 	})
@@ -100,18 +100,18 @@ func TestToReceive(t *testing.T) {
 
 		// assert
 		target := Message{"not", "received"}
-		rec.ToReceive(target)
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.OneToBe(target)
+		rec.RunChecks(75 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceive should fail because of unexpected message")
+			t.Error("OneToBe should fail because of unexpected message")
 		}
 		// assert error message
 		expectedErrorMessage := fmt.Sprintf("message not received\nexpected: %+v", target)
 		processedErrorMessage := removeSpaces(expectedErrorMessage)
 		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
 		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
-			t.Errorf("ToReceive wrong error message, expected:\n\"%v\"", expectedErrorMessage)
+			t.Errorf("OneToBe wrong error message, expected:\n\"%v\"", expectedErrorMessage)
 		}
 	})
 
@@ -125,13 +125,13 @@ func TestToReceive(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceive(Message{"chat", "sentence1"})
-		rec.ToReceive(Message{"chat", "sentence1"}) // twice
+		rec.OneToBe(Message{"chat", "sentence1"})
+		rec.OneToBe(Message{"chat", "sentence1"}) // twice
 
-		rec.RunAssertions(50 * time.Millisecond) // it's a max
+		rec.RunChecks(50 * time.Millisecond) // it's a max
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceive should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -145,23 +145,23 @@ func TestToReceive(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceive(Message{"chat", "sentence1"})
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.OneToBe(Message{"chat", "sentence1"})
+		rec.RunChecks(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceive should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 
-		rec.ToReceive(Message{"chat", "sentence1"})
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.OneToBe(Message{"chat", "sentence1"})
+		rec.RunChecks(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceive should fail for second Run", getTestOutput(mockT))
+			t.Error("OneToBe should fail for second Run", getTestOutput(mockT))
 		}
 	})
 }
 
-func TestToReceiveNotReceived(t *testing.T) {
+func TestOneToBeOneNotTobe(t *testing.T) {
 	t.Run("should fail fast", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -172,25 +172,25 @@ func TestToReceiveNotReceived(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceive(Message{"chat", "sentence4"})
-		rec.NotToReceive(Message{"chat", "sentence1"}) // failing assertion
+		rec.OneToBe(Message{"chat", "sentence4"})
+		rec.OneNotToBe(Message{"chat", "sentence1"}) // failing assertion
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunChecks(300 * time.Millisecond) // it's a max
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("NotToReceive should fail")
+			t.Error("OneNotToBe should fail")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 100*time.Millisecond {
-				t.Errorf("NotToReceive should fail faster")
+				t.Errorf("OneNotToBe should fail faster")
 			}
 		}
 	})
 }
 
-func TestToReceiveFirst(t *testing.T) {
+func TestFirstToBe(t *testing.T) {
 	t.Run("succeeds when first message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -201,18 +201,18 @@ func TestToReceiveFirst(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveFirst(Message{"chat", "sentence1"})
+		rec.FirstToBe(Message{"chat", "sentence1"})
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.RunChecks(300 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveFirst should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("FirstToBe should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 40*time.Millisecond {
-				t.Error("ToReceiveFirst should succeed faster")
+				t.Error("FirstToBe should succeed faster")
 			}
 		}
 	})
@@ -227,11 +227,11 @@ func TestToReceiveFirst(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveFirst(Message{"chat", "sentence1"})
-		rec.RunAssertions(5 * time.Millisecond)
+		rec.FirstToBe(Message{"chat", "sentence1"})
+		rec.RunChecks(5 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveFirst should fail because of timeout")
+			t.Error("FirstToBe should fail because of timeout")
 		}
 	})
 
@@ -245,21 +245,21 @@ func TestToReceiveFirst(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveFirst(Message{"chat", "sentence2"})
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.FirstToBe(Message{"chat", "sentence2"})
+		rec.RunChecks(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveFirst should fail")
+			t.Error("FirstToBe should fail")
 			// } else {
 			// 	output := getTestOutput(mockT)
 			// 	if !strings.Contains(output, "should be: {chat sentence2}, received: {chat sentence1}") {
-			// 		t.Errorf("ToReceiveFirst unexpected error message: \"%v\"", output)
+			// 		t.Errorf("FirstToBe unexpected error message: \"%v\"", output)
 			// 	}
 		}
 	})
 }
 
-func TestToReceiveLast(t *testing.T) {
+func TestLastToBe(t *testing.T) {
 	t.Run("succeeds when last message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -270,18 +270,18 @@ func TestToReceiveLast(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveLast(Message{"chat", "sentence4"})
+		rec.LastToBe(Message{"chat", "sentence4"})
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.RunChecks(300 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveLast should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("LastToBe should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed < 300*time.Millisecond {
-				t.Error("ToReceiveLast should not succeed before timeout")
+				t.Error("LastToBe should not succeed before timeout")
 			}
 		}
 	})
@@ -296,11 +296,11 @@ func TestToReceiveLast(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveLast(Message{"chat", "sentence4"})
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.LastToBe(Message{"chat", "sentence4"})
+		rec.RunChecks(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("AssertLastReceived should fail because of timeout")
+			t.Error("LastToBe should fail because of timeout")
 		}
 	})
 
@@ -314,15 +314,15 @@ func TestToReceiveLast(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceiveLast(Message{"chat", "sentence5"})
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.LastToBe(Message{"chat", "sentence5"})
+		rec.RunChecks(300 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveLast should fail")
+			t.Error("LastToBe should fail")
 			// } else {
 			// 	output := getTestOutput(mockT)
 			// 	if !strings.Contains(output, "should be: {chat sentence5}, received: {chat sentence4}") {
-			// 		t.Errorf("ToReceiveLast unexpected error message: \"%v\"", output)
+			// 		t.Errorf("LastToBe unexpected error message: \"%v\"", output)
 			// 	}
 		}
 	})
@@ -336,21 +336,21 @@ func TestToReceiveLast(t *testing.T) {
 		// script: nothing
 
 		// assert
-		rec.ToReceiveLast(Message{"chat", "sentence1"})
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.LastToBe(Message{"chat", "sentence1"})
+		rec.RunChecks(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveLast should fail")
+			t.Error("LastToBe should fail")
 			// } else {
 			// 	output := getTestOutput(mockT)
 			// 	if !strings.Contains(output, "should be: {chat sentence1}, received none") {
-			// 		t.Errorf("ToReceiveLast unexpected error message: \"%v\"", output)
+			// 		t.Errorf("LastToBe unexpected error message: \"%v\"", output)
 			// 	}
 		}
 	})
 }
 
-func TestNotToReceive(t *testing.T) {
+func TestOneNotToBe(t *testing.T) {
 	t.Run("succeeds when message is not received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -361,11 +361,11 @@ func TestNotToReceive(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.NotToReceive(Message{"not", "planned"})
-		rec.RunAssertions(110 * time.Millisecond)
+		rec.OneNotToBe(Message{"not", "planned"})
+		rec.RunChecks(110 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("NotToReceive should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneNotToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -379,16 +379,16 @@ func TestNotToReceive(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.NotToReceive(Message{"joined", "room:1"})
-		rec.RunAssertions(110 * time.Millisecond)
+		rec.OneNotToBe(Message{"joined", "room:1"})
+		rec.RunChecks(110 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("NotToReceive should fail (message is received)")
+			t.Error("OneNotToBe should fail (message is received)")
 		}
 	})
 }
 
-func TestToReceiveContaining(t *testing.T) {
+func TestOneToContain(t *testing.T) {
 	t.Run("succeeds when containing message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -399,18 +399,18 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceiveContaining("room:")
+		rec.OneToContain("room:")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunChecks(300 * time.Millisecond) // it's a max
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveContaining should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Errorf("ToReceiveContaining should succeed faster")
+				t.Errorf("OneToContain should succeed faster")
 			}
 		}
 	})
@@ -425,12 +425,12 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceiveContaining("kind") // json field is lowercased
-		rec.ToReceiveContaining("joined")
-		rec.RunAssertions(200 * time.Millisecond) // it's a max
+		rec.OneToContain("kind") // json field is lowercased
+		rec.OneToContain("joined")
+		rec.RunChecks(200 * time.Millisecond) // it's a max
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveContaining should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -444,14 +444,14 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send(Message{"pointer", ""})
 
 		// assert
-		rec.ToReceiveContaining("kind") // json field is lowercased
-		rec.ToReceiveContaining("pointer")
-		rec.ToReceiveContaining("payload")
-		rec.ToReceiveContaining("sent")
-		rec.RunAssertions(200 * time.Millisecond) // it's a max
+		rec.OneToContain("kind") // json field is lowercased
+		rec.OneToContain("pointer")
+		rec.OneToContain("payload")
+		rec.OneToContain("sent")
+		rec.RunChecks(200 * time.Millisecond) // it's a max
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveContaining should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -465,19 +465,19 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send("logs")
 
 		// assert
-		rec.ToReceiveContaining("log")
-		rec.ToReceiveContaining("log1")
+		rec.OneToContain("log")
+		rec.OneToContain("log1")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunChecks(300 * time.Millisecond) // it's a max
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveContaining should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Errorf("ToReceiveContaining should succeed faster")
+				t.Errorf("OneToContain should succeed faster")
 			}
 		}
 	})
@@ -492,19 +492,19 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send("logs")
 
 		// assert
-		rec.ToReceiveContaining("log")
-		rec.ToReceiveContaining("log1")
+		rec.OneToContain("log")
+		rec.OneToContain("log1")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunChecks(300 * time.Millisecond) // it's a max
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToReceiveContaining should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 150*time.Millisecond {
-				t.Errorf("ToReceiveContaining should succeed faster")
+				t.Errorf("OneToContain should succeed faster")
 			}
 		}
 	})
@@ -519,11 +519,11 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceiveContaining("room:")
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.OneToContain("room:")
+		rec.RunChecks(75 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveContaining should fail because of timeout")
+			t.Error("OneToContain should fail because of timeout")
 		}
 	})
 
@@ -537,11 +537,11 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// assert
-		rec.ToReceiveContaining("notfound")
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.OneToContain("notfound")
+		rec.RunChecks(300 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveContaining should fail because substr is not found")
+			t.Error("OneToContain should fail because substr is not found")
 		}
 	})
 
@@ -555,16 +555,16 @@ func TestToReceiveContaining(t *testing.T) {
 		conn.Send("logs")
 
 		// assert
-		rec.ToReceiveContaining("notfound")
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.OneToContain("notfound")
+		rec.RunChecks(300 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToReceiveContaining should fail because substr is not found")
+			t.Error("OneToContain should fail because substr is not found")
 		}
 	})
 }
 
-func TestToBeClosed(t *testing.T) {
+func TestConnClosed(t *testing.T) {
 	t.Run("fails when conn is not closed", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -572,13 +572,13 @@ func TestToBeClosed(t *testing.T) {
 		serveWsHistory(conn)
 
 		// script
-		rec.ToBeClosed()
+		rec.ConnClosed()
 
 		// assert
-		rec.RunAssertions(10 * time.Millisecond)
+		rec.RunChecks(10 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("ToBeClosed should fail")
+			t.Error("ConnClosed should fail")
 		}
 	})
 
@@ -592,11 +592,11 @@ func TestToBeClosed(t *testing.T) {
 		conn.Send(Message{"quit", ""})
 
 		// assert
-		rec.ToBeClosed()
-		rec.RunAssertions(200 * time.Millisecond)
+		rec.ConnClosed()
+		rec.RunChecks(200 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToBeClosed should succeed because of serveWsHistory logic, mockT output is:", getTestOutput(mockT))
+			t.Error("ConnClosed should succeed because of serveWsHistory logic, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -611,16 +611,16 @@ func TestToBeClosed(t *testing.T) {
 		conn.Close()
 
 		// assert
-		rec.ToBeClosed()
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.ConnClosed()
+		rec.RunChecks(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("ToBeClosed should succeed because of explicit conn Close, mockT output is:", getTestOutput(mockT))
+			t.Error("ConnClosed should succeed because of explicit conn Close, mockT output is:", getTestOutput(mockT))
 		}
 	})
 }
 
-func TestMultiAssertion(t *testing.T) {
+func TestMultiRunChecksion(t *testing.T) {
 	t.Run("should succeed without blocking", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -629,21 +629,21 @@ func TestMultiAssertion(t *testing.T) {
 
 		// script
 		conn.Send(Message{"history", ""})
-		rec.ToReceive(Message{"chat", "sentence1"})
-		rec.ToReceive(Message{"chat", "sentence2"})
-		rec.ToReceive(Message{"chat", "sentence3"})
-		rec.ToReceive(Message{"chat", "sentence4"})
+		rec.OneToBe(Message{"chat", "sentence1"})
+		rec.OneToBe(Message{"chat", "sentence2"})
+		rec.OneToBe(Message{"chat", "sentence3"})
+		rec.OneToBe(Message{"chat", "sentence4"})
 
 		// no assertion!
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.RunChecks(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("several ToReceive should not fail")
+			t.Error("several OneToBe should not fail")
 		}
 	})
 }
 
-func TestNoAssertion(t *testing.T) {
+func TestNoRunChecksion(t *testing.T) {
 	t.Run("no assertion should succeed", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -654,7 +654,7 @@ func TestNoAssertion(t *testing.T) {
 		conn.Send(Message{"join", "room:1"})
 
 		// no assertion!
-		rec.RunAssertions(10 * time.Millisecond)
+		rec.RunChecks(10 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("NoAssertion can't fail")
@@ -673,16 +673,13 @@ func TestFailing(t *testing.T) {
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.ToReceive(Message{"chat", "notfound"})
-		rec.ToReceiveFirst(Message{"chat", "notfound"})
-		rec.ToReceiveLast(Message{"chat", "notfound"})
-		rec.NotToReceive(Message{"chat", "sentence1"})
-		rec.ToReceiveContaining("notfound")
-		rec.ToBeClosed()
-		rec.ToReceiveSparseSequence([]any{Message{"chat", "notfound1"}, Message{"chat", "notfound2"}})
-		rec.ToReceiveSequence([]any{Message{"chat", "notfound1"}, Message{"chat", "notfound2"}})
-		rec.ToReceiveOnlySequence([]any{Message{"chat", "notfound1"}, Message{"chat", "notfound2"}})
+		rec.OneToBe(Message{"chat", "notfound"})
+		rec.FirstToBe(Message{"chat", "notfound"})
+		rec.LastToBe(Message{"chat", "notfound"})
+		rec.OneNotToBe(Message{"chat", "sentence1"})
+		rec.OneToContain("notfound")
+		rec.ConnClosed()
 
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.RunChecks(100 * time.Millisecond)
 	})
 }

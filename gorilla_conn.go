@@ -45,9 +45,10 @@ type IGorilla interface {
 
 // Mock for Gorilla websocket.Conn
 type GorillaConn struct {
-	recorder *Recorder
-	closed   bool
-	closedCh chan struct{}
+	serverReadCh chan any
+	recorder     *Recorder
+	closed       bool
+	closedCh     chan struct{}
 }
 
 type gorillaWriteCloser struct {
@@ -89,8 +90,9 @@ func (r *gorillaReader) Read(p []byte) (n int, err error) {
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 	recorder := newRecorder(t)
 	conn := &GorillaConn{
-		recorder: recorder,
-		closedCh: make(chan struct{}),
+		serverReadCh: make(chan any, 256),
+		recorder:     recorder,
+		closedCh:     make(chan struct{}),
 	}
 
 	return conn, recorder
@@ -101,7 +103,7 @@ func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 // Send does not make any asumption on its message argument type (and does not serializes it),
 // this will be decided upon what Read* function is used to retrieve it
 func (conn *GorillaConn) Send(message any) {
-	conn.recorder.serverReadCh <- message
+	conn.serverReadCh <- message
 }
 
 // Stub API (used by server)
@@ -125,7 +127,7 @@ func (conn *GorillaConn) ReadJSON(v any) error {
 	}
 	for {
 		select {
-		case read := <-conn.recorder.serverReadCh:
+		case read := <-conn.serverReadCh:
 			b, err := json.Marshal(read)
 			if err != nil {
 				return err
@@ -145,7 +147,7 @@ func (conn *GorillaConn) ReadJSON(v any) error {
 func (conn *GorillaConn) ReadMessage() (messageType int, p []byte, err error) {
 	for {
 		select {
-		case read := <-conn.recorder.serverReadCh:
+		case read := <-conn.serverReadCh:
 			switch v := read.(type) {
 			case []byte:
 				return websocket.BinaryMessage, v, nil

@@ -1,7 +1,7 @@
 package wsmock
 
 // Generic interface to be added on recorders
-// The Try method is called on *end* (timeout or connection closed) 
+// The Try method is called on *end* (timeout or connection closed)
 // and each time a message is received (*latest* argument), with *all* being "all messages including the *latest*"
 //
 // Case 1: when a message is sent (on the underlying Conn, and thus on the associated Recorder),
@@ -32,34 +32,54 @@ func (f AsserterFunc) Try(end bool, latest any, all []any) (done, passed bool, e
 	return f(end, latest, all)
 }
 
-// An AsserterOnReceive function is called each time a message is received.
-//
-// If it returns true, the assertion succeeds,
-// If it returns false, the assertion is considered not done/solved and waits for a new message or until end,
-// If the end is reached, the assertion fails.
-type AsserterOnReceive func(received any) (passed bool)
+// A Predicate function maps its input to true or false.
+type Predicate func(msg any) (passed bool)
 
-func (f AsserterOnReceive) Try(end bool, received any, allReceived []any) (done, passed bool, errorMessage string) {
+// The FailOnEnd struct implements Asserter. Its Predicate function is called each time a message is received.
+//
+// If the Predicate returns true, assertint succeeds,
+// If the Predicate returns false, asserting is considered not done/solved and waits for a new message or until end,
+// If the end is reached, the asserting fails and the errorMessage is displayed.
+type FailOnEnd struct {
+	p            Predicate
+	errorMessage string
+}
+
+func NewFailOnEnd(p Predicate, errorMessage string) *FailOnEnd {
+	return &FailOnEnd{p, errorMessage}
+}
+
+func (a FailOnEnd) Try(end bool, latest any, all []any) (done, passed bool, errorMessage string) {
 	// fails on end
 	if end {
-		return true, false, ""
+		return true, false, a.errorMessage
 	}
-	if f(received) { // succeeds
+	if a.p(latest) { // succeeds
 		return true, true, ""
 	}
 	// unfinished
 	return false, false, ""
 }
 
-// An AsserterOnEnd function is only called when RunAssertions ends (timeout or connection close).
-//
-// It gets in order all the messages received during the run, and returns the assertion outcome. 
-type AsserterOnEnd func(all []any) (passed bool)
+// A AllPredicate function maps its input to true or false.
+type AllPredicate func(all []any) (passed bool)
 
-func (f AsserterOnEnd) Try(end bool, _ any, all []any) (done, passed bool, errorMessage string) {
+// An AssertOnEnd function is only called when Assert ends (timeout or connection close).
+//
+// It gets in order all the messages received during the run, and returns the assertion outcome.
+type AssertOnEnd struct {
+	p            AllPredicate
+	errorMessage string
+}
+
+func NewAssertOnEnd(p AllPredicate, errorMessage string) *AssertOnEnd {
+	return &AssertOnEnd{p, errorMessage}
+}
+
+func (a AssertOnEnd) Try(end bool, _ any, all []any) (done, passed bool, errorMessage string) {
 	// bypassed until end
 	if !end {
 		return false, false, ""
 	}
-	return true, f(all), ""
+	return true, a.p(all), ""
 }

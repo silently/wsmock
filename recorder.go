@@ -31,7 +31,6 @@ type Recorder struct {
 	index        int // used in logs
 	currentRound *round
 	// ws communication
-	serverReadCh  chan any
 	serverWriteCh chan any
 	done          bool
 	doneCh        chan struct{}
@@ -54,7 +53,6 @@ func (r *Recorder) newRound() {
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:             t,
-		serverReadCh:  make(chan any, 256),
 		serverWriteCh: make(chan any, 256),
 		doneCh:        make(chan struct{}),
 	}
@@ -72,8 +70,9 @@ func (r *Recorder) stop() error {
 	return nil
 }
 
-func (r *Recorder) addToRound(a *assertionJob) {
-	r.currentRound.jobIndex[a] = true
+func (r *Recorder) addToRound(c *Checklist) {
+	j := newAssertionJob(r, c)
+	r.currentRound.jobIndex[j] = true
 	r.currentRound.wg.Add(1)
 }
 

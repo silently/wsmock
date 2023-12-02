@@ -13,15 +13,15 @@ runWs(conn1)
 runWs(conn2)
 
 // script
-conn1.Send("rock")
-conn2.Send("paper")
+conn1.Send("paper")
+conn2.Send("rock")
 
 // add assertions
-rec1.NotToReceive("won")
-rec2.ToReceive("won")
+rec1.OneToBe("won")
+rec2.OneNotToBe("won")
 
 // run assertions on a *testing.T, with a timeout
-wsmock.RunAssertions(t, 100*time.Millisecond)       
+wsmock.RunChecks(t, 100*time.Millisecond)       
 ```
 
 ...where `runWs` is a WebSocket handler based on [Gorilla WebSocket](https://github.com/gorilla/websocket), typically called like:
@@ -132,11 +132,11 @@ func TestWs(t *testing.T) {
     conn2.Send(Message{"join", "Johnny"})
     conn2.Send(Message{"send", "Hello"})
 
-    rec1.ToReceive(Message{"incoming", "Hello"})
+    rec1.OneToBe(Message{"incoming", "Hello"})
     // the next assertion is "not received" (supposing chat history is not implemented)
-    rec2.NotToReceive(Message{"incoming", "Bonjour"})
+    rec2.OneNotToBe(Message{"incoming", "Bonjour"})
     // run all assertions in this test, with a timeout
-    wsmock.RunAssertions(t, 100 * time.Millisecond)
+    wsmock.RunChecks(t, 100 * time.Millisecond)
     // or run per recorder: rec1.Run(100 * time.Millisecond)
   })
 }
@@ -145,7 +145,7 @@ func TestWs(t *testing.T) {
 Assertions are run either:
 
 - per recorder, for instance `rec1.Run(100 * time.Millisecond)` followed by `rec2.Run(100 * time.Millisecond)`
-- per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
+- per test: `wsmock.RunChecks(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 `wsmock.NewGorillaConnAndRecorder` returns two structs:
 
@@ -160,22 +160,19 @@ The only methods you're supposed to use on `wsmock.GorillaConn` in the tests are
 Assertions provided by `wsmock.Recorder` are (check the [API documentation here](https://pkg.go.dev/github.com/silently/wsmock#Recorder)) :
 
 ```golang
-func (r *Recorder) ToReceive(target any)
-func (r *Recorder) ToReceiveFirst(target any)
-func (r *Recorder) ToReceiveLast(target any)
-func (r *Recorder) ToReceiveContaining(substr string)
-func (r *Recorder) NotToReceive(target any)
-func (r *Recorder) ToBeClosed()
-func (r *Recorder) ToReceiveSparseSequence(targets []any)   // 2,4 is a sparse sequence within 1,2,3,4
-func (r *Recorder) ToReceiveSequence(targets []any) // 3,4 is an adjacent sequence within 1,2,3,4
-func (r *Recorder) ToReceiveOnlySequence(targets []any)    // only 1,2,3,4 is an exact match of 1,2,3,4
+func (r *Recorder) OneToBe(target any) ...
+func (r *Recorder) FirstToBe(target any)
+func (r *Recorder) LastToBe(target any)
+func (r *Recorder) OneToContain(substr string)
+func (r *Recorder) OneNotToBe(target any)
+func (r *Recorder) ConnClosed()
 ```
 
 *(assertions rely on the equality operator `==`, see [spec](https://go.dev/ref/spec#Comparison_operators))*
 
 ## Custom Assertions
 
-You can define custom assertions with `func (r *Recorder) Assert(f AsserterFunc)` where `AsserterFunc` type is:
+You can define custom assertions with `func (r *Recorder) RunChecks(f AsserterFunc)` where `AsserterFunc` type is:
 
 ```golang
 type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, errorMessage string)
@@ -188,7 +185,7 @@ With the following behaviour:
 For instance here is `AssertReceived` implementation, please note it can return sooner (if test passes) or later (if timeout is reached):
 
 ```golang TODO
-func (r *Recorder) ToReceive(target any) {
+func (r *Recorder) OneToBe(target any) {
   r.AddAsserter(func(end bool, latest any, _ []any) (done, passed bool, errorMessage string) {
     if end { // timeout has been reached
       done = true
@@ -206,7 +203,7 @@ func (r *Recorder) ToReceive(target any) {
 ## Implementation specifics
 
 A typical flow of messages in a test goes like (considering a `runWs` server handler):
-- `conn.Send("input")` -> recorder serverReadCh channel -> read by `runWs` (typically with `ReadJSON` or `ReadMessage`)
+- `conn.Send("input")` -> conn's serverReadCh channel -> read by `runWs` (typically with `ReadJSON` or `ReadMessage`)
 - then `runWs` processes the input message
 - then `runWs` possibly writes a message (typically with `WriteJSON` or `WriteMessage`) -> recorder serverWriteCh channel -> forwarded by the recorder to each assertion defined on it
 
@@ -214,7 +211,7 @@ Here are some gotchas:
 - `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent
 - all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
 - the `Recorder` stores all the messages written by the server handler: indeed some assertions need to know the complete history of messages to decide their outcome
-- **but** the message history is cleared after each run (`wsmock.RunAssertions(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
+- **but** the message history is cleared after each run (`wsmock.RunChecks(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
 ## wsmock output
 

@@ -10,7 +10,7 @@ func TestNewRecorderCleanup(t *testing.T) {
 	t.Run("name", func(t *testing.T) {
 		subT = t
 		_, rec := NewGorillaMockAndRecorder(subT)
-		rec.RunAssertions(1 * time.Millisecond)
+		rec.RunChecks(1 * time.Millisecond)
 	})
 
 	time.Sleep(1 * time.Second)

@@ -7,21 +7,23 @@ import (
 type assertionJob struct {
 	r *Recorder
 	// configuration
-	list []Asserter
+	c *Checklist
 	// events
 	latestWriteCh chan any
 	// state
-	done bool
+	done         bool // means finished, as a success OR failure
+	currentIndex int
 	// optional
 	errorMessage string
 }
 
-func newAssertionJob(r *Recorder, a Asserter, errorMessage ...string) *assertionJob {
+func newAssertionJob(r *Recorder, c *Checklist, errorMessage ...string) *assertionJob {
 	job := &assertionJob{
 		r:             r,
-		list:          []Asserter{a},
-		latestWriteCh: make(chan any),
+		c:             c,
+		latestWriteCh: make(chan any, 256),
 		done:          false,
+		currentIndex:  0,
 	}
 	if len(errorMessage) == 1 {
 		job.errorMessage = errorMessage[0]
@@ -29,19 +31,32 @@ func newAssertionJob(r *Recorder, a Asserter, errorMessage ...string) *assertion
 	return job
 }
 
+func (j *assertionJob) incPassed() {
+	j.currentIndex++
+}
+
+func (j *assertionJob) allPassed() bool {
+	return len(j.c.list) == j.currentIndex
+}
+
+func (j *assertionJob) currentAsserter() Asserter {
+	return j.c.list[j.currentIndex]
+}
+
 func (job *assertionJob) assertOnEnd() {
 	latest, _ := last(job.r.serverWrites)
 	// on end, done is considered true anyway
-	_, passed, errorMessage := job.list[0].Try(true, latest, job.r.serverWrites)
+	_, passed, errorMessage := job.currentAsserter().Try(true, latest, job.r.serverWrites)
+	job.done = true
 
-	if !passed {
+	if passed {
+		job.incPassed()
+	} else {
 		if len(errorMessage) == 0 {
 			errorMessage = job.errorMessage
 		}
 		job.r.addError(errorMessage)
 	}
-
-	job.done = true
 }
 
 func (job *assertionJob) loopWithTimeout(timeout time.Duration) {
@@ -56,13 +71,18 @@ func (job *assertionJob) loopWithTimeout(timeout time.Duration) {
 	for {
 		select {
 		case latest := <-job.latestWriteCh:
-			done, passed, errorMessage := job.list[0].Try(false, latest, job.r.serverWrites)
+			done, passed, errorMessage := job.currentAsserter().Try(false, latest, job.r.serverWrites)
 			if done {
-				if !passed {
-					job.r.addError(errorMessage)
-				}
 				job.done = true
-				return
+				if passed { // current passed
+					job.incPassed()
+					if job.allPassed() { // all passed
+						return
+					}
+				} else {
+					job.r.addError(errorMessage)
+					return
+				}
 			}
 		case <-job.r.currentRound.doneCh: // round is done because of another failing assertion
 			job.assertOnEnd()
