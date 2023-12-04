@@ -196,12 +196,12 @@ You can chain conditions to build an ordered assertion:
 ```golang
 rec.Assert().                 // this
   FirstToBe("hi").            // is
-  NextToBe("I'm fine")        // an
+  NextToBe("I'm fine").       // an
   OneToBe("It'd be great")    // assertion
 rec.RunAssertions(100 * time.Millisecond)
 ```
 
-...translates to: assert that the first message received by rec is "hi", the second one is "I'm fine" and a subsequent message is "It'd be great", all in less than 100 milliseconds.
+This translates to: *assert that the first message received by rec is "hi", the second one is "I'm fine" and a subsequent message is "It'd be great", all in less than 100 milliseconds.*
 
 ## Assertion API
 
@@ -217,7 +217,7 @@ Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#Asse
 - `rec.Assert().FirstToCheck(f)`: the first message should validate the predicate function `f`
 - `rec.Assert().LastNotToMach(re)`: the last message should not match the given regular expression
 
-If the `["a", "b", "c", "d", "e"]` message sequence is received, some successful assertions are:
+If the `["a", "b", "c", "d", "e"]` message sequence is received, some successful examples are:
 
 ```golang
 rec.Assert().
@@ -242,7 +242,7 @@ rec.Assert().
   NextToBe("c") // next should immediatly follow previous one
 ```
 
-If the method chaining style does not suit you, you may prefer:
+If method chaining does not suit you, you may prefer writing:
 
 ```golang
 a1 := rec.Assert()
