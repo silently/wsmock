@@ -35,21 +35,24 @@ func (f AsserterFunc) Try(end bool, latest any, all []any) (done, passed bool, e
 // A Predicate function maps its input to true or false.
 type Predicate func(msg any) (passed bool)
 
-// The FailOnEnd struct implements Asserter. Its Predicate function is called each time a message is received.
+// A AllPredicate function maps its input to true or false.
+type AllPredicate func(all []any) (passed bool)
+
+// The oneTo struct implements Asserter. Its Predicate function is called each time a message is received.
 //
-// If the Predicate returns true, assertint succeeds,
+// If the Predicate returns true, asserting succeeds,
 // If the Predicate returns false, asserting is considered not done/solved and waits for a new message or until end,
 // If the end is reached, the asserting fails and the err is displayed.
-type FailOnEnd struct {
+type oneTo struct {
 	f   Predicate
 	err string
 }
 
-func NewFailOnEnd(p Predicate, err string) *FailOnEnd {
-	return &FailOnEnd{p, err}
+func newOneTo(f Predicate, err string) *oneTo {
+	return &oneTo{f, err}
 }
 
-func (a FailOnEnd) Try(end bool, latest any, all []any) (done, passed bool, err string) {
+func (a oneTo) Try(end bool, latest any, all []any) (done, passed bool, err string) {
 	// fails on end
 	if end {
 		return true, false, a.err
@@ -61,25 +64,68 @@ func (a FailOnEnd) Try(end bool, latest any, all []any) (done, passed bool, err 
 	return false, false, ""
 }
 
-// A AllPredicate function maps its input to true or false.
-type AllPredicate func(all []any) (passed bool)
+// The nextTo struct implements Asserter. Its Predicate function is called once, when the next message
+// is received or on timeout.
+//
+// The predicate return value gives the test outcome.
+type nextTo struct {
+	f   Predicate
+	err string
+}
+
+func newNextTo(f Predicate, err string) *nextTo {
+	return &nextTo{f, err}
+}
+
+func (a nextTo) Try(end bool, latest any, all []any) (done, passed bool, err string) {
+	// fails on end
+	if end {
+		return true, false, a.err
+	}
+	return true, a.f(latest), a.err
+}
+
+// The lastTo struct implements Asserter. Its Predicate function is called once, on timeout.
+//
+// The predicate return value gives the test outcome.
+type lastTo struct {
+	f   Predicate
+	err string
+}
+
+func newLastTo(f Predicate, err string) *lastTo {
+	return &lastTo{f, err}
+}
+
+func (a lastTo) Try(end bool, _ any, all []any) (done, passed bool, err string) {
+	// fails on end
+	if end {
+		if length := len(all); length > 0 {
+			last := all[length-1]
+			return true, a.f(last), a.err // there's a last to be tested
+		}
+		return true, false, a.err // no "last" -> fails
+	}
+	// unfinished
+	return false, false, ""
+}
 
 // An AssertOnEnd function is only called when Assert ends (timeout or connection close).
 //
 // It gets in order all the messages received during the run, and returns the assertion outcome.
-type AssertOnEnd struct {
+type allTo struct {
 	f   AllPredicate
 	err string
 }
 
-func NewAssertOnEnd(p AllPredicate, err string) *AssertOnEnd {
-	return &AssertOnEnd{p, err}
+func newAllTo(p AllPredicate, err string) *allTo {
+	return &allTo{p, err}
 }
 
-func (a AssertOnEnd) Try(end bool, _ any, all []any) (done, passed bool, err string) {
+func (a allTo) Try(end bool, _ any, all []any) (done, passed bool, err string) {
 	// bypassed until end
 	if !end {
 		return false, false, ""
 	}
-	return true, a.f(all), ""
+	return true, a.f(all), a.err
 }

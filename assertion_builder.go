@@ -12,13 +12,6 @@ type AssertionBuilder struct {
 	list []Asserter
 }
 
-// private
-
-func (ab *AssertionBuilder) withAllOnEnd(a AssertOnEnd) *AssertionBuilder {
-	ab.list = append(ab.list, a)
-	return ab
-}
-
 // Generic API
 
 // Adds custom AsserterFunc
@@ -31,7 +24,7 @@ func (ab *AssertionBuilder) With(a AsserterFunc) *AssertionBuilder {
 
 // Asserts if a message has been received by recorder
 func (ab *AssertionBuilder) OneToBe(target any) *AssertionBuilder {
-	ab.list = append(ab.list, NewFailOnEnd(func(msg any) bool {
+	ab.list = append(ab.list, newOneTo(func(msg any) bool {
 		return msg == target
 	}, fmt.Sprintf("message not received\nexpected: %+v", target)))
 	return ab
@@ -39,14 +32,14 @@ func (ab *AssertionBuilder) OneToBe(target any) *AssertionBuilder {
 
 // Adds asserter that may succeed on receiving message, and fails if it dit not happen on end
 func (ab *AssertionBuilder) OneToCheck(f Predicate) *AssertionBuilder {
-	ab.list = append(ab.list, NewFailOnEnd(f, fmt.Sprintf("no message checked predicate\npredicate body: %+v", f)))
+	ab.list = append(ab.list, newOneTo(f, fmt.Sprintf("no message checked predicate\npredicate body: %+v", f)))
 	return ab
 }
 
 // Asserts if a message received by recorder contains a given string.
 // Messages that can't be converted to strings are JSON-marshalled
 func (ab *AssertionBuilder) OneToContain(sub string) *AssertionBuilder {
-	ab.list = append(ab.list, NewFailOnEnd(
+	ab.list = append(ab.list, newOneTo(
 		func(msg any) bool {
 			if str, ok := msg.(string); ok {
 				return strings.Contains(str, sub)
@@ -62,7 +55,7 @@ func (ab *AssertionBuilder) OneToContain(sub string) *AssertionBuilder {
 }
 
 func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
-	ab.list = append(ab.list, NewFailOnEnd(
+	ab.list = append(ab.list, newOneTo(
 		func(msg any) bool {
 			if str, ok := msg.(string); ok {
 				return re.Match([]byte(str))
@@ -81,30 +74,20 @@ func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
 
 // Asserts first message (times out only if no message is received)
 func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
-	return ab.With(func(_ bool, _ any, all []any) (done, passed bool, err string) {
-		done = true
-		hasReceivedOne := len(all) > 0
-		passed = hasReceivedOne && all[0] == target
-		if passed {
-			return
-		}
-		if hasReceivedOne {
-			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived: %+v", target, all[0])
-		} else {
-			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived none", target)
-		}
-		return
-	})
+	ab.list = append(ab.list, newNextTo(func(msg any) bool {
+		return msg == target
+	}, fmt.Sprintf("next message not received\nexpected: %+v", target)))
+	return ab
 }
 
 // Last*
 
 // Asserts last message (always times out)
-func (ab *AssertionBuilder) LastToBe(target any) {
-	ab.withAllOnEnd(*NewAssertOnEnd(func(all []any) bool {
-		length := len(all)
-		return length > 0 && all[length-1] == target
-	}, fmt.Sprintf("incorrect last message on timeout\nexpected: %+v", target)))
+func (ab *AssertionBuilder) LastToBe(target any) *AssertionBuilder {
+	ab.list = append(ab.list, newLastTo(func(msg any) bool {
+		return msg == target
+	}, fmt.Sprintf("incorrect last message\nexpected: %+v", target)))
+	return ab
 }
 
 // OneNot*

@@ -302,21 +302,18 @@ With the following behaviour:
 - when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
 - when timeout is reached, `Asserter` is called one last time with `(true, latest, all)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `err` do give the test outcome 
  
-For instance here is `NextToBe` implementation:
+For instance here is `OneNotToBe` implementation (please note it can fail before reaching end):
 
 ```golang
-func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
-	return ab.With(func(_ bool, _ any, all []any) (done, passed bool, err string) {
-		done = true
-		hasReceivedOne := len(all) > 0
-		passed = hasReceivedOne && all[0] == target
-		if passed {
-			return
-		}
-		if hasReceivedOne {
-			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived: %+v", target, all[0])
-		} else {
-			err = fmt.Sprintf("incorrect first message\nexpected: %+v\nreceived none", target)
+func (ab *AssertionBuilder) OneNotToBe(target any) *AssertionBuilder {
+	return ab.With(func(end bool, latest any, _ []any) (done, passed bool, err string) {
+		if end {
+			done = true
+			passed = true
+		} else if latest == target {
+			done = true
+			passed = false
+			err = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
 		}
 		return
 	})

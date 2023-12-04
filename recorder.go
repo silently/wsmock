@@ -123,6 +123,23 @@ func (r *Recorder) Assert() *AssertionBuilder {
 	return p
 }
 
+// type Selector func(w any) (val any, ok bool)
+
+// func WaitFor[T any](rec *Recorder, sel Selector) (val T, ok bool) {
+// 	for {
+// 		select {
+// 		case w := <-rec.serverWriteCh:
+// 			if v, ok := sel(w); ok {
+// 				if s, ok := v.(T); ok {
+// 					return s, true
+// 				}
+// 			}
+// 		case <-rec.doneCh:
+// 			return *new(T), false
+// 		}
+// 	}
+// }
+
 // Runs all Assert* methods that have been previously added on this recorder, with a timeout.
 //
 // If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.
