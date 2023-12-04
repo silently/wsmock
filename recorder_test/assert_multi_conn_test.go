@@ -1,8 +1,10 @@
-package wsmock
+package recorder_test
 
 import (
 	"testing"
 	"time"
+
+	ws "github.com/silently/wsmock"
 )
 
 func TestMultiConn_Chat(t *testing.T) {
@@ -10,9 +12,9 @@ func TestMultiConn_Chat(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		server := newChatWsStub()
-		conn1, rec1 := NewGorillaMockAndRecorder(mockT)
-		conn2, rec2 := NewGorillaMockAndRecorder(mockT)
-		conn3, rec3 := NewGorillaMockAndRecorder(mockT)
+		conn1, rec1 := ws.NewGorillaMockAndRecorder(mockT)
+		conn2, rec2 := ws.NewGorillaMockAndRecorder(mockT)
+		conn3, rec3 := ws.NewGorillaMockAndRecorder(mockT)
 		go server.handle(conn1)
 		go server.handle(conn2)
 		go server.handle(conn3)
@@ -22,9 +24,9 @@ func TestMultiConn_Chat(t *testing.T) {
 		conn1.Send(Message{"message", "hello"})
 
 		// assert
-		rec1.OneToBe(Message{"joined", "user1"})
-		rec2.OneNotToBe(Message{"user1", "hello"}) // user2 has not joined
-		RunAssertions(mockT, 110*time.Millisecond)
+		rec1.Assert().OneToBe(Message{"joined", "user1"})
+		rec2.Assert().OneNotToBe(Message{"user1", "hello"}) // user2 has not joined
+		ws.RunAssertions(mockT, 110*time.Millisecond)
 
 		// script
 		conn2.Send(Message{"join", "user2"})
@@ -33,10 +35,10 @@ func TestMultiConn_Chat(t *testing.T) {
 		conn3.Send(Message{"message", "hi"})
 
 		// assert
-		rec1.OneToBe(Message{"user3", "hi"})
-		rec2.OneToBe(Message{"user3", "hi"})
-		rec3.OneNotToBe(Message{"user3", "hi"})
-		RunAssertions(mockT, 110*time.Millisecond)
+		rec1.Assert().OneToBe(Message{"user3", "hi"})
+		rec2.Assert().OneToBe(Message{"user3", "hi"})
+		rec3.Assert().OneNotToBe(Message{"user3", "hi"})
+		ws.RunAssertions(mockT, 110*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in chat room, mockT output is:", getTestOutput(mockT))
@@ -49,8 +51,8 @@ func TestMultiConn_RPSt(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		server := newRpsWsStub()
-		conn1, rec1 := NewGorillaMockAndRecorder(mockT)
-		conn2, rec2 := NewGorillaMockAndRecorder(mockT)
+		conn1, rec1 := ws.NewGorillaMockAndRecorder(mockT)
+		conn2, rec2 := ws.NewGorillaMockAndRecorder(mockT)
 		go server.handle(conn1)
 		go server.handle(conn2)
 
@@ -59,10 +61,10 @@ func TestMultiConn_RPSt(t *testing.T) {
 		conn2.Send("rock")
 
 		// assert
-		rec1.OneToBe("won")
-		rec2.OneToBe("lost")
-		rec2.OneNotToBe("won")
-		RunAssertions(mockT, 50*time.Millisecond)
+		rec1.Assert().OneToBe("won")
+		rec2.Assert().OneToBe("lost")
+		rec2.Assert().OneNotToBe("won")
+		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))
@@ -73,10 +75,10 @@ func TestMultiConn_RPSt(t *testing.T) {
 		conn2.Send("paper")
 
 		// assert
-		rec1.OneToBe("won")
-		rec1.OneNotToBe("lost")
-		rec2.OneToBe("lost")
-		RunAssertions(mockT, 50*time.Millisecond)
+		rec1.Assert().OneToBe("won")
+		rec1.Assert().OneNotToBe("lost")
+		rec2.Assert().OneToBe("lost")
+		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))
@@ -87,11 +89,11 @@ func TestMultiConn_RPSt(t *testing.T) {
 		conn2.Send("paper")
 
 		// assert
-		rec1.OneToBe("draw")
-		rec1.OneNotToBe("won")
-		rec1.OneNotToBe("lost")
-		rec2.OneToBe("draw")
-		RunAssertions(mockT, 50*time.Millisecond)
+		rec1.Assert().OneToBe("draw")
+		rec1.Assert().OneNotToBe("won")
+		rec1.Assert().OneNotToBe("lost")
+		rec2.Assert().OneToBe("draw")
+		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:", getTestOutput(mockT))

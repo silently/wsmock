@@ -10,6 +10,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Message struct {
+	Kind    string `json:"kind"`
+	Payload string `json:"payload"`
+}
+
 func TestGorillaConnWrite(t *testing.T) {
 	t.Run("NextWriter can write to recorder", func(t *testing.T) {
 		mockT := &testing.T{}

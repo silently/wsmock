@@ -1,4 +1,4 @@
-package wsmock
+package recorder_test
 
 import (
 	"sync"
@@ -6,15 +6,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
+
+	w "github.com/silently/wsmock"
 )
 
-type Message struct {
-	Kind    string `json:"kind"`
-	Payload string `json:"payload"`
-}
-
 // stub for single conn tests
-func serveWsHistory(conn IGorilla) {
+func serveWsHistory(conn w.IGorilla) {
 	go func() {
 		for {
 			var m Message
@@ -46,7 +43,7 @@ func serveWsHistory(conn IGorilla) {
 }
 
 // stub for single conn tests
-func serveWsLogStrings(conn IGorilla) {
+func serveWsLogStrings(conn w.IGorilla) {
 	go func() {
 		for {
 			var m string
@@ -64,7 +61,7 @@ func serveWsLogStrings(conn IGorilla) {
 	}()
 }
 
-func serveWsLogBytes(conn IGorilla) {
+func serveWsLogBytes(conn w.IGorilla) {
 	go func() {
 		for {
 			var m string
@@ -90,14 +87,14 @@ func serveWsLogBytes(conn IGorilla) {
 // stub for multi conn tests
 type chatWsStub struct {
 	sync.Mutex
-	connIndex map[*GorillaConn]string
+	connIndex map[*w.GorillaConn]string
 }
 
 func newChatWsStub() *chatWsStub {
-	return &chatWsStub{sync.Mutex{}, make(map[*GorillaConn]string)}
+	return &chatWsStub{sync.Mutex{}, make(map[*w.GorillaConn]string)}
 }
 
-func (s *chatWsStub) handle(conn *GorillaConn) {
+func (s *chatWsStub) handle(conn *w.GorillaConn) {
 	for {
 		var m Message
 		err := conn.ReadJSON(&m)
@@ -125,7 +122,7 @@ func (s *chatWsStub) handle(conn *GorillaConn) {
 // rps stub for multi conn tests
 type rpsWsStub struct {
 	sync.Mutex
-	firstConn      *GorillaConn
+	firstConn      *w.GorillaConn
 	firstConnThrow string
 }
 
@@ -156,7 +153,7 @@ func (s *rpsWsStub) decideWinner(throw1, throw2 string) int {
 	}
 }
 
-func (s *rpsWsStub) handle(conn *GorillaConn) {
+func (s *rpsWsStub) handle(conn *w.GorillaConn) {
 	throws := []string{"rock", "paper", "scissors"}
 	go func() {
 		for {

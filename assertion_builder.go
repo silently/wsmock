@@ -7,42 +7,46 @@ import (
 	"strings"
 )
 
-type Pattern struct {
+type AssertionBuilder struct {
 	r    *Recorder
 	list []Asserter
 }
 
-// package private
+// private
 
-func (p *Pattern) assertAllOnEnd(a AssertOnEnd) *Pattern {
-	p.list = append(p.list, a)
-	return p
+func (ab *AssertionBuilder) withAllOnEnd(a AssertOnEnd) *AssertionBuilder {
+	ab.list = append(ab.list, a)
+	return ab
 }
 
 // Generic API
 
 // Adds custom AsserterFunc
-func (p *Pattern) AddAssert(a AsserterFunc) *Pattern {
-	p.list = append(p.list, a)
-	return p
+func (ab *AssertionBuilder) With(a AsserterFunc) *AssertionBuilder {
+	ab.list = append(ab.list, a)
+	return ab
 }
 
 // One*
 
-func (p *Pattern) OneToBe(target any) *Pattern {
-	p.list = append(p.list, NewFailOnEnd(func(msg any) bool {
+// Asserts if a message has been received by recorder
+func (ab *AssertionBuilder) OneToBe(target any) *AssertionBuilder {
+	ab.list = append(ab.list, NewFailOnEnd(func(msg any) bool {
 		return msg == target
 	}, fmt.Sprintf("message not received\nexpected: %+v", target)))
-	return p
+	return ab
 }
 
-func (p *Pattern) OneToCheck(f FailOnEnd) *Pattern {
-	p.list = append(p.list, f)
-	return p
+// Adds asserter that may succeed on receiving message, and fails if it dit not happen on end
+func (ab *AssertionBuilder) OneToCheck(f FailOnEnd) *AssertionBuilder {
+	ab.list = append(ab.list, f)
+	return ab
 }
 
-func (p *Pattern) OneToContain(sub string) *Pattern {
-	p.list = append(p.list, NewFailOnEnd(
+// Asserts if a message received by recorder contains a given string.
+// Messages that can't be converted to strings are JSON-marshalled
+func (ab *AssertionBuilder) OneToContain(sub string) *AssertionBuilder {
+	ab.list = append(ab.list, NewFailOnEnd(
 		func(msg any) bool {
 			if str, ok := msg.(string); ok {
 				return strings.Contains(str, sub)
@@ -54,11 +58,11 @@ func (p *Pattern) OneToContain(sub string) *Pattern {
 			}
 			return false
 		}, fmt.Sprintf("no message containing string\nexpected: %v", sub)))
-	return p
+	return ab
 }
 
-func (p *Pattern) OneToMatch(re regexp.Regexp) *Pattern {
-	p.list = append(p.list, NewFailOnEnd(
+func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
+	ab.list = append(ab.list, NewFailOnEnd(
 		func(msg any) bool {
 			if str, ok := msg.(string); ok {
 				return re.Match([]byte(str))
@@ -70,13 +74,14 @@ func (p *Pattern) OneToMatch(re regexp.Regexp) *Pattern {
 			}
 			return false
 		}, fmt.Sprintf("no message matching regexp\nexpected: %v", re)))
-	return p
+	return ab
 }
 
 // First*
 
-func (p *Pattern) FirstToBe(target any) *Pattern {
-	return p.AddAssert(func(_ bool, _ any, all []any) (done, passed bool, err string) {
+// Asserts first message (times out only if no message is received)
+func (ab *AssertionBuilder) FirstToBe(target any) *AssertionBuilder {
+	return ab.With(func(_ bool, _ any, all []any) (done, passed bool, err string) {
 		done = true
 		hasReceivedOne := len(all) > 0
 		passed = hasReceivedOne && all[0] == target
@@ -95,17 +100,18 @@ func (p *Pattern) FirstToBe(target any) *Pattern {
 // Last*
 
 // Asserts last message (always times out)
-func (p *Pattern) LastToBe(target any) *Pattern {
-	return p.assertAllOnEnd(*NewAssertOnEnd(func(all []any) bool {
+func (ab *AssertionBuilder) LastToBe(target any) *AssertionBuilder {
+	return ab.withAllOnEnd(*NewAssertOnEnd(func(all []any) bool {
 		length := len(all)
 		return length > 0 && all[length-1] == target
 	}, fmt.Sprintf("incorrect last message on timeout\nexpected: %+v", target)))
 }
 
 // OneNot*
+
 // Asserts if a message has not been received by recorder (can fail before time out)
-func (p *Pattern) OneNotToBe(target any) *Pattern {
-	return p.AddAssert(func(end bool, latest any, _ []any) (done, passed bool, err string) {
+func (ab *AssertionBuilder) OneNotToBe(target any) *AssertionBuilder {
+	return ab.With(func(end bool, latest any, _ []any) (done, passed bool, err string) {
 		if end {
 			done = true
 			passed = true
@@ -121,10 +127,10 @@ func (p *Pattern) OneNotToBe(target any) *Pattern {
 // Other
 
 // Asserts if conn has been closed
-func (p *Pattern) ConnClosed() *Pattern {
-	return p.AddAssert(func(end bool, latest any, all []any) (done, passed bool, err string) {
+func (ab *AssertionBuilder) ConnClosed() *AssertionBuilder {
+	return ab.With(func(end bool, latest any, all []any) (done, passed bool, err string) {
 		if end {
-			passed = p.r.done // conn closed => recorder done
+			passed = ab.r.done // conn closed => recorder done
 			err = "conn should be closed"
 		}
 		return

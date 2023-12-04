@@ -54,10 +54,10 @@ func TestRunClient(t *testing.T) {
 		// - assertions: client may queue and bundle messages together, that's why we check
 		//   if message is contained in a wider bundled message
 		// - alternatively: check next test with a custom Asserter (see next test)
-		rec1.OneToContain("one")
-		rec1.OneToContain("two")
-		rec2.OneToContain("one")
-		rec2.OneToContain("two")
+		rec1.Assert().OneToContain("one")
+		rec1.Assert().OneToContain("two")
+		rec2.Assert().OneToContain("one")
+		rec2.Assert().OneToContain("two")
 
 		// run all previously declared assertions with a timeout
 		wsmock.RunAssertions(t, 250*time.Millisecond)
@@ -74,8 +74,8 @@ func TestRunClient(t *testing.T) {
 		conn1.Send("one")
 		conn2.Send("two")
 		// use a custom Asserter that splits messages around newlines (check client.go line 108)
-		rec1.AddAssert(hasReceivedAutoSplit("one"))
-		rec2.AddAssert(hasReceivedAutoSplit("one"))
+		rec1.Assert().With(hasReceivedAutoSplit("one"))
+		rec2.Assert().With(hasReceivedAutoSplit("one"))
 
 		// run all previously declared assertions with a timeout
 		wsmock.RunAssertions(t, 100*time.Millisecond)

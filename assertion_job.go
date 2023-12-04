@@ -4,10 +4,10 @@ import (
 	"time"
 )
 
-type patternJob struct {
+type assertionJob struct {
 	r *Recorder
 	// configuration
-	p *Pattern
+	ab *AssertionBuilder
 	// events
 	latestWriteCh chan any
 	// state
@@ -17,10 +17,10 @@ type patternJob struct {
 	err string
 }
 
-func newAssertionJob(r *Recorder, p *Pattern, err ...string) *patternJob {
-	job := &patternJob{
+func newAssertionJob(r *Recorder, ab *AssertionBuilder, err ...string) *assertionJob {
+	job := &assertionJob{
 		r:             r,
-		p:             p,
+		ab:            ab,
 		latestWriteCh: make(chan any, 256),
 		done:          false,
 		currentIndex:  0,
@@ -31,19 +31,19 @@ func newAssertionJob(r *Recorder, p *Pattern, err ...string) *patternJob {
 	return job
 }
 
-func (j *patternJob) incPassed() {
+func (j *assertionJob) incPassed() {
 	j.currentIndex++
 }
 
-func (j *patternJob) allPassed() bool {
-	return len(j.p.list) == j.currentIndex
+func (j *assertionJob) allPassed() bool {
+	return len(j.ab.list) == j.currentIndex
 }
 
-func (j *patternJob) currentAsserter() Asserter {
-	return j.p.list[j.currentIndex]
+func (j *assertionJob) currentAsserter() Asserter {
+	return j.ab.list[j.currentIndex]
 }
 
-func (j *patternJob) assertOnEnd() {
+func (j *assertionJob) assertOnEnd() {
 	latest, _ := last(j.r.serverWrites)
 	// on end, done is considered true anyway
 	_, passed, err := j.currentAsserter().Try(true, latest, j.r.serverWrites)
@@ -59,7 +59,7 @@ func (j *patternJob) assertOnEnd() {
 	}
 }
 
-func (j *patternJob) loopWithTimeout(timeout time.Duration) {
+func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 	// we found that using time.Sleep is more accurate (= less delay in addition to the specified timeout)
 	// than using <-time.After directly on a for-select case
 	timeoutCh := make(chan string, 1)

@@ -8,24 +8,8 @@ import (
 	"time"
 )
 
-type round struct {
-	wg       sync.WaitGroup // track if assertions are finished
-	done     bool
-	doneCh   chan struct{} // caused by timeout or outcome known before timeout (wg passed)
-	jobIndex map[*patternJob]bool
-}
-
-// closed when corresponding conn is
-func (rd *round) stop() error {
-	if !rd.done {
-		rd.done = true
-		close(rd.doneCh)
-	}
-	return nil
-}
-
 // Used in conjunction with a WebSocket connection mock, a Recorder stores all messages written by
-// the server to the mock, and its API (Assert* methods) is used to make assertions about these messages.
+// the server to the mock, and its API is used to make assertions about these messages.
 type Recorder struct {
 	t            *testing.T
 	index        int // used in logs
@@ -41,15 +25,6 @@ type Recorder struct {
 	errors []string
 }
 
-func (r *Recorder) newRound() {
-	r.serverWrites = nil
-	r.currentRound = &round{
-		wg:       sync.WaitGroup{},
-		doneCh:   make(chan struct{}),
-		jobIndex: make(map[*patternJob]bool),
-	}
-}
-
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:             t,
@@ -57,23 +32,39 @@ func newRecorder(t *testing.T) *Recorder {
 		doneCh:        make(chan struct{}),
 	}
 	r.index = indexRecorder(t, &r)
-	r.newRound()
+	r.resetRound()
 	return &r
 }
 
-// closed when corresponding conn is
-func (r *Recorder) stop() error {
+func (r *Recorder) resetRound() {
+	r.serverWrites = nil
+	r.currentRound = newRound()
+}
+
+// called when corresponding conn is closed
+func (r *Recorder) stop() {
 	if !r.done {
 		r.done = true
 		close(r.doneCh)
 	}
-	return nil
 }
 
-func (r *Recorder) addToRound(p *Pattern) {
-	j := newAssertionJob(r, p)
-	r.currentRound.jobIndex[j] = true
-	r.currentRound.wg.Add(1)
+func (r *Recorder) forwardWritesDuringRound() {
+	for {
+		select {
+		case w := <-r.serverWriteCh:
+			r.serverWrites = append(r.serverWrites, w)
+
+			for job := range r.currentRound.jobIndex {
+				if !job.done { // to prevent blocking channel
+					job.latestWriteCh <- w
+				}
+			}
+		case <-r.currentRound.doneCh:
+			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round
+			return
+		}
+	}
 }
 
 func (r *Recorder) addError(err string) {
@@ -84,16 +75,6 @@ func (r *Recorder) addError(err string) {
 	r.currentRound.stop()
 }
 
-func (r *Recorder) startRound(timeout time.Duration) {
-	go r.forwardWritesDuringRound()
-	for j := range r.currentRound.jobIndex {
-		go func(j *patternJob) {
-			defer r.currentRound.wg.Done()
-			j.loopWithTimeout(timeout)
-		}(j)
-	}
-}
-
 func formatErrorSection[T any](r *Recorder, label string, items []T) string {
 	output := fmt.Sprintf("Recorder#%v ", r.index) + label + "\n"
 	for _, item := range items {
@@ -102,9 +83,7 @@ func formatErrorSection[T any](r *Recorder, label string, items []T) string {
 	return output
 }
 
-func (r *Recorder) error(err string, isFirst bool) {
-	r.t.Helper()
-
+func (r *Recorder) outputError(err string, isFirst bool) {
 	errorParts := strings.Split(err, "\n")
 	label, rest := errorParts[0], errorParts[1:]
 	errorOutput := formatErrorSection(r, "error: "+label, rest)
@@ -124,39 +103,60 @@ func (r *Recorder) error(err string, isFirst bool) {
 	r.t.Error("\n" + errorOutput)
 }
 
-func (r *Recorder) waitForRound() {
-	r.t.Helper()
-
-	r.currentRound.wg.Wait()
-
+func (r *Recorder) manageErrors() {
+	r.mu.RLock()
 	if len(r.errors) > 0 {
-		r.mu.RLock()
 		for i, err := range r.errors {
-			r.error(err, i == 0)
+			r.outputError(err, i == 0)
 		}
-		r.mu.RUnlock()
 	}
+	r.mu.RUnlock()
 }
 
-func (r *Recorder) stopRound() {
+// API
+
+// Initialize a new chainable AssertionBuilder.
+func (r *Recorder) Assert() *AssertionBuilder {
+	p := &AssertionBuilder{r: r}
+	j := newAssertionJob(r, p)
+	r.currentRound.addJob(j)
+	return p
+}
+
+// Runs all Assert* methods that have been previously added on this recorder, with a timeout.
+//
+// If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.
+//
+// For instance, some assertions (like OneNotToBe) always need to wait until the timeout has been reached
+// to assert success, but may fail sooner.
+//
+// At the end of Run, the recorder previously received messages are flushed and assertions
+// are removed. It's then possible to add new Assert* methods and Run again.
+func (r *Recorder) RunAssertions(timeout time.Duration) {
+	// start
+	go r.forwardWritesDuringRound()
+	r.currentRound.start(timeout)
+	// wait
+	r.currentRound.wg.Wait()
+	// manage potential assert errors
+	r.manageErrors()
+	// stop and reset round
 	r.currentRound.stop()
-	r.newRound()
+	r.resetRound()
 }
 
-func (r *Recorder) forwardWritesDuringRound() {
-	for {
-		select {
-		case w := <-r.serverWriteCh:
-			r.serverWrites = append(r.serverWrites, w)
+// Launches and waits (till timeout) for the outcome of all assertions added to all recorders
+// of this test.
+func RunAssertions(t *testing.T, timeout time.Duration) {
+	recs := getIndexedRecorders(t)
+	wg := sync.WaitGroup{}
 
-			for job := range r.currentRound.jobIndex {
-				if !job.done { // to prevent blocking channel
-					job.latestWriteCh <- w
-				}
-			}
-		case <-r.currentRound.doneCh:
-			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round
-			return
-		}
+	for _, r := range recs {
+		wg.Add(1)
+		go func(r *Recorder) {
+			defer wg.Done()
+			r.RunAssertions(timeout)
+		}(r)
 	}
+	wg.Wait()
 }
