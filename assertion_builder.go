@@ -8,7 +8,7 @@ import (
 )
 
 type AssertionBuilder struct {
-	r    *Recorder
+	rec  *Recorder
 	list []Asserter
 }
 
@@ -38,8 +38,8 @@ func (ab *AssertionBuilder) OneToBe(target any) *AssertionBuilder {
 }
 
 // Adds asserter that may succeed on receiving message, and fails if it dit not happen on end
-func (ab *AssertionBuilder) OneToCheck(f FailOnEnd) *AssertionBuilder {
-	ab.list = append(ab.list, f)
+func (ab *AssertionBuilder) OneToCheck(f Predicate) *AssertionBuilder {
+	ab.list = append(ab.list, NewFailOnEnd(f, fmt.Sprintf("no message checked predicate\npredicate body: %+v", f)))
 	return ab
 }
 
@@ -80,7 +80,7 @@ func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
 // First*
 
 // Asserts first message (times out only if no message is received)
-func (ab *AssertionBuilder) FirstToBe(target any) *AssertionBuilder {
+func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
 	return ab.With(func(_ bool, _ any, all []any) (done, passed bool, err string) {
 		done = true
 		hasReceivedOne := len(all) > 0
@@ -100,8 +100,8 @@ func (ab *AssertionBuilder) FirstToBe(target any) *AssertionBuilder {
 // Last*
 
 // Asserts last message (always times out)
-func (ab *AssertionBuilder) LastToBe(target any) *AssertionBuilder {
-	return ab.withAllOnEnd(*NewAssertOnEnd(func(all []any) bool {
+func (ab *AssertionBuilder) LastToBe(target any) {
+	ab.withAllOnEnd(*NewAssertOnEnd(func(all []any) bool {
 		length := len(all)
 		return length > 0 && all[length-1] == target
 	}, fmt.Sprintf("incorrect last message on timeout\nexpected: %+v", target)))
@@ -130,7 +130,7 @@ func (ab *AssertionBuilder) OneNotToBe(target any) *AssertionBuilder {
 func (ab *AssertionBuilder) ConnClosed() *AssertionBuilder {
 	return ab.With(func(end bool, latest any, all []any) (done, passed bool, err string) {
 		if end {
-			passed = ab.r.done // conn closed => recorder done
+			passed = ab.rec.done // conn closed => recorder done
 			err = "conn should be closed"
 		}
 		return

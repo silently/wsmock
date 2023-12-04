@@ -117,7 +117,7 @@ func (r *Recorder) manageErrors() {
 
 // Initialize a new chainable AssertionBuilder.
 func (r *Recorder) Assert() *AssertionBuilder {
-	p := &AssertionBuilder{r: r}
+	p := &AssertionBuilder{rec: r}
 	j := newAssertionJob(r, p)
 	r.currentRound.addJob(j)
 	return p

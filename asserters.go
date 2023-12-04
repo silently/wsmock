@@ -41,7 +41,7 @@ type Predicate func(msg any) (passed bool)
 // If the Predicate returns false, asserting is considered not done/solved and waits for a new message or until end,
 // If the end is reached, the asserting fails and the err is displayed.
 type FailOnEnd struct {
-	p   Predicate
+	f   Predicate
 	err string
 }
 
@@ -54,7 +54,7 @@ func (a FailOnEnd) Try(end bool, latest any, all []any) (done, passed bool, err 
 	if end {
 		return true, false, a.err
 	}
-	if a.p(latest) { // succeeds
+	if a.f(latest) { // succeeds
 		return true, true, ""
 	}
 	// unfinished
@@ -68,7 +68,7 @@ type AllPredicate func(all []any) (passed bool)
 //
 // It gets in order all the messages received during the run, and returns the assertion outcome.
 type AssertOnEnd struct {
-	p   AllPredicate
+	f   AllPredicate
 	err string
 }
 
@@ -81,5 +81,5 @@ func (a AssertOnEnd) Try(end bool, _ any, all []any) (done, passed bool, err str
 	if !end {
 		return false, false, ""
 	}
-	return true, a.p(all), ""
+	return true, a.f(all), ""
 }

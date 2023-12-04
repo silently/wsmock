@@ -5,7 +5,7 @@ import (
 )
 
 type assertionJob struct {
-	r *Recorder
+	rec *Recorder
 	// configuration
 	ab *AssertionBuilder
 	// events
@@ -19,7 +19,7 @@ type assertionJob struct {
 
 func newAssertionJob(r *Recorder, ab *AssertionBuilder, err ...string) *assertionJob {
 	job := &assertionJob{
-		r:             r,
+		rec:           r,
 		ab:            ab,
 		latestWriteCh: make(chan any, 256),
 		done:          false,
@@ -44,9 +44,9 @@ func (j *assertionJob) currentAsserter() Asserter {
 }
 
 func (j *assertionJob) assertOnEnd() {
-	latest, _ := last(j.r.serverWrites)
+	latest, _ := last(j.rec.serverWrites)
 	// on end, done is considered true anyway
-	_, passed, err := j.currentAsserter().Try(true, latest, j.r.serverWrites)
+	_, passed, err := j.currentAsserter().Try(true, latest, j.rec.serverWrites)
 	j.done = true
 
 	if passed {
@@ -55,7 +55,7 @@ func (j *assertionJob) assertOnEnd() {
 		if len(err) == 0 {
 			err = j.err
 		}
-		j.r.addError(err)
+		j.rec.addError(err)
 	}
 }
 
@@ -71,7 +71,7 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 	for {
 		select {
 		case latest := <-j.latestWriteCh:
-			done, passed, err := j.currentAsserter().Try(false, latest, j.r.serverWrites)
+			done, passed, err := j.currentAsserter().Try(false, latest, j.rec.serverWrites)
 			if done {
 				j.done = true
 				if passed { // current passed
@@ -80,14 +80,14 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 						return
 					}
 				} else {
-					j.r.addError(err)
+					j.rec.addError(err)
 					return
 				}
 			}
-		case <-j.r.currentRound.doneCh: // round is done because of another failing assertion
+		case <-j.rec.currentRound.doneCh: // round is done because of another failing assertion
 			j.assertOnEnd()
 			return
-		case <-j.r.doneCh: // conn is closed
+		case <-j.rec.doneCh: // conn is closed
 			j.assertOnEnd()
 			return
 		case <-timeoutCh: // timeout is reached

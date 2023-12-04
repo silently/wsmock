@@ -61,9 +61,9 @@ func TestMultiConn_RPSt(t *testing.T) {
 		conn2.Send("rock")
 
 		// assert
-		rec1.Assert().OneToBe("won")
-		rec2.Assert().OneToBe("lost")
-		rec2.Assert().OneNotToBe("won")
+		rec1.Assert().OneToBe("win")
+		rec2.Assert().OneToBe("loss")
+		rec2.Assert().OneNotToBe("win")
 		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -75,9 +75,9 @@ func TestMultiConn_RPSt(t *testing.T) {
 		conn2.Send("paper")
 
 		// assert
-		rec1.Assert().OneToBe("won")
-		rec1.Assert().OneNotToBe("lost")
-		rec2.Assert().OneToBe("lost")
+		rec1.Assert().OneToBe("win")
+		rec1.Assert().OneNotToBe("loss")
+		rec2.Assert().OneToBe("loss")
 		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -90,8 +90,8 @@ func TestMultiConn_RPSt(t *testing.T) {
 
 		// assert
 		rec1.Assert().OneToBe("draw")
-		rec1.Assert().OneNotToBe("won")
-		rec1.Assert().OneNotToBe("lost")
+		rec1.Assert().OneNotToBe("win")
+		rec1.Assert().OneNotToBe("loss")
 		rec2.Assert().OneToBe("draw")
 		ws.RunAssertions(mockT, 50*time.Millisecond)
 

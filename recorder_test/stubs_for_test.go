@@ -173,11 +173,11 @@ func (s *rpsWsStub) handle(conn *w.GorillaConn) {
 					}
 					switch s.decideWinner(s.firstConnThrow, m) {
 					case -1:
-						s.firstConn.WriteJSON("won")
-						conn.WriteJSON("lost")
+						s.firstConn.WriteJSON("win")
+						conn.WriteJSON("loss")
 					case 1:
-						s.firstConn.WriteJSON("lost")
-						conn.WriteJSON("won")
+						s.firstConn.WriteJSON("loss")
+						conn.WriteJSON("win")
 					case 0:
 						s.firstConn.WriteJSON("draw")
 						conn.WriteJSON("draw")

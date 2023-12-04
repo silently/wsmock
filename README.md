@@ -9,17 +9,24 @@ func TestRockPaperScissors(t *testing.T) {
   conn1, rec1 := wsmock.NewGorillaMockAndRecorder(t)
   conn2, rec2 := wsmock.NewGorillaMockAndRecorder(t)
 
-  // runWs behaviour is the test target
+  // runWs is the test target
   go runWs(conn1)
   go runWs(conn2)
 
   // script
   conn1.Send("paper")
+  conn2.Send("paper")
+  // then
+  conn1.Send("paper")
   conn2.Send("rock")
 
-  // add assertions on recorded messages
-  rec1.Assert().OneToBe("won")
-  rec2.Assert().OneNotToBe("won")
+  // add chained assertions on recorders
+  rec1.Assert().
+    OneToBe("draw").  // one received message expected to be "draw"
+    NextToBe("win")   // right next message expected to be "win"
+  rec2.Assert().
+    OneToBe("draw").
+    NextToBe("loss")
 
   // run assertions with a timeout
   wsmock.RunAssertions(t, 100*time.Millisecond) 
@@ -187,21 +194,21 @@ Assertion helpers define conditions on messages received by recorders.
 You can run assertions in parallel by calling `Assert()` multiple times. In that case the same message history will be used for each assertion:
 
 ```golang
-rec.Assert().FirstToContain("content")  // assertion 1
-rec.Assert().OneToContain("content")    // assertion 2 (necessarily succeeds if assertion 1 does)
+rec.Assert().OneToContain("long content") // assertion 1
+rec.Assert().OneToContain("content")      // assertion 2 (necessarily succeeds if assertion 1 does)
 ```
 
 You can chain conditions to build an ordered assertion:
 
 ```golang
 rec.Assert().                 // this
-  FirstToBe("hi").            // is
+  NextToBe("hi").             // is
   NextToBe("I'm fine").       // an
-  OneToBe("It'd be great")    // assertion
+  OneToBe("it'd be great")    // assertion
 rec.RunAssertions(100 * time.Millisecond)
 ```
 
-This translates to: *assert that the first message received by rec is "hi", the second one is "I'm fine" and a subsequent message is "It'd be great", all in less than 100 milliseconds.*
+This translates to: *assert that the next (=first) message received by rec is "hi", then the next (=second) one is "I'm fine" and a subsequent message is "it'd be great", all in less than 100 milliseconds.*
 
 ## Assertion API
 
@@ -211,20 +218,37 @@ This translates to: *assert that the first message received by rec is "hi", the 
 
 CURRENTLY UNDER WORK, only a few helpers are implemented.
 
-Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#AssertionBuilder) for a comprehensive description of wsmock helper methods. They are combinations of `First|Next|One|Last + To|NotTo + Be|Check|Contain|Match`, for instance:
+Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#AssertionBuilder) for a comprehensive description of wsmock helper methods. Available methods have their name as a combination of `Next|One|Last + To|NotTo + Be|Check|Contain|Match`, with the following meaning:
 
-- `rec.Assert().OneToBe(target)`: one message should be equal to `target`, according to the equality operator `==` (see [spec](https://go.dev/ref/spec#Comparison_operators))
-- `rec.Assert().FirstToCheck(f)`: the first message should validate the predicate function `f`
+- Prefix:
+  - `Next*` means the condition should be to be true on the very next received message
+  - `One*` means one among subsequent messages should verify the condition
+  - `Last*` means the last message should verify the condition
+- Condition (with parameter type for clarity):
+  - `*ToBe(target any)` is successful if the message equals `target` (according to the equality operator `==` (see [spec](https://go.dev/ref/spec#Comparison_operators))
+  - `*ToCheck(f Predicate)` is successful if the `predicate(msg)` is true
+  - `*ToContain(sub string)` is successful if the message contains `sub`
+  - `*ToMatch(re regexp.Regexp)` is successful if the message contains a match of `re`
+  - while `*NotTo*` evaluates to the opposite
+
+Here are some example:
+
+- `rec.Assert().OneToBe(target)`: one message should be equal to `target`
+- `rec.Assert().NextToCheck(f)`: the next (first in that case) message should validate the predicate function `f`
 - `rec.Assert().LastNotToMach(re)`: the last message should not match the given regular expression
 
-If the `["a", "b", "c", "d", "e"]` message sequence is received, some successful examples are:
+### Chaining helpers
+
+You can chain helpers to refine assertions.
+
+For instance, if the `["a", "b", "c", "d", "e"]` message sequence is received, some successful assertions are:
 
 ```golang
 rec.Assert().
   NextToBe("a").
   NextToBe("b")
 rec.Assert().
-  FirstToBe("a").
+  NextToBe("a").
   OneToBe("c")
 rec.Assert().
   OneToBe("c").
@@ -242,21 +266,27 @@ rec.Assert().
   NextToBe("c") // next should immediatly follow previous one
 ```
 
-If method chaining does not suit you, you may prefer writing:
+Some helper methods are "dead-ends", meaning that no other helper can be chained/appended to them. These helpers start with `Last*` or `OneNotTo*`: they need to timeout to be evaluated.
+
+### Chaining style
+
+If method chaining does not suit you, there is an alternate notation:
 
 ```golang
-a1 := rec.Assert()
-a1.NextToBe("a")
-a1.NextToBe("b")
+// method chaining
+rec.Assert().
+  NextToBe("a").
+  NextToBe("b")
 
-a2 := rec.Assert()
-a2.FirstToBe("a")
-a2.OneToBe("c")
+// or (has same effect)
+a := rec.Assert()
+a.NextToBe("a")
+a.NextToBe("b")
 ```
 
 ### With
 
-Predefined helpers may not fit your needs/ In that case you can define a custom assertion logic with: 
+Predefined helpers may not fit your needs. In that case you can define a custom assertion logic with: 
 
 ```golang
 func (ab *AssertionBuilder) With(a AsserterFunc) *AssertionBuilder
@@ -272,10 +302,10 @@ With the following behaviour:
 - when a write occurs (from the WebSocket server handler, like `runWs` previously), the `AsserterFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
 - when timeout is reached, `Asserter` is called one last time with `(true, latest, all)`. Regarding return values: `done` is considered true (by the recorder `Assert`) whatever is returned, while `passed` and `err` do give the test outcome 
  
-For instance here is `FirstToBe` implementation:
+For instance here is `NextToBe` implementation:
 
 ```golang
-func (ab *AssertionBuilder) FirstToBe(target any) *AssertionBuilder {
+func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
 	return ab.With(func(_ bool, _ any, all []any) (done, passed bool, err string) {
 		done = true
 		hasReceivedOne := len(all) > 0

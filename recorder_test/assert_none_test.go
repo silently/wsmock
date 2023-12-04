@@ -38,7 +38,7 @@ func TestFailing(t *testing.T) {
 
 		// assert
 		rec.Assert().OneToBe(Message{"chat", "notfound"})
-		rec.Assert().FirstToBe(Message{"chat", "notfound"})
+		rec.Assert().NextToBe(Message{"chat", "notfound"})
 		rec.Assert().LastToBe(Message{"chat", "notfound"})
 		rec.Assert().OneNotToBe(Message{"chat", "sentence1"})
 		rec.Assert().OneToContain("notfound")
