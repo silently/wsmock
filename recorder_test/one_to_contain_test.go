@@ -4,23 +4,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	ws "github.com/silently/wsmock"
 )
 
-func TestOneToContain(t *testing.T) {
-	t.Run("succeeds when containing message is received before timeout", func(t *testing.T) {
+func TestOneToContain_Success(t *testing.T) {
+	t.Run("succeeds when containing messages are received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
-		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong")
+			conn.WriteJSON(Message{"nothing", "special"})
+		}()
 
 		// assert
-		rec.Assert().OneToContain("room:")
+		rec.Assert().OneToContain("ong")
+		rec.Assert().OneToContain("spec")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(30 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -34,19 +39,22 @@ func TestOneToContain(t *testing.T) {
 		}
 	})
 
-	t.Run("succeeds when containing JSON message is written", func(t *testing.T) {
+	t.Run("succeeds when testing JSON field names", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(Message{"nothing", "special"})
+		}()
 
 		// assert
 		rec.Assert().OneToContain("kind") // json field is lowercased
-		rec.Assert().OneToContain("joined")
-		rec.RunAssertions(200 * time.Millisecond) // it's a max
+		rec.Assert().OneToContain("payload")
+		rec.RunAssertions(30 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
@@ -57,17 +65,20 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"pointer", ""})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(&Message{"pointer", "sent"})
+		}()
 
 		// assert
 		rec.Assert().OneToContain("kind") // json field is lowercased
 		rec.Assert().OneToContain("pointer")
 		rec.Assert().OneToContain("payload")
 		rec.Assert().OneToContain("sent")
-		rec.RunAssertions(200 * time.Millisecond) // it's a max
+		rec.RunAssertions(30 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
@@ -78,16 +89,22 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsLogStrings(conn)
 
 		// script
-		conn.Send("logs")
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+			conn.WriteJSON("pong3")
+			conn.WriteJSON("pong4")
+		}()
 
 		// assert
-		rec.Assert().OneToContain("log")
-		rec.Assert().OneToContain("log1")
+		rec.Assert().OneToContain("pong")
+		rec.Assert().OneToContain("pong2")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(30 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -105,16 +122,24 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsLogBytes(conn)
 
 		// script
-		conn.Send("logs")
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			w, _ := conn.NextWriter(websocket.TextMessage)
+			w.Write([]byte("byte1"))
+			w.Close()
+			w, _ = conn.NextWriter(websocket.TextMessage)
+			w.Write([]byte("byte2"))
+			w.Close()
+		}()
 
 		// assert
-		rec.Assert().OneToContain("log")
-		rec.Assert().OneToContain("log1")
+		rec.Assert().OneToContain("byte")
+		rec.Assert().OneToContain("byte2")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(50 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -122,24 +147,29 @@ func TestOneToContain(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 150*time.Millisecond {
+			if elapsed > 30*time.Millisecond {
 				t.Errorf("OneToContain should succeed faster")
 			}
 		}
 	})
+}
 
+func TestOneToContain_Failure(t *testing.T) {
 	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(50 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// assert
-		rec.Assert().OneToContain("room:")
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.Assert().OneToContain("pong")
+		rec.RunAssertions(30 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToContain should fail because of timeout")
@@ -150,14 +180,17 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(Message{"nothing", "special"})
+		}()
 
 		// assert
 		rec.Assert().OneToContain("notfound")
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.RunAssertions(30 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToContain should fail because substr is not found")
@@ -168,14 +201,17 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsLogStrings(conn)
 
 		// script
-		conn.Send("logs")
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// assert
 		rec.Assert().OneToContain("notfound")
-		rec.RunAssertions(300 * time.Millisecond)
+		rec.RunAssertions(30 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToContain should fail because substr is not found")

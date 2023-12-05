@@ -1,7 +1,6 @@
 package recorder_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -21,15 +20,18 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// assert
-		rec.Assert().OneToBe(Message{"joined", "room:1"})
+		rec.Assert().OneToBe("pong")
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(20 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -47,14 +49,17 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(50 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// assert
-		rec.Assert().OneToBe(Message{"joined", "room:1"})
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.Assert().OneToBe("pong")
+		rec.RunAssertions(20 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToBe should fail because of timeout")
@@ -65,19 +70,22 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
 		go func() {
-			time.Sleep(75 * time.Millisecond)
+			conn.Send("ping")
+			time.Sleep(50 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+		go func() {
+			time.Sleep(20 * time.Millisecond)
 			conn.Close()
 		}()
 
 		// assert
-		rec.Assert().OneToBe(Message{"joined", "room:1"})
+		rec.Assert().OneToBe("pong")
 		before := time.Now()
-		rec.RunAssertions(200 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
@@ -85,7 +93,7 @@ func TestOneToBe(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 100*time.Millisecond {
+			if elapsed > 30*time.Millisecond {
 				t.Error("OneToBe should fail faster because of Close")
 			}
 		}
@@ -95,21 +103,22 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(20 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
-		// assert
-		target := Message{"not", "received"}
-		rec.Assert().OneToBe(target)
-		rec.RunAssertions(75 * time.Millisecond)
+		rec.Assert().OneToBe("pongpong")
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToBe should fail because of unexpected message")
 		}
 		// assert error message
-		expectedErrorMessage := fmt.Sprintf("message not received\nexpected: %+v", target)
+		expectedErrorMessage := "message not received\nexpected: pongpong"
 		processedErrorMessage := removeSpaces(expectedErrorMessage)
 		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
 		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
@@ -121,16 +130,22 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
+
+		// script
+		go func() {
+			conn.Send("ping")
+			time.Sleep(20 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// script
 		conn.Send(Message{"history", ""})
 
 		// assert
-		rec.Assert().OneToBe(Message{"chat", "sentence1"})
-		rec.Assert().OneToBe(Message{"chat", "sentence1"}) // twice
+		rec.Assert().OneToBe("pong")
+		rec.Assert().OneToBe("pong") // twice is ok
 
-		rec.RunAssertions(50 * time.Millisecond) // it's a max
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
@@ -141,20 +156,23 @@ func TestOneToBe(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"history", ""})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(20 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
 
 		// assert
-		rec.Assert().OneToBe(Message{"chat", "sentence1"})
+		rec.Assert().OneToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 
-		rec.Assert().OneToBe(Message{"chat", "sentence1"})
+		rec.Assert().OneToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

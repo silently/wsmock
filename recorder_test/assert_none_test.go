@@ -12,10 +12,9 @@ func TestNoRunAssertionsion(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"join", "room:1"})
+		conn.Send("ping")
 
 		// no assertion!
 		rec.RunAssertions(10 * time.Millisecond)
@@ -31,10 +30,9 @@ func TestFailing(t *testing.T) {
 	t.Run("should fail", func(t *testing.T) {
 		t.Skip()
 		conn, rec := ws.NewGorillaMockAndRecorder(t)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"history", ""})
+		conn.Send("ping")
 
 		// assert
 		rec.Assert().OneToBe(Message{"chat", "notfound"})

@@ -7,21 +7,26 @@ import (
 	ws "github.com/silently/wsmock"
 )
 
-func TestOneToBeOneNotTobe(t *testing.T) {
+func TestMulti_FailFast(t *testing.T) {
 	t.Run("should fail fast", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
-		// script
-		conn.Send(Message{"history", ""})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+			conn.WriteJSON("pong3")
+			conn.WriteJSON("pong4")
+		}()
 
 		// assert
-		rec.Assert().OneToBe(Message{"chat", "sentence4"})
-		rec.Assert().OneNotToBe(Message{"chat", "sentence1"}) // failing assertion
+		rec.Assert().OneToBe("pong4")
+		rec.Assert().OneNotToBe("pong1") // failing assertion
 		before := time.Now()
-		rec.RunAssertions(300 * time.Millisecond) // it's a max
+		rec.RunAssertions(300 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
@@ -29,26 +34,34 @@ func TestOneToBeOneNotTobe(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 100*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneNotToBe should fail faster")
 			}
 		}
 	})
 }
 
-func TestMultiRunAssertionsion(t *testing.T) {
+func TestMulti_Assert(t *testing.T) {
 	t.Run("should succeed without blocking", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		go serveWsHistory(conn)
 
 		// script
-		conn.Send(Message{"history", ""})
-		rec.Assert().OneToBe(Message{"chat", "sentence1"})
-		rec.Assert().OneToBe(Message{"chat", "sentence2"})
-		rec.Assert().OneToBe(Message{"chat", "sentence3"})
-		rec.Assert().OneToBe(Message{"chat", "sentence4"})
+		go func() {
+			conn.Send("ping")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+			conn.WriteJSON("pong3")
+			conn.WriteJSON("pong4")
+		}()
+
+		// script
+		rec.Assert().OneToBe("pong1")
+		rec.Assert().OneToBe("pong2")
+		rec.Assert().OneToBe("pong3")
+		rec.Assert().OneToBe("pong4")
 
 		// no assertion!
 		rec.RunAssertions(100 * time.Millisecond)
