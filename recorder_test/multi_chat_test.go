@@ -1,13 +1,48 @@
 package recorder_test
 
 import (
+	"sync"
 	"testing"
 	"time"
 
 	ws "github.com/silently/wsmock"
 )
 
-func TestMultiConn_Chat(t *testing.T) {
+type chatStub struct {
+	sync.Mutex
+	connIndex map[*ws.GorillaConn]string
+}
+
+func newChatWsStub() *chatStub {
+	return &chatStub{sync.Mutex{}, make(map[*ws.GorillaConn]string)}
+}
+
+func (s *chatStub) handle(conn *ws.GorillaConn) {
+	for {
+		var m Message
+		err := conn.ReadJSON(&m)
+		if err != nil {
+			// client left (or needs to stop loop anyway)
+			return
+		} else if m.Kind == "join" {
+			s.Lock()
+			s.connIndex[conn] = m.Payload
+			s.Unlock()
+			conn.WriteJSON(Message{"joined", m.Payload})
+		} else if m.Kind == "message" {
+			s.Lock()
+			from := s.connIndex[conn]
+			for c := range s.connIndex {
+				if c != conn {
+					c.WriteJSON(Message{from, m.Payload})
+				}
+			}
+			s.Unlock()
+		}
+	}
+}
+
+func TestMulti_Chat(t *testing.T) {
 	t.Run("succeeds when testing messages written before and after other users join", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}

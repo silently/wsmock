@@ -14,6 +14,8 @@ type recorderStore struct {
 
 // returns the index/position of recorder for the given *testing.T test
 func indexRecorder(t *testing.T, r *Recorder) (index int) {
+	t.Helper()
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
@@ -31,6 +33,8 @@ func indexRecorder(t *testing.T, r *Recorder) (index int) {
 }
 
 func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
+	t.Helper()
+
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 
@@ -38,6 +42,8 @@ func getIndexedRecorders(t *testing.T) (recorders []*Recorder) {
 }
 
 func unindexRecorders(t *testing.T) {
+	t.Helper()
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
 

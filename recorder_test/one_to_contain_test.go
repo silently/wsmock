@@ -12,7 +12,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -38,7 +38,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -57,7 +57,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"pointer", ""})
@@ -78,7 +78,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsLogStrings(conn)
+		go serveWsLogStrings(conn)
 
 		// script
 		conn.Send("logs")
@@ -105,7 +105,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsLogBytes(conn)
+		go serveWsLogBytes(conn)
 
 		// script
 		conn.Send("logs")
@@ -132,7 +132,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -150,7 +150,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -168,7 +168,7 @@ func TestOneToContain(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsLogStrings(conn)
+		go serveWsLogStrings(conn)
 
 		// script
 		conn.Send("logs")

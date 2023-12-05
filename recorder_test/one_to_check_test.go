@@ -21,7 +21,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"join", "room:1"})
@@ -47,7 +47,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"join", "room:1"})
@@ -65,7 +65,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"join", "room:1"})
@@ -95,7 +95,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"join", "room:1"})
@@ -121,7 +121,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"history", ""})
@@ -141,7 +141,7 @@ package recorder_test
 // 		// init
 // 		mockT := &testing.T{}
 // 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-// 		serveWsHistory(conn)
+// 		go serveWsHistory(conn)
 
 // 		// script
 // 		conn.Send(Message{"history", ""})

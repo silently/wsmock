@@ -31,7 +31,7 @@ func TestRunAssertions(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -57,7 +57,7 @@ func TestRunAssertions(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -83,7 +83,7 @@ func TestRunAssertions(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -101,7 +101,7 @@ func TestRunAssertions(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
@@ -119,7 +119,7 @@ func TestRunAssertions(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})

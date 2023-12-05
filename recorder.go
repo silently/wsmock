@@ -84,6 +84,8 @@ func formatErrorSection[T any](r *Recorder, label string, items []T) string {
 }
 
 func (r *Recorder) outputError(err string, isFirst bool) {
+	r.t.Helper()
+
 	errorParts := strings.Split(err, "\n")
 	label, rest := errorParts[0], errorParts[1:]
 	errorOutput := formatErrorSection(r, "error: "+label, rest)
@@ -104,6 +106,8 @@ func (r *Recorder) outputError(err string, isFirst bool) {
 }
 
 func (r *Recorder) manageErrors() {
+	r.t.Helper()
+
 	r.mu.RLock()
 	if len(r.errors) > 0 {
 		for i, err := range r.errors {
@@ -158,6 +162,8 @@ func (r *Recorder) Assert() *AssertionBuilder {
 // At the end of Run, the recorder previously received messages are flushed and assertions
 // are removed. It's then possible to add new Assert* methods and Run again.
 func (r *Recorder) RunAssertions(timeout time.Duration) {
+	r.t.Helper()
+
 	// start
 	go r.forwardWritesDuringRound()
 	r.currentRound.start(timeout)
@@ -173,12 +179,16 @@ func (r *Recorder) RunAssertions(timeout time.Duration) {
 // Launches and waits (till timeout) for the outcome of all assertions added to all recorders
 // of this test.
 func RunAssertions(t *testing.T, timeout time.Duration) {
+	t.Helper()
+
 	recs := getIndexedRecorders(t)
 	wg := sync.WaitGroup{}
 
 	for _, r := range recs {
 		wg.Add(1)
 		go func(r *Recorder) {
+			r.t.Helper()
+
 			defer wg.Done()
 			r.RunAssertions(timeout)
 		}(r)

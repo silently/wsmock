@@ -12,7 +12,7 @@ func TestNoRunAssertionsion(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"join", "room:1"})
@@ -31,7 +31,7 @@ func TestFailing(t *testing.T) {
 	t.Run("should fail", func(t *testing.T) {
 		t.Skip()
 		conn, rec := ws.NewGorillaMockAndRecorder(t)
-		serveWsHistory(conn)
+		go serveWsHistory(conn)
 
 		// script
 		conn.Send(Message{"history", ""})
