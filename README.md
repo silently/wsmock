@@ -23,7 +23,7 @@ func TestRockPaperScissors(t *testing.T) {
   // add chained assertions on recorders
   rec1.Assert().
     OneToBe("draw").  // one received message expected to be "draw"
-    NextToBe("win")   // right next message expected to be "win"
+    NextToBe("win")   // next message expected to be "win"
   rec2.Assert().
     OneToBe("draw").
     NextToBe("loss")

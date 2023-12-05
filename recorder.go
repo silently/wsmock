@@ -140,6 +140,14 @@ func (r *Recorder) Assert() *AssertionBuilder {
 // 	}
 // }
 
+// func Try() {
+// 	x, ok := WaitFor[float32](nil, func(w any) (v any, ok bool) {
+// 		return 1, true
+// 	})
+// // other implemention could look like
+// rec.WaitFor(pointer, filter, timeout)
+// }
+
 // Runs all Assert* methods that have been previously added on this recorder, with a timeout.
 //
 // If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.

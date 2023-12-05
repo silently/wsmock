@@ -1,7 +1,7 @@
 module github.com/silently/wsmock
 
-go 1.20
+go 1.21
 
-require github.com/gorilla/websocket v1.5.0
+require github.com/gorilla/websocket v1.5.1
 
-require golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+require golang.org/x/net v0.19.0 // indirect
