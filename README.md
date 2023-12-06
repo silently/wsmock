@@ -226,7 +226,6 @@ The name of chainable condition methods is any combination of `Next|One + To|Not
 - Prefix:
   - `Next*` means the condition should be true on the very next received message
   - `One*` means one among subsequent messages should verify the condition
-  - `Last*` means the last message should verify the condition
 - Condition (with parameter type for clarity):
   - `*ToBe(target any)` is successful if the message equals `target` (according to the equality operator `==`, see [spec](https://go.dev/ref/spec#Comparison_operators))
   - `*ToCheck(f Predicate)` is successful if `predicate(msg)` is true
@@ -241,10 +240,14 @@ Here are some example:
 
 ### Closing conditions
 
-The name of closing condition methods is any combination of `LastTo|LastNotTo|AllTo|NoneTo + Be|Check|Contain|Match`. They behave similarly to chaining condition methods, with the following differences:
+The name of closing condition methods is any combination of `LastTo|LastNotTo|AllTo|NoneTo + Be|Check|Contain|Match` (plus the special `ConnClosed` that checks the connection is closed). They behave similarly to chaining condition methods, with the following differences:
 
 - they need the whole message history to succeed, meaning they can fail fast (for instance if `NoneToBe("a")` receives `"a"`) but can only succeed on end (timeout or conn closed)
 - there can be only one closing condition in an assertion (or the assertion will always fail)
+- Prefix:
+  - `Last*` means the last message should verify the condition
+  - `None*` means all messages should verify the condition
+  - `All*` means no message should verify the condition
 
 If you want to test several closing conditions, don't chain them but instead create parallel assertions with multiple `.Assert()`:
 

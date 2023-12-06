@@ -35,7 +35,7 @@ func TestLastToBe(t *testing.T) {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed < 30*time.Millisecond {
-				t.Error("LastToBe should succeed before timeout")
+				t.Error("LastToBe should not succeed before timeout")
 			}
 		}
 	})
