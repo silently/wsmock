@@ -33,14 +33,11 @@ func TestFailing(t *testing.T) {
 
 		// script
 		conn.Send("ping")
+		conn.WriteJSON(Message{"chat", "sentence1"})
 
 		// assert
-		rec.Assert().OneToBe(Message{"chat", "notfound"})
+		rec.Assert().OneNotToBe(Message{"chat", "sentence1"})
 		rec.Assert().NextToBe(Message{"chat", "notfound"})
-		rec.Assert().LastToBe(Message{"chat", "notfound"})
-		rec.Assert().OneToContain("notfound")
-		rec.Assert().ConnClosed()
-
 		rec.RunAssertions(100 * time.Millisecond)
 	})
 }

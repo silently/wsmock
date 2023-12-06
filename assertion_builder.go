@@ -185,7 +185,7 @@ func (ab *AssertionBuilder) ConnClosed() {
 	ab.With(func(end bool, latest any, all []any) (done, passed bool, err string) {
 		if end {
 			passed = ab.rec.done // conn closed => recorder done
-			err = "conn should be closed"
+			err = "[ConnClosed] conn is not closed"
 		}
 		return
 	})

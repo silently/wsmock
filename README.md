@@ -1,6 +1,8 @@
 # wsmock
 
-Golang library to help with WebSocket testing, writing tests like:
+Golang library to help with WebSocket testing by providing Gorilla mocks, expressive scripting of assertions, parallelism, configurable timeouts and meaningful logs. wsmock is itself thoroughly tested.
+
+With wsmock tests are written like:
 
 ```golang
 func TestRockPaperScissors(t *testing.T) {
@@ -20,10 +22,10 @@ func TestRockPaperScissors(t *testing.T) {
   conn1.Send("paper")
   conn2.Send("rock")
 
-  // add chained assertions on recorders
+  // assertions are made of chained and ordered conditions
   rec1.Assert().
-    OneToBe("draw").  // one received message expected to be "draw"
-    NextToBe("win")   // next message expected to be "win"
+    OneToBe("draw").  // one message received is expected to be "draw"
+    NextToBe("win")   // the next message is expected to be "win"
   rec2.Assert().
     OneToBe("draw").
     NextToBe("loss")
@@ -246,8 +248,8 @@ The name of closing condition methods is any combination of `LastTo|LastNotTo|Al
 - there can be only one closing condition in an assertion (or the assertion will always fail)
 - Prefix:
   - `Last*` means the last message should verify the condition
-  - `None*` means all messages should verify the condition
-  - `All*` means no message should verify the condition
+  - `None*` means all messages should verify the condition (succeeds when no message is received)
+  - `All*` means no message should verify the condition (succeeds when no message is received)
 
 If you want to test several closing conditions, don't chain them but instead create parallel assertions with multiple `.Assert()`:
 
@@ -340,26 +342,24 @@ Here are some gotchas:
 In case of a failing test, the output looks like:
 
 ```
---- FAIL: TestFailing (0.01s)
-    --- FAIL: TestFailing/should_fail (0.01s)
-        recorder_api_test.go:588: 
+--- FAIL: TestFailing (0.00s)
+    --- FAIL: TestFailing/should_fail (0.00s)
+        assert_none_test.go:41: 
             Recorder#0 1 message received:
                 {Kind:chat Payload:sentence1}
             
-        recorder_api_test.go:588: 
-            Recorder#0 error: message should not be received
-                unexpected: {Kind:chat Payload:sentence1}
+        assert_none_test.go:41: 
+            Recorder#0 error: [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
+                Failing message (of type recorder_test.Message): {Kind:chat Payload:sentence1}
             
-        recorder_api_test.go:588: 
-            Recorder#0 error: incorrect first message
-                expected: {Kind:chat Payload:notfound}
-                received: {Kind:chat Payload:sentence1}
+        assert_none_test.go:41: 
+            Recorder#0 error: [OneNotToBe] message unexpectedly equal to: {Kind:chat Payload:sentence1}
 ```
 
 Where:
 
 - `Recorder#0` serves as a unique identifier of the failing recorder within the test `TestFailing` (the index `#0` maps the creation order of the recorder in `TestFailing`)
-- if there is at least one error for `Recorder#0`, the introductory log `Recorder#0 1 message received:` helps understand the  errors that follow
+- if there is at least one error for `Recorder#0`, the introductory log `Recorder#0 1 message received:` may help understand errors that follow
 
 ## For wsmock developers
 

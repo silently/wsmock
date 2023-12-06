@@ -1,5 +1,7 @@
 package wsmock
 
+import "fmt"
+
 // Generic interface to be added on recorders
 // The Try method is called on *end* (timeout or connection closed)
 // and each time a message is received (*latest* argument), with *all* being "all messages including the *latest*"
@@ -77,8 +79,11 @@ func (a nextTo) Try(end bool, latest any, _ []any) (done, passed bool, err strin
 	// fails on end
 	if end {
 		return true, false, a.err
+	} else if a.f(latest) {
+		return true, true, ""
+	} else {
+		return true, a.f(latest), a.err + fmt.Sprintf("\nFailing message (of type %T): %+v", latest, latest)
 	}
-	return true, a.f(latest), a.err
 }
 
 // The lastTo struct implements Asserter. Its Predicate function is called once, on end.
@@ -94,9 +99,14 @@ func (a lastTo) Try(end bool, latest any, _ []any) (done, passed bool, err strin
 	// fails on end
 	if end {
 		if latest != nil {
-			return true, a.f(latest), a.err
+			if a.f(latest) {
+				return true, true, ""
+			} else {
+				return true, false, a.err + fmt.Sprintf("\nFailing message (of type %T): %+v", latest, latest)
+			}
+		} else {
+			return true, false, a.err + "\nReason: last message missing" // no "last" -> fails
 		}
-		return true, false, a.err // no "last" -> fails
 	}
 	// unfinished
 	return false, false, ""
@@ -120,7 +130,7 @@ func (a allTo) Try(end bool, latest any, _ []any) (done, passed bool, err string
 		if a.f(latest) {
 			return false, false, "" // ongoing
 		} else {
-			return true, false, a.err // failed
+			return true, false, a.err + fmt.Sprintf("\nFailing message (of type %T): %+v", latest, latest) // failed
 		}
 	}
 }
