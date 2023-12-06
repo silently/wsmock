@@ -20,7 +20,7 @@ func (ab *AssertionBuilder) With(a AsserterFunc) *AssertionBuilder {
 	return ab
 }
 
-// One*
+// OneTo*
 
 // Asserts if a message has been received by recorder
 func (ab *AssertionBuilder) OneToBe(target any) *AssertionBuilder {
@@ -54,11 +54,11 @@ func (ab *AssertionBuilder) OneToContain(sub string) *AssertionBuilder {
 	return ab
 }
 
-func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
+func (ab *AssertionBuilder) OneToMatch(re *regexp.Regexp) *AssertionBuilder {
 	ab.list = append(ab.list, newOneTo(
 		func(msg any) bool {
 			if str, ok := msg.(string); ok {
-				return re.Match([]byte(str))
+				return re.MatchString(str)
 			} else {
 				b, err := json.Marshal(msg)
 				if err == nil {
@@ -70,7 +70,24 @@ func (ab *AssertionBuilder) OneToMatch(re regexp.Regexp) *AssertionBuilder {
 	return ab
 }
 
-// First*
+// OneNot*
+
+// Asserts if a message has not been received by recorder (can fail before time out)
+func (ab *AssertionBuilder) NoneToBe(target any) *AssertionBuilder {
+	return ab.With(func(end bool, latest any, _ []any) (done, passed bool, err string) {
+		if end {
+			done = true
+			passed = true
+		} else if latest == target {
+			done = true
+			passed = false
+			err = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
+		}
+		return
+	})
+}
+
+// NextTo*
 
 // Asserts first message (times out only if no message is received)
 func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
@@ -83,28 +100,10 @@ func (ab *AssertionBuilder) NextToBe(target any) *AssertionBuilder {
 // Last*
 
 // Asserts last message (always times out)
-func (ab *AssertionBuilder) LastToBe(target any) *AssertionBuilder {
+func (ab *AssertionBuilder) LastToBe(target any) {
 	ab.list = append(ab.list, newLastTo(func(msg any) bool {
 		return msg == target
 	}, fmt.Sprintf("incorrect last message\nexpected: %+v", target)))
-	return ab
-}
-
-// OneNot*
-
-// Asserts if a message has not been received by recorder (can fail before time out)
-func (ab *AssertionBuilder) OneNotToBe(target any) *AssertionBuilder {
-	return ab.With(func(end bool, latest any, _ []any) (done, passed bool, err string) {
-		if end {
-			done = true
-			passed = true
-		} else if latest == target {
-			done = true
-			passed = false
-			err = fmt.Sprintf("message should not be received\nunexpected: %+v", target)
-		}
-		return
-	})
 }
 
 // Other

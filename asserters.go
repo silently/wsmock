@@ -52,7 +52,7 @@ func newOneTo(f Predicate, err string) *oneTo {
 	return &oneTo{f, err}
 }
 
-func (a oneTo) Try(end bool, latest any, all []any) (done, passed bool, err string) {
+func (a oneTo) Try(end bool, latest any, _ []any) (done, passed bool, err string) {
 	// fails on end
 	if end {
 		return true, false, a.err
@@ -77,7 +77,7 @@ func newNextTo(f Predicate, err string) *nextTo {
 	return &nextTo{f, err}
 }
 
-func (a nextTo) Try(end bool, latest any, all []any) (done, passed bool, err string) {
+func (a nextTo) Try(end bool, latest any, _ []any) (done, passed bool, err string) {
 	// fails on end
 	if end {
 		return true, false, a.err

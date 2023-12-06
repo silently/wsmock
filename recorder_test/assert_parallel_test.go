@@ -24,7 +24,7 @@ func TestMulti_FailFast(t *testing.T) {
 
 		// assert
 		rec.Assert().OneToBe("pong4")
-		rec.Assert().OneNotToBe("pong1") // failing assertion
+		rec.Assert().NoneToBe("pong1") // failing assertion
 		before := time.Now()
 		rec.RunAssertions(300 * time.Millisecond)
 		after := time.Now()

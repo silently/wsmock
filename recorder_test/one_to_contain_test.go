@@ -25,7 +25,7 @@ func TestOneToContain_Success(t *testing.T) {
 		rec.Assert().OneToContain("ong")
 		rec.Assert().OneToContain("spec")
 		before := time.Now()
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -33,7 +33,7 @@ func TestOneToContain_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 150*time.Millisecond {
+			if elapsed > 30*time.Millisecond {
 				t.Errorf("OneToContain should succeed faster")
 			}
 		}
@@ -82,39 +82,6 @@ func TestOneToContain_Success(t *testing.T) {
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
-		}
-	})
-
-	t.Run("succeeds when containing string is received before timeout", func(t *testing.T) {
-		// init
-		mockT := &testing.T{}
-		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
-			conn.WriteJSON("pong4")
-		}()
-
-		// assert
-		rec.Assert().OneToContain("pong")
-		rec.Assert().OneToContain("pong2")
-		before := time.Now()
-		rec.RunAssertions(30 * time.Millisecond)
-		after := time.Now()
-
-		if mockT.Failed() { // fail not expected
-			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
-		} else {
-			// test timing
-			elapsed := after.Sub(before)
-			if elapsed > 150*time.Millisecond {
-				t.Errorf("OneToContain should succeed faster")
-			}
 		}
 	})
 

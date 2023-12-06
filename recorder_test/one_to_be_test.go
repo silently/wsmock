@@ -31,7 +31,7 @@ func TestOneToBe(t *testing.T) {
 		// assert
 		rec.Assert().OneToBe("pong")
 		before := time.Now()
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -39,7 +39,7 @@ func TestOneToBe(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 150*time.Millisecond {
+			if elapsed > 30*time.Millisecond {
 				t.Errorf("OneToBe should succeed faster")
 			}
 		}

@@ -8,7 +8,7 @@ import (
 )
 
 func TestNextToBe(t *testing.T) {
-	t.Run("succeeds when first message is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when first message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
