@@ -35,18 +35,17 @@ func (f AsserterFunc) Try(end bool, latest any, all []any) (done, passed bool, e
 // A Predicate function maps its input to true or false.
 type Predicate func(msg any) (passed bool)
 
-// A AllPredicate function maps its input to true or false.
-type AllPredicate func(all []any) (passed bool)
-
-// The oneTo struct implements Asserter. Its Predicate function is called each time a message is received.
-//
-// If the Predicate returns true, asserting succeeds,
-// If the Predicate returns false, asserting is considered not done/solved and waits for a new message or until end,
-// If the end is reached, the asserting fails and the err is displayed.
-type oneTo struct {
+type predicateAndError struct {
 	f   Predicate
 	err string
 }
+
+// The oneTo struct implements Asserter. Its Predicate function is called each on message and on end.
+//
+// If the Predicate returns true, asserting is done and succeeds,
+// If the Predicate returns false, asserting is not done,
+// If the end is reached, asserting is done and fails.
+type oneTo predicateAndError
 
 func newOneTo(f Predicate, err string) *oneTo {
 	return &oneTo{f, err}
@@ -64,14 +63,11 @@ func (a oneTo) Try(end bool, latest any, _ []any) (done, passed bool, err string
 	return false, false, ""
 }
 
-// The nextTo struct implements Asserter. Its Predicate function is called once, when the next message
-// is received or on timeout.
+// The nextTo struct implements Asserter. Its Predicate function is called once, either on the (next) message
+// or on timeout.
 //
-// The predicate return value gives the test outcome.
-type nextTo struct {
-	f   Predicate
-	err string
-}
+// The Predicate return value gives the test outcome (success/failure).
+type nextTo predicateAndError
 
 func newNextTo(f Predicate, err string) *nextTo {
 	return &nextTo{f, err}
@@ -85,24 +81,20 @@ func (a nextTo) Try(end bool, latest any, _ []any) (done, passed bool, err strin
 	return true, a.f(latest), a.err
 }
 
-// The lastTo struct implements Asserter. Its Predicate function is called once, on timeout.
+// The lastTo struct implements Asserter. Its Predicate function is called once, on end.
 //
-// The predicate return value gives the test outcome.
-type lastTo struct {
-	f   Predicate
-	err string
-}
+// The Predicate return value gives the test outcome (success/failure).
+type lastTo predicateAndError
 
 func newLastTo(f Predicate, err string) *lastTo {
 	return &lastTo{f, err}
 }
 
-func (a lastTo) Try(end bool, _ any, all []any) (done, passed bool, err string) {
+func (a lastTo) Try(end bool, latest any, _ []any) (done, passed bool, err string) {
 	// fails on end
 	if end {
-		if length := len(all); length > 0 {
-			last := all[length-1]
-			return true, a.f(last), a.err // there's a last to be tested
+		if latest != nil {
+			return true, a.f(latest), a.err
 		}
 		return true, false, a.err // no "last" -> fails
 	}
@@ -110,22 +102,25 @@ func (a lastTo) Try(end bool, _ any, all []any) (done, passed bool, err string) 
 	return false, false, ""
 }
 
-// An AssertOnEnd function is only called when Assert ends (timeout or connection close).
+// The allTo struct implements Asserter. Its Predicate function is called on message and on end.
 //
-// It gets in order all the messages received during the run, and returns the assertion outcome.
-type allTo struct {
-	f   AllPredicate
-	err string
-}
+// If the Predicate returns true, asserting is not done,
+// If the Predicate returns false, asserting is done and fails,
+// If the end is reached, asserting is done and succeeds.
+type allTo predicateAndError
 
-func newAllTo(p AllPredicate, err string) *allTo {
+func newAllTo(p Predicate, err string) *allTo {
 	return &allTo{p, err}
 }
 
-func (a allTo) Try(end bool, _ any, all []any) (done, passed bool, err string) {
-	// bypassed until end
-	if !end {
-		return false, false, ""
+func (a allTo) Try(end bool, latest any, _ []any) (done, passed bool, err string) {
+	if end {
+		return true, true, ""
+	} else {
+		if a.f(latest) {
+			return false, false, "" // ongoing
+		} else {
+			return true, false, a.err // failed
+		}
 	}
-	return true, a.f(all), a.err
 }

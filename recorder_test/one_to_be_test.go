@@ -118,7 +118,7 @@ func TestOneToBe(t *testing.T) {
 			t.Error("OneToBe should fail because of unexpected message")
 		}
 		// assert error message
-		expectedErrorMessage := "message not received: pongpong"
+		expectedErrorMessage := "no message is equal to: pongpong"
 		processedErrorMessage := removeSpaces(expectedErrorMessage)
 		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
 		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
