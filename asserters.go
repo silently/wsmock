@@ -34,14 +34,6 @@ func (f AsserterFunc) Try(end bool, latest any, all []any) (done, passed bool, e
 	return f(end, latest, all)
 }
 
-// A Predicate function maps its input to true or false.
-type Predicate func(msg any) (passed bool)
-
-type predicateAndError struct {
-	f   Predicate
-	err string
-}
-
 // The oneTo struct implements Asserter. Its Predicate function is called each on message and on end.
 //
 // If the Predicate returns true, asserting is done and succeeds,

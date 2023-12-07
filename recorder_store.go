@@ -7,6 +7,7 @@ import (
 
 var store recorderStore = recorderStore{sync.RWMutex{}, make(map[*testing.T][]*Recorder)}
 
+// Used to find all recorders declared on a given testing.T
 type recorderStore struct {
 	mu    sync.RWMutex
 	index map[*testing.T][]*Recorder

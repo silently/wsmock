@@ -43,7 +43,7 @@ type IGorilla interface {
 	WritePreparedMessage(pm *websocket.PreparedMessage) error
 }
 
-// Mock for Gorilla websocket.Conn
+// Mock for Gorilla websocket.Conn with an additional Send() method to simulate client-side sent message.
 type GorillaConn struct {
 	serverReadCh chan any
 	recorder     *Recorder
@@ -82,9 +82,8 @@ func (r *gorillaReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-// Returns a mock to be used in place of a Gorilla websocket.Conn in tests. GorillaConn has an extra Send()
-// method to simulate client-side sent messages, and *Recorder provides an API to declare assertions about
-// what is written by the server to the mock.
+// Returns a mock to be used in place of a Gorilla websocket.Conn (in tests) plus a recorder
+// that comes with an API to define assertions about messages sent by the server to the mock.
 //
 // Binding these resources to a given *testing.T helps cleaning them when the test is over.
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {

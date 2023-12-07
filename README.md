@@ -134,7 +134,7 @@ type Message struct {
   Payload any    `json:"payload"`
 }
 
-func TestWs(t *testing.T) {
+func TestChat(t *testing.T) {
   t.Run("two peers can connect and exchange hellos", func(t *testing.T) {
     // 2 users interact via WebSockets
     johnnyConn, johnnyRec := wsmock.NewGorillaMockAndRecorder(t)
@@ -170,10 +170,10 @@ func TestWs(t *testing.T) {
 }
 ```
 
-Here, `wsmock.NewGorillaConnAndRecorder` returns two structs:
+Thanks to `wsmock.NewGorillaConnAndRecorder` we get two structs:
 
-- `wsmock.GorillaConn`, the mocked WebSocket connection given to `runWs`
-- `wsmock.Recorder`, that records what is written by `runWs` to `GorillaConn` and propose an API to define assertions on these writes
+- `wsmock.GorillaConn` the mocked WebSocket connection given to `runWs`
+- `wsmock.Recorder` that records what is written by `runWs` to `GorillaConn` and propose an API to define assertions on these writes
 
 Methods you're supposed to use on `wsmock.GorillaConn` to script the tests are:
 

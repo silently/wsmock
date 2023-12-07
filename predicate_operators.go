@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+// A Predicate function maps its input to true or false.
+type Predicate func(msg any) (passed bool)
+
+type predicateAndError struct {
+	f   Predicate
+	err string
+}
+
 func not(f Predicate) Predicate {
 	return func(msg any) bool {
 		return !f(msg)

@@ -9,7 +9,9 @@ import (
 )
 
 // Used in conjunction with a WebSocket connection mock, a Recorder stores all messages written by
-// the server to the mock, and its API is used to make assertions about these messages.
+// the WebSocket server handler to the mock.
+//
+// Its API is used to define assertions about these messages.
 type Recorder struct {
 	t            *testing.T
 	index        int // used in logs
@@ -20,7 +22,7 @@ type Recorder struct {
 	doneCh        chan struct{}
 	// messages queue
 	serverWrites []any
-	// fails
+	// when fails
 	mu     sync.RWMutex
 	errors []string
 }
@@ -49,6 +51,7 @@ func (r *Recorder) stop() {
 	}
 }
 
+// forward to assertionJobs
 func (r *Recorder) forwardWritesDuringRound() {
 	for {
 		select {
@@ -119,7 +122,7 @@ func (r *Recorder) manageErrors() {
 
 // API
 
-// Initialize a new chainable AssertionBuilder.
+// Initialize a new chainable AssertionBuilder
 func (r *Recorder) Assert() *AssertionBuilder {
 	p := &AssertionBuilder{rec: r}
 	j := newAssertionJob(r, p)
@@ -152,15 +155,20 @@ func (r *Recorder) Assert() *AssertionBuilder {
 // rec.WaitFor(pointer, filter, timeout)
 // }
 
-// Runs all Assert* methods that have been previously added on this recorder, with a timeout.
+// Runs all the conditions added on this recorder with Assert() and waits for their outcome.
 //
-// If all the assertions succeeds before the timeout, or if one fails before it, timeout won't be reached.
+// The specified timeout is not reached in the following cases:
+// - all of the assertions succeed
+// - one assertion fails
+// - the conn is closed
+// - (or if there is no assertion on the recorder)
 //
-// For instance, some assertions (like OneNotToBe) always need to wait until the timeout has been reached
-// to assert success, but may fail sooner.
+// For instance some conditions (like NoneToBe) always need to wait until the timeout is reached
+// to succeed, but may fail sooner.
 //
-// At the end of Run, the recorder previously received messages are flushed and assertions
-// are removed. It's then possible to add new Assert* methods and Run again.
+// At the end of RunAssertions, the recorder message history is flushed and assertions
+// are removed. It's then possible to add new assertions and run them with a fresh history
+// on the same recorder.
 func (r *Recorder) RunAssertions(timeout time.Duration) {
 	r.t.Helper()
 
@@ -176,8 +184,8 @@ func (r *Recorder) RunAssertions(timeout time.Duration) {
 	r.resetRound()
 }
 
-// Launches and waits (till timeout) for the outcome of all assertions added to all recorders
-// of this test.
+// Runs and waits for the outcome of all the assertions added to all the recorders
+// of this T test.
 func RunAssertions(t *testing.T, timeout time.Duration) {
 	t.Helper()
 

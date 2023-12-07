@@ -59,6 +59,8 @@ func (j *assertionJob) assertOnEnd() {
 	}
 }
 
+// Deals with messages forwarded by recorder, send them to condition and manage condition progress,
+// also dealing with ending logic.
 func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 	// we found that using time.Sleep is more accurate (= less delay in addition to the specified timeout)
 	// than using <-time.After directly on a for-select case
