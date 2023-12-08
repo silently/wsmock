@@ -15,7 +15,6 @@ func TestLastToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -47,7 +46,6 @@ func TestLastToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -72,7 +70,6 @@ func TestLastToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -99,8 +96,8 @@ func TestLastToBe(t *testing.T) {
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
-		// script: not much
-		conn.Send("ping")
+		// dumb script
+		go conn.Send("ping")
 
 		// assert
 		rec.Assert().LastToBe("pong")

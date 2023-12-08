@@ -13,8 +13,8 @@ func TestMulti_FailFast(t *testing.T) {
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
+		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -42,6 +42,29 @@ func TestMulti_FailFast(t *testing.T) {
 }
 
 func TestMulti_Assert(t *testing.T) {
+
+	t.Run("same condition should succeed twice in same Run", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+
+		// assert
+		rec.Assert().OneToBe("pong")
+		rec.Assert().OneToBe("pong") // twice is ok
+
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
 	t.Run("should succeed without blocking", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -49,7 +72,6 @@ func TestMulti_Assert(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -64,7 +86,7 @@ func TestMulti_Assert(t *testing.T) {
 		rec.Assert().OneToBe("pong4")
 
 		// no assertion!
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("several OneToBe should not fail")

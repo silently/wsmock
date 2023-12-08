@@ -34,7 +34,6 @@ func TestCustom_AlwaysTrue(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
@@ -63,7 +62,6 @@ func TestCustom_AlwaysTrue(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(100 * time.Millisecond) // ------> longer than RunAssertions timeout
 			conn.WriteJSON("pong")
 		}()
@@ -86,7 +84,6 @@ func TestCustom_AlwaysFalse(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
@@ -117,7 +114,6 @@ func TestCustom_CountMessages(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -127,7 +123,7 @@ func TestCustom_CountMessages(t *testing.T) {
 
 		// assert
 		rec.Assert().With(hasMoreMessagesOnEndThan(3))
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
@@ -142,18 +138,17 @@ func TestCustom_CountMessages(t *testing.T) {
 		// script
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
-			time.Sleep(30 * time.Millisecond)
+			time.Sleep(60 * time.Millisecond)
 			conn.WriteJSON("pong3")
 			conn.WriteJSON("pong4")
 		}()
 
 		// assert
 		rec.Assert().With(hasMoreMessagesOnEndThan(3))
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
@@ -167,7 +162,6 @@ func TestCustom_CountMessages(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -177,7 +171,7 @@ func TestCustom_CountMessages(t *testing.T) {
 
 		// assert
 		rec.Assert().With(hasMoreMessagesOnEndThan(10))
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")

@@ -13,8 +13,8 @@ func TestNoRunAssertionsion(t *testing.T) {
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
-		// script
-		conn.Send("ping")
+		// dumb script
+		go conn.Send("ping")
 
 		// no assertion!
 		rec.RunAssertions(10 * time.Millisecond)
@@ -31,9 +31,7 @@ func TestFailing(t *testing.T) {
 		t.Skip()
 		conn, rec := ws.NewGorillaMockAndRecorder(t)
 
-		// script
-		conn.Send("ping")
-		conn.WriteJSON(Message{"chat", "sentence1"})
+		go conn.WriteJSON(Message{"chat", "sentence1"})
 
 		// assert
 		rec.Assert().OneNotToBe(Message{"chat", "sentence1"})

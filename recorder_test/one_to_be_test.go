@@ -15,15 +15,14 @@ func removeSpaces(s string) (out string) {
 	return
 }
 
-func TestOneToBe(t *testing.T) {
-	t.Run("succeeds when message is received before timeout", func(t *testing.T) {
+func TestOneToBe_Success(t *testing.T) {
+	t.Run("succeeds fast when equal message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
@@ -45,35 +44,101 @@ func TestOneToBe(t *testing.T) {
 		}
 	})
 
-	t.Run("fails when timeout occurs before message", func(t *testing.T) {
+	t.Run("succeeds when equal message is received among others", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+			conn.WriteJSON("pong3")
+		}()
+
+		// assert
+		rec.Assert().OneToBe("pong2")
+		rec.RunAssertions(100 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+}
+
+func TestOneToBe_Failure(t *testing.T) {
+	t.Run("fails when no message is received", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// dumb script
+		go conn.Send("ping")
+
+		// assert
+		rec.Assert().OneToBe(stringLongerThan3)
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToBe should fail because no message is received")
+		}
+	})
+
+	t.Run("fails when only non equal message are received", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+		}()
+
+		rec.Assert().OneToBe("pong3")
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToBe should fail because of unexpected message")
+		}
+		// assert error message
+		expectedErrorMessage := "no message is equal to: pong3"
+		processedErrorMessage := removeSpaces(expectedErrorMessage)
+		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
+		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
+			t.Errorf("OneToBe wrong error message, expected:\n\"%v\"", expectedErrorMessage)
+		}
+	})
+
+	t.Run("fails when timeout occurs before equal message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(60 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
 
 		// assert
 		rec.Assert().OneToBe("pong")
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToBe should fail because of timeout")
 		}
 	})
 
-	t.Run("fails when conn is closed before message", func(t *testing.T) {
+	t.Run("fails fast when conn is closed before message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(50 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
@@ -96,87 +161,6 @@ func TestOneToBe(t *testing.T) {
 			if elapsed > 30*time.Millisecond {
 				t.Error("OneToBe should fail faster because of Close")
 			}
-		}
-	})
-
-	t.Run("fails with correct message", func(t *testing.T) {
-		// init
-		mockT := &testing.T{}
-		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(20 * time.Millisecond)
-			conn.WriteJSON("pong")
-		}()
-
-		rec.Assert().OneToBe("pongpong")
-		rec.RunAssertions(50 * time.Millisecond)
-
-		if !mockT.Failed() { // fail expected
-			t.Error("OneToBe should fail because of unexpected message")
-		}
-		// assert error message
-		expectedErrorMessage := "no message is equal to: pongpong"
-		processedErrorMessage := removeSpaces(expectedErrorMessage)
-		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
-		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
-			t.Errorf("OneToBe wrong error message, expected:\n\"%v\"", expectedErrorMessage)
-		}
-	})
-
-	t.Run("succeeds twice in same Run", func(t *testing.T) {
-		// init
-		mockT := &testing.T{}
-		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(20 * time.Millisecond)
-			conn.WriteJSON("pong")
-		}()
-
-		// script
-		conn.Send(Message{"history", ""})
-
-		// assert
-		rec.Assert().OneToBe("pong")
-		rec.Assert().OneToBe("pong") // twice is ok
-
-		rec.RunAssertions(50 * time.Millisecond)
-
-		if mockT.Failed() { // fail not expected
-			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
-		}
-	})
-
-	t.Run("succeeds once on two RunS", func(t *testing.T) {
-		// init
-		mockT := &testing.T{}
-		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(20 * time.Millisecond)
-			conn.WriteJSON("pong")
-		}()
-
-		// assert
-		rec.Assert().OneToBe("pong")
-		rec.RunAssertions(50 * time.Millisecond)
-
-		if mockT.Failed() { // fail not expected
-			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
-		}
-
-		rec.Assert().OneToBe("pong")
-		rec.RunAssertions(50 * time.Millisecond)
-
-		if !mockT.Failed() { // fail expected
-			t.Error("OneToBe should fail for second Run", getTestOutput(mockT))
 		}
 	})
 }

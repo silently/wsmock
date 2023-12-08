@@ -7,15 +7,14 @@ import (
 	ws "github.com/silently/wsmock"
 )
 
-func TestNextToBe(t *testing.T) {
-	t.Run("succeeds fast when first message is received before timeout", func(t *testing.T) {
+func TestNextToBe_Success(t *testing.T) {
+	t.Run("succeeds fast when first equal message is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -47,7 +46,6 @@ func TestNextToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -63,28 +61,9 @@ func TestNextToBe(t *testing.T) {
 			t.Error("NextToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
+}
 
-	t.Run("fails when timeout occurs before first message", func(t *testing.T) {
-		// init
-		mockT := &testing.T{}
-		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
-
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(30 * time.Millisecond)
-			conn.WriteJSON("pong")
-		}()
-
-		// assert
-		rec.Assert().NextToBe("pong")
-		rec.RunAssertions(10 * time.Millisecond)
-
-		if !mockT.Failed() { // fail expected
-			t.Error("NextToBe should fail because of timeout")
-		}
-	})
-
+func TestNextToBe_Failure(t *testing.T) {
 	t.Run("fails when first message differs", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -92,22 +71,16 @@ func TestNextToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong")
+			conn.WriteJSON("pong1")
 		}()
 
 		// assert
-		rec.Assert().NextToBe("pongpong")
-		rec.RunAssertions(20 * time.Millisecond)
+		rec.Assert().NextToBe("pong2")
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("NextToBe should fail")
-			// } else { // TODO?
-			// 	output := getTestOutput(mockT)
-			// 	if !strings.Contains(output, "should be: {chat sentence2}, received: {chat sentence1}") {
-			// 		t.Errorf("NextToBe unexpected error message: \"%v\"", output)
-			// 	}
 		}
 	})
 
@@ -118,7 +91,6 @@ func TestNextToBe(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong1")
 			conn.WriteJSON("pong2")
@@ -132,6 +104,26 @@ func TestNextToBe(t *testing.T) {
 
 		if !mockT.Failed() { // fail expected
 			t.Error("NextToBe should fail")
+		}
+	})
+
+	t.Run("fails when timeout occurs before first message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(30 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+
+		// assert
+		rec.Assert().NextToBe("pong")
+		rec.RunAssertions(10 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("NextToBe should fail because of timeout")
 		}
 	})
 }

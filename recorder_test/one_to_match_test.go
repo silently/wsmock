@@ -16,7 +16,7 @@ func init() {
 }
 
 func TestOneToMatch_Success(t *testing.T) {
-	t.Run("succeeds when matched string is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when matching string is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -44,7 +44,29 @@ func TestOneToMatch_Success(t *testing.T) {
 		}
 	})
 
-	t.Run("succeeds when matched []byte is received", func(t *testing.T) {
+	t.Run("succeeds fast when matching string is received among others", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		go func() {
+			conn.Send("shoot")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("missed")
+			conn.WriteJSON("gooooal")
+			conn.WriteJSON("out")
+		}()
+
+		// assert
+		rec.Assert().OneToMatch(goalRE)
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("OneToMatch should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
+	t.Run("succeeds when matching []byte is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -60,7 +82,7 @@ func TestOneToMatch_Success(t *testing.T) {
 
 		// assert
 		rec.Assert().OneToMatch(goalRE)
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToMatch should succeed, mockT output is:", getTestOutput(mockT))
@@ -69,62 +91,93 @@ func TestOneToMatch_Success(t *testing.T) {
 }
 
 func TestOneToMatch_Failure(t *testing.T) {
-	t.Run("fails when timeout occurs before matched message", func(t *testing.T) {
+	t.Run("fails when no message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
-		go func() {
-			conn.Send("shoot")
-			time.Sleep(50 * time.Millisecond)
-			conn.WriteJSON("goooooal")
-		}()
+		// dumb script
+		go conn.Send("ping")
 
 		// assert
 		rec.Assert().OneToMatch(goalRE)
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("OneToMatch should fail because of timeout")
+			t.Error("OneToMatch should fail because no message is received")
 		}
 	})
 
-	t.Run("fails when timeout occurs before matched message", func(t *testing.T) {
+	t.Run("fails when no matching message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		go func() {
 			conn.Send("shoot")
-			time.Sleep(50 * time.Millisecond)
-			conn.WriteJSON("gl")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("missed")
 		}()
 
 		// assert
 		rec.Assert().OneToMatch(goalRE)
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToMatch should fail because there is no matching message")
 		}
 	})
 
-	t.Run("fails when there is no", func(t *testing.T) {
+	t.Run("fails when timeout occurs before matching message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		go func() {
+			conn.Send("shoot")
+			time.Sleep(60 * time.Millisecond)
+			conn.WriteJSON("goooooal")
+		}()
+
+		// assert
+		rec.Assert().OneToMatch(goalRE)
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToMatch should fail because of timeout")
+		}
+	})
+
+	t.Run("fails fast when conn is closed before message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
+			conn.Send("shoot")
+			time.Sleep(50 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+		go func() {
+			time.Sleep(20 * time.Millisecond)
+			conn.Close()
 		}()
 
 		// assert
 		rec.Assert().OneToMatch(goalRE)
-		rec.RunAssertions(30 * time.Millisecond)
+		before := time.Now()
+		rec.RunAssertions(100 * time.Millisecond)
+		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("OneToMatch should fail because there is no received message")
+			t.Error("OneToMatch should fail because of Close")
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 30*time.Millisecond {
+				t.Error("OneToMatch should fail faster because of Close")
+			}
 		}
 	})
 }

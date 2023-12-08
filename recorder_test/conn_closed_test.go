@@ -13,8 +13,8 @@ func TestConnClosed(t *testing.T) {
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
-		// script
-		conn.Send("ping")
+		// dumb script
+		go conn.Send("ping")
 
 		// assert
 		rec.Assert().ConnClosed()
@@ -32,7 +32,6 @@ func TestConnClosed(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.Close()
 		}()

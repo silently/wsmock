@@ -9,13 +9,13 @@ import (
 )
 
 func TestOneToContain_Success(t *testing.T) {
-	t.Run("succeeds when containing messages are received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when containing messages are received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
+		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong")
 			conn.WriteJSON(Message{"nothing", "special"})
@@ -39,6 +39,28 @@ func TestOneToContain_Success(t *testing.T) {
 		}
 	})
 
+	t.Run("succeeds when containing message is received among others", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON("pong1")
+			conn.WriteJSON("pong2")
+			conn.WriteJSON("pong3")
+		}()
+
+		// assert
+		rec.Assert().OneToContain("ng2")
+		rec.RunAssertions(100 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
+
 	t.Run("succeeds when testing JSON field names", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -46,7 +68,6 @@ func TestOneToContain_Success(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON(Message{"nothing", "special"})
 		}()
@@ -54,21 +75,20 @@ func TestOneToContain_Success(t *testing.T) {
 		// assert
 		rec.Assert().OneToContain("kind") // json field is lowercased
 		rec.Assert().OneToContain("payload")
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
-	t.Run("succeeds when containing JSON message pointer is written", func(t *testing.T) {
+	t.Run("succeeds when pointer to containing JSON message is written", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON(&Message{"pointer", "sent"})
 		}()
@@ -78,21 +98,20 @@ func TestOneToContain_Success(t *testing.T) {
 		rec.Assert().OneToContain("pointer")
 		rec.Assert().OneToContain("payload")
 		rec.Assert().OneToContain("sent")
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToContain should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
-	t.Run("succeeds when containing bytes is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when containing bytes is received before timeout", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			w, _ := conn.NextWriter(websocket.TextMessage)
 			w.Write([]byte("byte1"))
@@ -122,24 +141,20 @@ func TestOneToContain_Success(t *testing.T) {
 }
 
 func TestOneToContain_Failure(t *testing.T) {
-	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
+	t.Run("fails when no message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
-		// script
-		go func() {
-			conn.Send("ping")
-			time.Sleep(50 * time.Millisecond)
-			conn.WriteJSON("pong")
-		}()
+		// dumb script
+		go conn.Send("ping")
 
 		// assert
 		rec.Assert().OneToContain("pong")
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("OneToContain should fail because of timeout")
+			t.Error("OneToContain should fail because no message is received")
 		}
 	})
 
@@ -150,14 +165,13 @@ func TestOneToContain_Failure(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON(Message{"nothing", "special"})
 		}()
 
 		// assert
 		rec.Assert().OneToContain("notfound")
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToContain should fail because substr is not found")
@@ -171,17 +185,68 @@ func TestOneToContain_Failure(t *testing.T) {
 
 		// script
 		go func() {
-			conn.Send("ping")
 			time.Sleep(10 * time.Millisecond)
 			conn.WriteJSON("pong")
 		}()
 
 		// assert
 		rec.Assert().OneToContain("notfound")
-		rec.RunAssertions(30 * time.Millisecond)
+		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToContain should fail because substr is not found")
+		}
+	})
+
+	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(60 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+
+		// assert
+		rec.Assert().OneToContain("pong")
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToContain should fail because of timeout")
+		}
+	})
+
+	t.Run("fails fast when conn is closed before message", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(50 * time.Millisecond)
+			conn.WriteJSON("pong")
+		}()
+		go func() {
+			time.Sleep(20 * time.Millisecond)
+			conn.Close()
+		}()
+
+		// assert
+		rec.Assert().OneToContain("ng")
+		before := time.Now()
+		rec.RunAssertions(100 * time.Millisecond)
+		after := time.Now()
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToContain should fail because of Close")
+		} else {
+			// test timing
+			elapsed := after.Sub(before)
+			if elapsed > 30*time.Millisecond {
+				t.Error("OneToContain should fail faster because of Close")
+			}
 		}
 	})
 }

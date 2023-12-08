@@ -191,7 +191,7 @@ After `RunAssertions(...)`, message history on recorders is emptied and `wsmock`
 
 ## Assertion concepts
 
-With wsmock we define assertions regarding messages (received by a recorder) with chained conditions. All of the conditions in the chain must succeed for the assertion to succeed:
+With wsmock we define assertions regarding messages (received by a recorder) with chained conditions. The assertion succeeds only if all of the conditions in the chain do:
 
 ```golang
 rec.Assert().     // this
@@ -291,6 +291,13 @@ To sum-up:
 - as soon as a condition fails, the whole assertion fails
 - the set of possible outcomes of a condition is "not done", "done with success", "done with failure"
 - when a `Next*` condition appears first in the chain (for instance `rec.Assert().NextToBe("a")...`) it means it will only consider the first received message to decide its outcome
+
+### OneNotToBe and NoneToBe
+
+Beware of this potential confusion:
+
+- `NoneToBe` means "no message until end should be equal to..." → if no message is received the condition is true
+- `OneNotToBe` means "a message not equal to ... is expected" → like every `One*` condition, one message satisfying the condition is needed
 
 ### With
 
