@@ -88,6 +88,27 @@ func TestOneToMatch_Success(t *testing.T) {
 			t.Error("OneToMatch should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
+
+	t.Run("succeeds when matching marshalled message is received", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			conn.Send("shoot")
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(Message{"event", "gooal"})
+		}()
+
+		// assert
+		rec.Assert().OneToMatch(goalRE)
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if mockT.Failed() { // fail not expected
+			t.Error("OneToMatch should succeed, mockT output is:", getTestOutput(mockT))
+		}
+	})
 }
 
 func TestOneToMatch_Failure(t *testing.T) {
@@ -125,6 +146,26 @@ func TestOneToMatch_Failure(t *testing.T) {
 
 		if !mockT.Failed() { // fail expected
 			t.Error("OneToMatch should fail because there is no matching message")
+		}
+	})
+
+	t.Run("fails when message can not be marshalled", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(make(chan bool)) // contrieved example for test coverage
+		}()
+
+		// assert
+		rec.Assert().OneToMatch(goalRE)
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToMatch should fail because message can not be marshalled")
 		}
 	})
 

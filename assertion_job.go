@@ -17,16 +17,13 @@ type assertionJob struct {
 	err string
 }
 
-func newAssertionJob(r *Recorder, ab *AssertionBuilder, err ...string) *assertionJob {
+func newAssertionJob(r *Recorder, ab *AssertionBuilder) *assertionJob {
 	job := &assertionJob{
 		rec:           r,
 		ab:            ab,
 		latestWriteCh: make(chan any, 256),
 		done:          false,
 		currentIndex:  0,
-	}
-	if len(err) == 1 {
-		job.err = err[0]
 	}
 	return job
 }
@@ -86,9 +83,6 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 					return
 				}
 			}
-		case <-j.rec.currentRound.doneCh: // round is done because of another failing assertion
-			j.assertOnEnd()
-			return
 		case <-j.rec.doneCh: // conn is closed
 			j.assertOnEnd()
 			return

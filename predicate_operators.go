@@ -30,11 +30,8 @@ func contains(sub string) Predicate {
 	return func(msg any) bool {
 		if str, ok := msg.(string); ok {
 			return strings.Contains(str, sub)
-		} else {
-			b, err := json.Marshal(msg)
-			if err == nil {
-				return strings.Contains(string(b), sub)
-			}
+		} else if b, err := json.Marshal(msg); err == nil {
+			return strings.Contains(string(b), sub)
 		}
 		return false
 	}
@@ -44,11 +41,8 @@ func matches(re *regexp.Regexp) Predicate {
 	return func(msg any) bool {
 		if str, ok := msg.(string); ok {
 			return re.MatchString(str)
-		} else {
-			b, err := json.Marshal(msg)
-			if err == nil {
-				return re.Match(b)
-			}
+		} else if b, err := json.Marshal(msg); err == nil {
+			return re.Match(b)
 		}
 		return false
 	}

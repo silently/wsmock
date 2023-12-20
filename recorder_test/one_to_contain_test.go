@@ -198,6 +198,26 @@ func TestOneToContain_Failure(t *testing.T) {
 		}
 	})
 
+	t.Run("fails when message can not be marshalled", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		// script
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			conn.WriteJSON(make(chan bool)) // contrieved example for test coverage
+		}()
+
+		// assert
+		rec.Assert().OneToContain("notfound")
+		rec.RunAssertions(50 * time.Millisecond)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToContain should fail because message can not be marshalled")
+		}
+	})
+
 	t.Run("fails when timeout occurs before containing message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}

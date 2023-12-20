@@ -63,7 +63,7 @@ func (r *Recorder) forwardWritesDuringRound() {
 					job.latestWriteCh <- w
 				}
 			}
-		case <-r.currentRound.doneCh:
+		case <-r.doneCh:
 			// stop forwarding when round ends, serverWriteCh buffers new messages waiting for next round
 			return
 		}
@@ -75,7 +75,6 @@ func (r *Recorder) addError(err string) {
 	defer r.mu.Unlock()
 
 	r.errors = append(r.errors, err)
-	r.currentRound.stop()
 }
 
 func formatErrorSection[T any](r *Recorder, label string, items []T) string {
@@ -180,7 +179,6 @@ func (r *Recorder) RunAssertions(timeout time.Duration) {
 	// manage potential assert errors
 	r.manageErrors()
 	// stop and reset round
-	r.currentRound.stop()
 	r.resetRound()
 }
 
