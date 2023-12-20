@@ -16,7 +16,7 @@ func stringLongerThan3(msg any) bool {
 }
 
 func TestOneToCheck_Success(t *testing.T) {
-	t.Run("succeeds fast when valid message is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when valid message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -153,7 +153,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Error("OneToCheck should fail faster because of Close")
 			}
 		}

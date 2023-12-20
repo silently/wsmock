@@ -7,8 +7,8 @@ import (
 	ws "github.com/silently/wsmock"
 )
 
-func TestNoneToBe_Success(t *testing.T) {
-	t.Run("succeeds when message is not received", func(t *testing.T) {
+func TestNoneToMatch_Success(t *testing.T) {
+	t.Run("succeeds when no message matches", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -16,52 +16,51 @@ func TestNoneToBe_Success(t *testing.T) {
 		// script
 		go func() {
 			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
+			conn.WriteJSON("missed")
+			conn.WriteJSON("missed")
+			conn.WriteJSON("missed")
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong4")
+		rec.Assert().NoneToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("NoneToBe should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("NoneToMatch should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
-	t.Run("succeeds when message is received too late", func(t *testing.T) {
+	t.Run("succeeds when matching message is received too late", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.WriteJSON("pong1")
+			conn.WriteJSON("missed")
 			time.Sleep(60 * time.Millisecond)
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
+			conn.WriteJSON("goal")
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong2")
+		rec.Assert().NoneToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("NoneToBe should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("NoneToMatch should succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
-	t.Run("succeeds when conn is closed before message", func(t *testing.T) {
+	t.Run("succeeds when conn is closed before matching message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.WriteJSON("pong1")
+			conn.WriteJSON("missed")
 			time.Sleep(50 * time.Millisecond)
-			conn.WriteJSON("pong2")
+			conn.WriteJSON("goal")
 		}()
 		go func() {
 			time.Sleep(20 * time.Millisecond)
@@ -69,43 +68,42 @@ func TestNoneToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong2")
+		rec.Assert().NoneToMatch(goalRE)
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("NoneToBe should succeed because of Close")
+			t.Error("NoneToMatch should succeed because of Close")
 		}
 	})
 }
 
-func TestNoneToBe_Failure(t *testing.T) {
-	t.Run("fails fast when message is received", func(t *testing.T) {
+func TestNoneToMatch_Failure(t *testing.T) {
+	t.Run("fails fast when matching message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
 
 		// script
 		go func() {
-			conn.Send("ping")
-			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
+			conn.WriteJSON("missed")
+			conn.WriteJSON("missed")
+			conn.WriteJSON("goal")
+			conn.WriteJSON("missed")
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong3")
+		rec.Assert().NoneToMatch(goalRE)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if !mockT.Failed() { // fail expected
-			t.Error("NoneToBe should fail (message is received)")
+			t.Error("NoneToMatch should fail (message is received)")
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed > 50*time.Millisecond {
-				t.Errorf("NoneToBe should fail faster")
+				t.Errorf("NoneToMatch should fail faster")
 			}
 		}
 	})
@@ -117,20 +115,20 @@ func TestNoneToBe_Failure(t *testing.T) {
 
 		// script
 		go func() {
-			conn.WriteJSON("pong1")
+			conn.WriteJSON("missed")
 			time.Sleep(60 * time.Millisecond)
-			conn.WriteJSON("pong2")
+			conn.WriteJSON("goal")
 		}()
 
 		// short assert does not catch pong2
-		rec.Assert().NoneToBe("pong2")
+		rec.Assert().NoneToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
-		rec.Assert().NoneToBe("pong2")
+		rec.Assert().NoneToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("NoneToBe should fail because of message history")
+			t.Error("NoneToMatch should fail because of message history")
 		}
 	})
 }

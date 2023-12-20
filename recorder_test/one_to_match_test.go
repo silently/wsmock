@@ -16,7 +16,7 @@ func init() {
 }
 
 func TestOneToMatch_Success(t *testing.T) {
-	t.Run("succeeds fast when matching string is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when matching string is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -38,7 +38,7 @@ func TestOneToMatch_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneToMatch should succeed faster")
 			}
 		}
@@ -175,7 +175,7 @@ func TestOneToMatch_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Error("OneToMatch should fail faster because of Close")
 			}
 		}

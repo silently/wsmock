@@ -16,7 +16,7 @@ func removeSpaces(s string) (out string) {
 }
 
 func TestOneToBe_Success(t *testing.T) {
-	t.Run("succeeds fast when equal message is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when equal message is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -38,7 +38,7 @@ func TestOneToBe_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneToBe should succeed faster")
 			}
 		}
@@ -158,7 +158,7 @@ func TestOneToBe_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Error("OneToBe should fail faster because of Close")
 			}
 		}

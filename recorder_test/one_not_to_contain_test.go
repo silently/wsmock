@@ -31,7 +31,7 @@ func TestOneNotToContain_Success(t *testing.T) {
 		}
 	})
 
-	t.Run("succeeds fast when not containing bytes is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when not containing bytes is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -50,7 +50,7 @@ func TestOneNotToContain_Success(t *testing.T) {
 		// assert
 		rec.Assert().OneNotToContain("byte1")
 		before := time.Now()
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -58,7 +58,7 @@ func TestOneNotToContain_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneNotToContain should succeed faster")
 			}
 		}

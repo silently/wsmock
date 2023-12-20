@@ -7,8 +7,8 @@ import (
 	ws "github.com/silently/wsmock"
 )
 
-func TestLastToBe_Success(t *testing.T) {
-	t.Run("succeeds on end when last message is received", func(t *testing.T) {
+func TestLastToContain_Success(t *testing.T) {
+	t.Run("succeeds on end when last message is containing", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -16,31 +16,31 @@ func TestLastToBe_Success(t *testing.T) {
 		// script
 		go func() {
 			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
-			conn.WriteJSON("pong4")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON(Message{"nothing", "special"})
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong4")
+		rec.Assert().LastToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("LastToBe should succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("LastToContain should succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
 			if elapsed < 30*time.Millisecond {
-				t.Error("LastToBe should not succeed before timeout")
+				t.Error("LastToContain should not succeed before timeout")
 			}
 		}
 	})
 }
 
-func TestLastToBe_Failure(t *testing.T) {
+func TestLastToCheck_Failure(t *testing.T) {
 	t.Run("fails when timeout occurs before last message", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
@@ -49,23 +49,23 @@ func TestLastToBe_Failure(t *testing.T) {
 		// script
 		go func() {
 			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
 			time.Sleep(90 * time.Millisecond)
-			conn.WriteJSON("pong4")
+			conn.WriteJSON(Message{"nothing", "special"})
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong4")
+		rec.Assert().LastToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("LastToBe should fail because of timeout")
+			t.Error("LastToContain should fail because of timeout")
 		}
 	})
 
-	t.Run("fails when last message differs", func(t *testing.T) {
+	t.Run("fails when last message does not contain", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -73,18 +73,18 @@ func TestLastToBe_Failure(t *testing.T) {
 		// script
 		go func() {
 			time.Sleep(10 * time.Millisecond)
-			conn.WriteJSON("pong1")
-			conn.WriteJSON("pong2")
-			conn.WriteJSON("pong3")
-			conn.WriteJSON("pong4")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
+			conn.WriteJSON("nothing")
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong")
+		rec.Assert().LastToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("LastToBe should fail")
+			t.Error("LastToContain should fail")
 		}
 	})
 
@@ -97,11 +97,11 @@ func TestLastToBe_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().LastToBe("pong")
+		rec.Assert().LastToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("LastToBe should fail")
+			t.Error("LastToContain should fail")
 		}
 	})
 }

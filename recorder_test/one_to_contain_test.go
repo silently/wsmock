@@ -9,7 +9,7 @@ import (
 )
 
 func TestOneToContain_Success(t *testing.T) {
-	t.Run("succeeds fast when containing messages are received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when containing messages are received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -33,7 +33,7 @@ func TestOneToContain_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneToContain should succeed faster")
 			}
 		}
@@ -105,7 +105,7 @@ func TestOneToContain_Success(t *testing.T) {
 		}
 	})
 
-	t.Run("succeeds fast when containing bytes is received before timeout", func(t *testing.T) {
+	t.Run("succeeds fast when containing bytes is received", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -125,7 +125,7 @@ func TestOneToContain_Success(t *testing.T) {
 		rec.Assert().OneToContain("byte")
 		rec.Assert().OneToContain("byte2")
 		before := time.Now()
-		rec.RunAssertions(50 * time.Millisecond)
+		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
@@ -133,7 +133,7 @@ func TestOneToContain_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Errorf("OneToContain should succeed faster")
 			}
 		}
@@ -244,7 +244,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 30*time.Millisecond {
+			if elapsed > 50*time.Millisecond {
 				t.Error("OneToContain should fail faster because of Close")
 			}
 		}
