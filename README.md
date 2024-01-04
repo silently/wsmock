@@ -73,7 +73,7 @@ go get github.com/silently/wsmock
 
 ## Prerequesite
 
-*(in short: replace `websocket.Conn` with an interface to be able to use a mocked conn in tests)*
+*(in short: replace Gorilla's `*websocket.Conn` with an interface to be able to use a mocked conn in tests)*
 
 Going on with our `runWs` WebSocket handler, the main gotcha is to be able to call it:
 
@@ -203,7 +203,7 @@ rec.RunAssertions(100 * time.Millisecond)
 
 The preceding assertion will for instance succeed if the message history is `["a", "b", "c", "d"]` but fail with `["a", "d", "b"]` (wrong order) or `["z" "a", "b", "d"]` (unexpected first element).
 
-Assertions may contain only one condition and and you can run several in parallel (with multiple `.NewAssertion()`):
+Assertions may contain only one condition and you can run several assertions in parallel (with multiple calls to `NewAssertion`):
 
 ```golang
 // both succeed if the only message received is "this is a short sentence"
@@ -299,7 +299,7 @@ To sum-up:
 Beware of this potential confusion:
 
 - `NoneToBe` means "no message until end should be equal to..." → if no message is received the condition is true
-- `OneNotToBe` means "a message not equal to ... is expected" → like every `One*` condition, one message satisfying the condition is needed
+- `OneNotToBe` means "a message not equal to ... is expected" → like every `One*` condition, only one message satisfying the condition is needed
 
 ### With
 
