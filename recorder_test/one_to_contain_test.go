@@ -22,8 +22,8 @@ func TestOneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("ong")
-		rec.Assert().OneToContain("spec")
+		rec.NewAssertion().OneToContain("ong")
+		rec.NewAssertion().OneToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -53,7 +53,7 @@ func TestOneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("ng2")
+		rec.NewAssertion().OneToContain("ng2")
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -73,8 +73,8 @@ func TestOneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("kind") // json field is lowercased
-		rec.Assert().OneToContain("payload")
+		rec.NewAssertion().OneToContain("kind") // json field is lowercased
+		rec.NewAssertion().OneToContain("payload")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -94,10 +94,10 @@ func TestOneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("kind") // json field is lowercased
-		rec.Assert().OneToContain("pointer")
-		rec.Assert().OneToContain("payload")
-		rec.Assert().OneToContain("sent")
+		rec.NewAssertion().OneToContain("kind") // json field is lowercased
+		rec.NewAssertion().OneToContain("pointer")
+		rec.NewAssertion().OneToContain("payload")
+		rec.NewAssertion().OneToContain("sent")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -122,8 +122,8 @@ func TestOneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("byte")
-		rec.Assert().OneToContain("byte2")
+		rec.NewAssertion().OneToContain("byte")
+		rec.NewAssertion().OneToContain("byte2")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -150,7 +150,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().OneToContain("pong")
+		rec.NewAssertion().OneToContain("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -170,7 +170,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("notfound")
+		rec.NewAssertion().OneToContain("notfound")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -190,7 +190,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("notfound")
+		rec.NewAssertion().OneToContain("notfound")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -210,7 +210,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("notfound")
+		rec.NewAssertion().OneToContain("notfound")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -230,7 +230,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("pong")
+		rec.NewAssertion().OneToContain("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -254,7 +254,7 @@ func TestOneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToContain("ng")
+		rec.NewAssertion().OneToContain("ng")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()

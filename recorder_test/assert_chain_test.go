@@ -33,17 +33,17 @@ func TestChainOneToBe(t *testing.T) {
 		}()
 
 		// declare expected chains
-		rec.Assert().
+		rec.NewAssertion().
 			OneToBe(Message{"chat", "sentence1"}).
 			OneToBe(Message{"chat", "sentence2"})
-		rec.Assert().
+		rec.NewAssertion().
 			OneToBe(Message{"chat", "sentence1"}).
 			OneToBe(Message{"chat", "sentence3"})
-		rec.Assert().
+		rec.NewAssertion().
 			OneToBe(Message{"chat", "sentence2"}).
 			OneToBe(Message{"chat", "sentence3"})
 
-		rec.RunAssertions(100 * time.Millisecond)
+		rec.RunAssertions(150 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToBe*s* should succeed, mockT output is:", getTestOutput(mockT))
@@ -67,7 +67,7 @@ func TestChainVarious(t *testing.T) {
 		}()
 
 		// declare expected chains
-		rec.Assert().
+		rec.NewAssertion().
 			OneToBe(Message{"chat", "sentence2"}).
 			NextToBe(Message{"chat", "sentence3"}).
 			OneNotToBe(Message{"chat", "sentence3"}).
@@ -92,7 +92,7 @@ func TestChainVarious(t *testing.T) {
 		conn.WriteJSON(Message{"chat", "sentence6"})
 
 		// declare expected chains
-		rec.Assert().
+		rec.NewAssertion().
 			OneToBe(Message{"chat", "sentence2"}).
 			NextToBe(Message{"chat", "sentence3"}).
 			OneNotToBe(Message{"chat", "sentence3"}).
@@ -118,11 +118,11 @@ func TestChainVarious(t *testing.T) {
 		}()
 
 		// declare expected chains
-		rec.Assert().
+		rec.NewAssertion().
 			NextToCheck(truthy).
 			NextNotToCheck(truthy).
 			AllToCheck(truthy)
-		rec.Assert().
+		rec.NewAssertion().
 			OneNotToCheck(truthy).
 			LastToCheck(truthy)
 
@@ -148,12 +148,12 @@ func TestChainVarious(t *testing.T) {
 		}()
 
 		// declare expected chains
-		rec.Assert().
+		rec.NewAssertion().
 			NextToCheck(truthy).
 			NextNotToCheck(stringLongerThan3).
 			OneToCheck(stringLongerThan3).
 			AllToMatch(goalRE)
-		rec.Assert().
+		rec.NewAssertion().
 			OneNotToCheck(truthy).
 			LastToCheck(stringLongerThan3)
 

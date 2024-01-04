@@ -16,7 +16,7 @@ func alwaysFalse(_ bool, _ any, _ []any) (done, passed bool, err string) {
 	return true, false, ""
 }
 
-func hasMoreMessagesOnEndThan(count int) ws.AsserterFunc {
+func hasMoreMessagesOnEndThan(count int) ws.ConditionFunc {
 	return func(end bool, _ any, all []any) (done, passed bool, err string) {
 		if end {
 			err = fmt.Sprintf("on end, the number of messages should be strictly more than: %v", count)
@@ -27,7 +27,7 @@ func hasMoreMessagesOnEndThan(count int) ws.AsserterFunc {
 }
 
 func TestCustom_AlwaysTrue(t *testing.T) {
-	t.Run("succeeds when custom Asserter does", func(t *testing.T) {
+	t.Run("succeeds when custom Condition does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -39,13 +39,13 @@ func TestCustom_AlwaysTrue(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(trueExceptOnEnd)
+		rec.NewAssertion().With(trueExceptOnEnd)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
 
 		if mockT.Failed() { // fail not expected
-			t.Error("RunAssertions should have custom Asserter trueExceptOnEnd succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("RunAssertions should have custom Condition trueExceptOnEnd succeed, mockT output is:", getTestOutput(mockT))
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
@@ -67,17 +67,17 @@ func TestCustom_AlwaysTrue(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(trueExceptOnEnd)
+		rec.NewAssertion().With(trueExceptOnEnd)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("should have custom Asserter trueExceptOnEnd fail when no message is received")
+			t.Error("should have custom Condition trueExceptOnEnd fail when no message is received")
 		}
 	})
 }
 
 func TestCustom_AlwaysFalse(t *testing.T) {
-	t.Run("fails when custom Asserter does", func(t *testing.T) {
+	t.Run("fails when custom Condition does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}
 		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
@@ -89,7 +89,7 @@ func TestCustom_AlwaysFalse(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(alwaysFalse)
+		rec.NewAssertion().With(alwaysFalse)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -122,11 +122,11 @@ func TestCustom_CountMessages(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(hasMoreMessagesOnEndThan(3))
+		rec.NewAssertion().With(hasMoreMessagesOnEndThan(3))
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("should have custom Asserter hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
+			t.Error("should have custom Condition hasMoreMessagesOnEndThan succeed, mockT output is:", getTestOutput(mockT))
 		}
 	})
 
@@ -147,11 +147,11 @@ func TestCustom_CountMessages(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(hasMoreMessagesOnEndThan(3))
+		rec.NewAssertion().With(hasMoreMessagesOnEndThan(3))
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
+			t.Error("should have custom Condition hasMoreMessagesOnEndThan fail")
 		}
 	})
 
@@ -170,11 +170,11 @@ func TestCustom_CountMessages(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().With(hasMoreMessagesOnEndThan(10))
+		rec.NewAssertion().With(hasMoreMessagesOnEndThan(10))
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
-			t.Error("should have custom Asserter hasMoreMessagesOnEndThan fail")
+			t.Error("should have custom Condition hasMoreMessagesOnEndThan fail")
 		}
 	})
 }

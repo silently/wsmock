@@ -21,7 +21,7 @@ func TestOneNotToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToCheck(stringLongerThan3)
+		rec.NewAssertion().OneNotToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -44,7 +44,7 @@ func TestOneNotToCheck_Failure(t *testing.T) {
 			conn.WriteJSON("longest")
 		}()
 
-		rec.Assert().OneNotToCheck(stringLongerThan3)
+		rec.NewAssertion().OneNotToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

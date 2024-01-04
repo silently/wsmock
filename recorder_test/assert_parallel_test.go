@@ -23,8 +23,8 @@ func TestMulti_FailFast(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("pong4")
-		rec.Assert().NoneToBe("pong1") // failing assertion
+		rec.NewAssertion().OneToBe("pong4")
+		rec.NewAssertion().NoneToBe("pong1") // failing assertion
 		before := time.Now()
 		rec.RunAssertions(300 * time.Millisecond)
 		after := time.Now()
@@ -55,8 +55,8 @@ func TestMulti_Assert(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("pong")
-		rec.Assert().OneToBe("pong") // twice is ok
+		rec.NewAssertion().OneToBe("pong")
+		rec.NewAssertion().OneToBe("pong") // twice is ok
 
 		rec.RunAssertions(50 * time.Millisecond)
 
@@ -80,10 +80,10 @@ func TestMulti_Assert(t *testing.T) {
 		}()
 
 		// script
-		rec.Assert().OneToBe("pong1")
-		rec.Assert().OneToBe("pong2")
-		rec.Assert().OneToBe("pong3")
-		rec.Assert().OneToBe("pong4")
+		rec.NewAssertion().OneToBe("pong1")
+		rec.NewAssertion().OneToBe("pong2")
+		rec.NewAssertion().OneToBe("pong3")
+		rec.NewAssertion().OneToBe("pong4")
 
 		// no assertion!
 		rec.RunAssertions(50 * time.Millisecond)

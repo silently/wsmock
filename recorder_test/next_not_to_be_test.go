@@ -23,7 +23,7 @@ func TestNextNotToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextNotToBe("pong2")
+		rec.NewAssertion().NextNotToBe("pong2")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -54,7 +54,7 @@ func TestNextNotToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("pong2").NextNotToBe("pong4")
+		rec.NewAssertion().OneToBe("pong2").NextNotToBe("pong4")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -76,7 +76,7 @@ func TestNextNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextNotToBe("pong1")
+		rec.NewAssertion().NextNotToBe("pong1")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -99,7 +99,7 @@ func TestNextNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("pong1").NextNotToBe("pong3")
+		rec.NewAssertion().OneToBe("pong1").NextNotToBe("pong3")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -119,7 +119,7 @@ func TestNextNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextNotToBe("pong")
+		rec.NewAssertion().NextNotToBe("pong")
 		rec.RunAssertions(10 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

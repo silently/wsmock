@@ -9,7 +9,7 @@ type assertionJob struct {
 	rec   *Recorder
 	index int // used in logs
 	// configuration
-	ab *AssertionBuilder
+	a *Assertion
 	// events
 	latestWriteCh chan any
 	// state
@@ -19,10 +19,10 @@ type assertionJob struct {
 	err string
 }
 
-func newAssertionJob(r *Recorder, ab *AssertionBuilder) *assertionJob {
+func newAssertionJob(r *Recorder, a *Assertion) *assertionJob {
 	job := &assertionJob{
 		rec:           r,
-		ab:            ab,
+		a:             a,
 		latestWriteCh: make(chan any, 256),
 		done:          false,
 		currentIndex:  0,
@@ -36,11 +36,11 @@ func (j *assertionJob) incPassed() {
 }
 
 func (j *assertionJob) allPassed() bool {
-	return len(j.ab.conditions) == j.currentIndex
+	return len(j.a.conditions) == j.currentIndex
 }
 
-func (j *assertionJob) currentAsserter() Asserter {
-	return j.ab.conditions[j.currentIndex]
+func (j *assertionJob) currentCondition() Condition {
+	return j.a.conditions[j.currentIndex]
 }
 
 func (j *assertionJob) addError(err string, end bool) {
@@ -56,7 +56,7 @@ func (j *assertionJob) addError(err string, end bool) {
 func (j *assertionJob) assertOnEnd() {
 	latest, _ := last(j.rec.serverWrites)
 	// on end, done is considered true anyway
-	_, passed, err := j.currentAsserter().Try(true, latest, j.rec.serverWrites)
+	_, passed, err := j.currentCondition().Try(true, latest, j.rec.serverWrites)
 	j.done = true
 
 	if passed {
@@ -83,7 +83,7 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 	for {
 		select {
 		case latest := <-j.latestWriteCh:
-			done, passed, err := j.currentAsserter().Try(false, latest, j.rec.serverWrites)
+			done, passed, err := j.currentCondition().Try(false, latest, j.rec.serverWrites)
 			// log.Printf(">> %v latest %v", j.index, latest)
 			if done {
 				j.done = true

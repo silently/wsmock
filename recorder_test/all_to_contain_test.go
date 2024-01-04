@@ -22,7 +22,7 @@ func TestAllToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().AllToContain("spec")
+		rec.NewAssertion().AllToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -52,7 +52,7 @@ func TestAllToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().AllToContain("spec")
+		rec.NewAssertion().AllToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -78,7 +78,7 @@ func TestAllToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().AllToContain("spec")
+		rec.NewAssertion().AllToContain("spec")
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -101,7 +101,7 @@ func TestAllToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().AllToContain("spec")
+		rec.NewAssertion().AllToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()

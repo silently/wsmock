@@ -22,7 +22,7 @@ func TestNoneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -43,7 +43,7 @@ func TestNoneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -68,7 +68,7 @@ func TestNoneToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -92,7 +92,7 @@ func TestNoneToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -121,10 +121,10 @@ func TestNoneToContain_Failure(t *testing.T) {
 		}()
 
 		// short assert does not catch pong2
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
-		rec.Assert().NoneToContain("spec")
+		rec.NewAssertion().NoneToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

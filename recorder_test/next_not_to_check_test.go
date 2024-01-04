@@ -21,7 +21,7 @@ func TestNextNotToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextNotToCheck(stringLongerThan3)
+		rec.NewAssertion().NextNotToCheck(stringLongerThan3)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -51,7 +51,7 @@ func TestNextNotToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("no").NextNotToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToBe("no").NextNotToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -73,7 +73,7 @@ func TestNextNotToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextNotToCheck(stringLongerThan3)
+		rec.NewAssertion().NextNotToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -95,7 +95,7 @@ func TestNextNotToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("no").NextNotToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToBe("no").NextNotToCheck(stringLongerThan3)
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

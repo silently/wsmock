@@ -23,7 +23,7 @@ func TestLastToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong4")
+		rec.NewAssertion().LastToBe("pong4")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -57,7 +57,7 @@ func TestLastToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong4")
+		rec.NewAssertion().LastToBe("pong4")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -80,7 +80,7 @@ func TestLastToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToBe("pong")
+		rec.NewAssertion().LastToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -97,7 +97,7 @@ func TestLastToBe_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().LastToBe("pong")
+		rec.NewAssertion().LastToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

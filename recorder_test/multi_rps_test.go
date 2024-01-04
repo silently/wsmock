@@ -96,8 +96,8 @@ func TestMulti_RPS(t *testing.T) {
 		conn2.Send("rock")
 
 		// assert
-		rec1.Assert().OneToBe("win")
-		rec2.Assert().OneToBe("loss")
+		rec1.NewAssertion().OneToBe("win")
+		rec2.NewAssertion().OneToBe("loss")
 		ws.RunAssertions(mockT, 50*time.Millisecond)
 
 		if mockT.Failed() { // fail not expected

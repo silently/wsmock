@@ -27,7 +27,7 @@ func TestOneToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -57,7 +57,7 @@ func TestOneToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -79,7 +79,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -99,7 +99,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 			conn.WriteJSON("p2")
 		}()
 
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -119,7 +119,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -143,7 +143,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()

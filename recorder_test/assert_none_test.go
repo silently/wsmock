@@ -34,9 +34,9 @@ func TestFailing(t *testing.T) {
 		go conn.WriteJSON("no")
 
 		// assert
-		rec.Assert().OneNotToBe(Message{"chat", "sentence1"})
-		rec.Assert().NextToBe(Message{"chat", "notfound"})
-		rec.Assert().OneToCheck(stringLongerThan3)
+		rec.NewAssertion().OneNotToBe(Message{"chat", "sentence1"})
+		rec.NewAssertion().NextToBe(Message{"chat", "notfound"})
+		rec.NewAssertion().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(100 * time.Millisecond)
 	})
 }

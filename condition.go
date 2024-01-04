@@ -2,8 +2,7 @@ package wsmock
 
 import "fmt"
 
-// Generic interface to be added on recorders
-// The Try method is called in two cases:
+// Generic interface that is chained to form Assertions. The Try method of a Condition is called in two cases:
 //
 // Case 1: every time a message is sent (on the underlying Conn, and thus on the associated Recorder),
 // Try is called with (false, latest, all) where *all* is "all messages including the *latest*"
@@ -20,20 +19,20 @@ import "fmt"
 //
 // For case 2, the return value `done` is considered true whatever is returned, while `passed` and `err`
 // do give the test outcome.
-type Asserter interface {
+type Condition interface {
 	Try(end bool, latest any, all []any) (done, passed bool, err string)
 }
 
-// The AsserterFunc type is an adapter to allow the use of a function as an Asserter.
+// The ConditionFunc type is an adapter to allow the use of a function as an Condition.
 //
-// Its signature and behaviour has to match Asserters' Try method.
-type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, err string)
+// Its signature and behaviour has to match Condition' Try method.
+type ConditionFunc func(end bool, latest any, all []any) (done, passed bool, err string)
 
-func (f AsserterFunc) Try(end bool, latest any, all []any) (done, passed bool, err string) {
+func (f ConditionFunc) Try(end bool, latest any, all []any) (done, passed bool, err string) {
 	return f(end, latest, all)
 }
 
-// The oneTo struct implements Asserter. Its Predicate function is called on each message and on end.
+// The oneTo struct implements Condition. Its Predicate function is called on each message and on end.
 //
 // If the Predicate returns true, asserting is done and succeeds,
 // If the Predicate returns false, asserting is not done,
@@ -56,7 +55,7 @@ func (a oneTo) Try(end bool, latest any, _ []any) (done, passed bool, err string
 	return false, false, ""
 }
 
-// The nextTo struct implements Asserter. Its Predicate function is called once, either on the (next) message
+// The nextTo struct implements Condition. Its Predicate function is called once, either on the (next) message
 // or on timeout.
 //
 // The Predicate return value gives the test outcome (success/failure).
@@ -77,7 +76,7 @@ func (a nextTo) Try(end bool, latest any, _ []any) (done, passed bool, err strin
 	}
 }
 
-// The lastTo struct implements Asserter. Its Predicate function is called once, on end.
+// The lastTo struct implements Condition. Its Predicate function is called once, on end.
 //
 // The Predicate return value gives the test outcome (success/failure).
 type lastTo predicateAndError
@@ -103,7 +102,7 @@ func (a lastTo) Try(end bool, latest any, _ []any) (done, passed bool, err strin
 	return false, false, ""
 }
 
-// The allTo struct implements Asserter. Its Predicate function is called on each message and on end.
+// The allTo struct implements Condition. Its Predicate function is called on each message and on end.
 //
 // If the Predicate returns true, asserting is not done,
 // If the Predicate returns false, asserting is done and fails,

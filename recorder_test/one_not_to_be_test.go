@@ -20,7 +20,7 @@ func TestOneNotToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToBe("pong2")
+		rec.NewAssertion().OneNotToBe("pong2")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -48,7 +48,7 @@ func TestOneNotToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToBe("pong1")
+		rec.NewAssertion().OneNotToBe("pong1")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -75,7 +75,7 @@ func TestOneNotToBe_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().OneNotToBe("pong")
+		rec.NewAssertion().OneNotToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -96,7 +96,7 @@ func TestOneNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToBe("pong")
+		rec.NewAssertion().OneNotToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -117,7 +117,7 @@ func TestOneNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToBe("pong1")
+		rec.NewAssertion().OneNotToBe("pong1")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -143,7 +143,7 @@ func TestOneNotToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToBe("pong1")
+		rec.NewAssertion().OneNotToBe("pong1")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

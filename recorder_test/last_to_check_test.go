@@ -23,7 +23,7 @@ func TestLastToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToCheck(stringLongerThan3)
+		rec.NewAssertion().LastToCheck(stringLongerThan3)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -57,7 +57,7 @@ func TestLastToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToCheck(stringLongerThan3)
+		rec.NewAssertion().LastToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -80,7 +80,7 @@ func TestLastToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToCheck(stringLongerThan3)
+		rec.NewAssertion().LastToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -97,7 +97,7 @@ func TestLastToContain_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().LastToCheck(stringLongerThan3)
+		rec.NewAssertion().LastToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

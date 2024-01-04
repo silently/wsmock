@@ -23,7 +23,7 @@ func TestLastToMatch_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToMatch(goalRE)
+		rec.NewAssertion().LastToMatch(goalRE)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -56,7 +56,7 @@ func TestLastToMatch_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToMatch(goalRE)
+		rec.NewAssertion().LastToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -79,7 +79,7 @@ func TestLastToMatch_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastToMatch(goalRE)
+		rec.NewAssertion().LastToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -96,7 +96,7 @@ func TestLastToMatch_Failure(t *testing.T) {
 		go conn.Send("ping")
 
 		// assert
-		rec.Assert().LastToMatch(goalRE)
+		rec.NewAssertion().LastToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

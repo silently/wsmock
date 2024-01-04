@@ -22,7 +22,7 @@ func TestOneNotToMatch_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToMatch(goalRE)
+		rec.NewAssertion().OneNotToMatch(goalRE)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -53,7 +53,7 @@ func TestOneNotToMatch_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToMatch(goalRE)
+		rec.NewAssertion().OneNotToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -75,7 +75,7 @@ func TestOneNotToMatch_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToMatch(goalRE)
+		rec.NewAssertion().OneNotToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

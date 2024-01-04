@@ -2,7 +2,7 @@
 
 Golang library to help with WebSocket testing by providing Gorilla mocks, expressive scripting of assertions, parallelism, configurable timeouts and meaningful logs. wsmock is itself thoroughly tested.
 
-With wsmock tests are written like:
+With wsmock, tests are written like:
 
 ```golang
 func TestRockPaperScissors(t *testing.T) {
@@ -22,11 +22,11 @@ func TestRockPaperScissors(t *testing.T) {
   conn1.Send("paper")
   conn2.Send("rock")
 
-  // assertions are made of chained and ordered conditions
-  rec1.Assert().
+  // assertions are ordered chains of conditions
+  rec1.NewAssertion().
     OneToBe("draw").  // one message received is expected to be "draw"
     NextToBe("win")   // the next message is expected to be "win"
-  rec2.Assert().
+  rec2.NewAssertion().
     OneToBe("draw").
     NextToBe("loss")
 
@@ -56,7 +56,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) { // HTTP handler
 
 ## Status
 
-wsmock is in an early stage of development, API may change.
+wsmock is in an early stage of development, API may evolve.
 
 Currently, only Gorilla WebSocket mocks are provided (more WebSocket implementation mocks could be added) with a focus on reading from and writing to the Conn:
 
@@ -151,9 +151,9 @@ func TestChat(t *testing.T) {
     michelineConn.Send(Message{"join", "Micheline"})
     michelineConn.Send(Message{"send", "Salut"})
 
-    johnnyRec.Assert().OneToBe(Message{"incoming", "Salut"})
+    johnnyRec.NewAssertion().OneToBe(Message{"incoming", "Salut"})
     // the next assertion is "not received" (supposing chat history is not implemented)
-    michelineRec.Assert().OneNotToBe(Message{"incoming", "Hello"})
+    michelineRec.NewAssertion().OneNotToBe(Message{"incoming", "Hello"})
     // run all assertions in this test, with a timeout
     wsmock.RunAssertions(t, 100 * time.Millisecond)
 
@@ -161,7 +161,7 @@ func TestChat(t *testing.T) {
     johnnyConn.Send(Message{"send", "Are you French?"})
     johnnyConn.Send(Message{"send", "Sorry I only speak English"})
     // it's possible to chain assertions, order matters
-    michelineRec.Assert().
+    michelineRec.NewAssertion().
       OneToContain("French").
       OneToContain("English")
     // you can run assertions on a given recorder, with a timeout
@@ -180,46 +180,48 @@ Methods you're supposed to use on `wsmock.GorillaConn` to script the tests are:
 - `Send(message any)` to script sent messages
 - `Close()` if you want to explicitely close connections "client-side" (alternatively, wsmock will close them when test ends)
 
-Then you add assertions on recorders (`rec.Assert().<Assertion(...)>`), see more in the next paragraph about wsmock chaining features.
+Then you add assertions on recorders (`rec.NewAssertion().<Assertion(...)>`), see more in the next paragraph about wsmock chaining features.
 
 You can run assertions either:
 
 - per recorder, for instance `michelineRec.Run(100 * time.Millisecond)`
 - per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
-After `RunAssertions(...)`, message history on recorders is emptied and `wsmock` internally creates a new *round* of events. It means you can pursue scripting your test with `conn.Send(...)`, define and run new assertions on recorders, but messages from previous rounds won't be taken into account in the current round.
+After `RunAssertions(...)`, the message history on recorders is emptied and `wsmock` internally creates a new *round* of events. It means you can pursue scripting your test with `conn.Send(...)`, define and run new assertions on recorders, but messages from previous rounds won't be taken into account in the current round.
 
 ## Assertion concepts
 
-With wsmock we define assertions regarding messages (received by a recorder) with chained conditions. The assertion succeeds only if all of the conditions in the chain do:
+With wsmock we define assertions regarding messages (received by a recorder) as ordered chains of conditions. The assertion succeeds only if all of the conditions in the chain succeed in order:
 
 ```golang
-rec.Assert().     // this
-  NextToBe("a").  // is
-  NextToBe("b").  // an
-  OneToBe("d")    // assertion
+rec.NewAssertion().  // this
+  NextToBe("a").     // is
+  NextToBe("b").     // an
+  OneToBe("d")       // assertion
 rec.RunAssertions(100 * time.Millisecond)
 ```
 
-The preceding assertion (as a condition chain) will for instance succeed if the message history is `["a", "b", "c", "d"]` but fail with `["a", "d", "b"]` or `["z" "a", "b", "d"]`.
+The preceding assertion will for instance succeed if the message history is `["a", "b", "c", "d"]` but fail with `["a", "d", "b"]` (wrong order) or `["z" "a", "b", "d"]` (unexpected first element).
 
-Assertions may contain only one condition, and you can run several in parallel (with multiple `.Assert()`):
+Assertions may contain only one condition and and you can run several in parallel (with multiple `.NewAssertion()`):
 
 ```golang
 // both succeed if the only message received is "this is a short sentence"
-rec.Assert().OneToContain("short")    // assertion 1
-rec.Assert().OneToContain("sentence") // assertion 2
+rec.NewAssertion().OneToContain("short")    // assertion 1
+rec.NewAssertion().OneToContain("sentence") // assertion 2
 // but this one fails since it is supposed to match two different messages
-rec.Assert(). 
+rec.NewAssertion(). 
   OneToContain("short").
   OneToContain("sentence")
 ```
 
+To sum-up, if several conditions have been attached to a recorder, they will be run in parallel, each assertion receiving the same sequence of messages from the recorder. In contrast, conditions (the building blocks of assertions) are run in series (one after the other: order matters).
+
 ## Assertion API
 
-Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#AssertionBuilder) for a comprehensive description of wsmock.
+Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#Assertion) for a comprehensive description of wsmock.
 
-`Recorder#Assert()` returns a new `AssertionBuilder` struct whose API provide chainable and ordered conditions (methods). A wsmock assertion is indeed a chain of conditions.
+`Recorder#NewAssertion()` returns a new struct whose API enable chaining and ordering conditions. A wsmock assertion is indeed a chain of conditions.
 
 ### Chainable conditions
 
@@ -237,8 +239,8 @@ The name of chainable condition methods is any combination of `Next|One + To|Not
 
 Here are some example:
 
-- `rec.Assert().OneToBe(target)`: one message should be equal to `target`
-- `rec.Assert().NextToCheck(f)`: the next (first in that case) message should validate the predicate function `f`
+- `rec.NewAssertion().OneToBe(target)`: one message should be equal to `target`
+- `rec.NewAssertion().NextToCheck(f)`: the next (first in that case) message should validate the predicate function `f`
 
 ### Closing conditions
 
@@ -251,14 +253,14 @@ The name of closing condition methods is any combination of `LastTo|LastNotTo|Al
   - `None*` means all messages should verify the condition (succeeds when no message is received)
   - `All*` means no message should verify the condition (succeeds when no message is received)
 
-If you want to test several closing conditions, don't chain them but instead create parallel assertions with multiple `.Assert()`:
+If you want to test several closing conditions, don't chain them but instead create parallel assertions with multiple `.NewAssertion()`:
 
 ```golang
-rec.Assert().
+rec.NewAssertion().
   OneNotToBe("z").
   OneToBe("a").
   LastNoToBe("z")
-rec.Assert().
+rec.NewAssertion().
   NoneToMatch(regex)
 ```
 
@@ -267,7 +269,7 @@ rec.Assert().
 Let's inspect the following assertion:
 
 ```golang
-rec.Assert().
+rec.NewAssertion().
   OneToBe("a").
   NextToBe("b").
   LastToBe("z")
@@ -290,7 +292,7 @@ Now let say `NextToBe("b")` also succeeded and the active condition is `LastNoTo
 To sum-up:
 - as soon as a condition fails, the whole assertion fails
 - the set of possible outcomes of a condition is "not done", "done with success", "done with failure"
-- when a `Next*` condition appears first in the chain (for instance `rec.Assert().NextToBe("a")...`) it means it will only consider the first received message to decide its outcome
+- when a `Next*` condition appears first in the chain (for instance `rec.NewAssertion().NextToBe("a")...`) it means it will only consider the first received message to decide its outcome
 
 ### OneNotToBe and NoneToBe
 
@@ -301,20 +303,20 @@ Beware of this potential confusion:
 
 ### With
 
-The predefined set of conditions may not fit your needs. In that case you can define a custom `AsserterFunc`: 
+The predefined set of conditions may not fit your needs. In that case you can define a custom `ConditionFunc`: 
 
 ```golang
-type AsserterFunc func(end bool, latest any, all []any) (done, passed bool, err string)
+type ConditionFunc func(end bool, latest any, all []any) (done, passed bool, err string)
 ```
 
 With the following behaviour:
-- when a message is received (sent from the WebSocket server handler to the recorder), the `AsserterFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
-- when the end is reached (timeout or conn closed), `AsserterFunc` is called one last time with `(true, latest, all)`. `done` is considered true whatever is returned, while `passed` and `err` do give the asserter outcome
+- when a message is received (sent from the WebSocket server handler to the recorder), the `ConditionFunc` is called with `(false, latest, all)` and you have to decide if the assertion outcome is known (`done` return value). If `done` is true, you also need to return the test outcome (`passed`) and possibly an error message
+- when the end is reached (timeout or conn closed), `ConditionFunc` is called one last time with `(true, latest, all)`. `done` is considered true whatever is returned, while `passed` and `err` do give the asserter outcome
 
 Here is an example and how to add/chain it on a recorder:
 
 ```golang
-func customAsserter(end bool, latest any, _ []any) (done, passed bool, err string) {
+func customCondition(end bool, latest any, _ []any) (done, passed bool, err string) {
   if end {
     done = true
     passed = true
@@ -326,17 +328,17 @@ func customAsserter(end bool, latest any, _ []any) (done, passed bool, err strin
   return
 }
 
-rec.Assert().With(customAsserter) // it's possible to chain it with other AssertionBuilder conditions
+rec.NewAssertion().With(customCondition) // it's possible to chain it with other conditions
 ```
 
-...this `customAsserter` is an alternate implementation of `OneNotToBe`.
+...this `customCondition` is an alternate implementation of `OneNotToBe`.
 
 ## Implementation specifics
 
 The flow of messages in a test goes like (considering a `runWs` server handler):
 - `conn.Send("input")` → conn's serverReadCh channel → read by `runWs` (typically with `ReadJSON` or `ReadMessage`)
 - then `runWs` processes the input message
-- and/or/then `runWs` possibly writes messages (typically with `WriteJSON` or `WriteMessage`) → recorder serverWriteCh channel → forwarded by the recorder to each assertion declated on it with `Assert()`
+- and/or/then `runWs` possibly writes messages (typically with `WriteJSON` or `WriteMessage`) → recorder serverWriteCh channel → forwarded by the recorder to each assertion declated on it with `NewAssertion()`
 
 Here are some gotchas:
 - `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent

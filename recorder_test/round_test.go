@@ -20,14 +20,14 @@ func TestRound(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("pong")
+		rec.NewAssertion().OneToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("OneToBe should succeed, mockT output is:", getTestOutput(mockT))
 		}
 
-		rec.Assert().OneToBe("pong")
+		rec.NewAssertion().OneToBe("pong")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

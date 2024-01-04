@@ -22,7 +22,7 @@ func TestNoneToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong4")
+		rec.NewAssertion().NoneToBe("pong4")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -44,7 +44,7 @@ func TestNoneToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong2")
+		rec.NewAssertion().NoneToBe("pong2")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -69,7 +69,7 @@ func TestNoneToBe_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong2")
+		rec.NewAssertion().NoneToBe("pong2")
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -94,7 +94,7 @@ func TestNoneToBe_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NoneToBe("pong3")
+		rec.NewAssertion().NoneToBe("pong3")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -123,10 +123,10 @@ func TestNoneToBe_Failure(t *testing.T) {
 		}()
 
 		// short assert does not catch pong2
-		rec.Assert().NoneToBe("pong2")
+		rec.NewAssertion().NoneToBe("pong2")
 		rec.RunAssertions(50 * time.Millisecond)
 
-		rec.Assert().NoneToBe("pong2")
+		rec.NewAssertion().NoneToBe("pong2")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

@@ -23,7 +23,7 @@ func TestLastNotToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToContain("spec")
+		rec.NewAssertion().LastNotToContain("spec")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -55,7 +55,7 @@ func TestLastNotToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToContain("spec")
+		rec.NewAssertion().LastNotToContain("spec")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -75,7 +75,7 @@ func TestLastNotToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToContain("spec")
+		rec.NewAssertion().LastNotToContain("spec")
 		rec.RunAssertions(10 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

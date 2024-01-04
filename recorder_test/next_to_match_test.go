@@ -21,7 +21,7 @@ func TestNextToMatch_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextToMatch(goalRE)
+		rec.NewAssertion().NextToMatch(goalRE)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -51,7 +51,7 @@ func TestNextToMatch_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("post").NextToMatch(goalRE)
+		rec.NewAssertion().OneToBe("post").NextToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -73,7 +73,7 @@ func TestNextToMatch_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().NextToMatch(goalRE)
+		rec.NewAssertion().NextToMatch(goalRE)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -95,7 +95,7 @@ func TestNextToMatch_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneToBe("defender").NextToMatch(goalRE)
+		rec.NewAssertion().OneToBe("defender").NextToMatch(goalRE)
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

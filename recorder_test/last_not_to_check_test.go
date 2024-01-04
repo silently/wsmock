@@ -23,7 +23,7 @@ func TestLastNotToCheck_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToCheck(stringLongerThan3)
+		rec.NewAssertion().LastNotToCheck(stringLongerThan3)
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -55,7 +55,7 @@ func TestLastNotToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToCheck(stringLongerThan3)
+		rec.NewAssertion().LastNotToCheck(stringLongerThan3)
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected
@@ -75,7 +75,7 @@ func TestLastNotToCheck_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().LastNotToCheck(stringLongerThan3)
+		rec.NewAssertion().LastNotToCheck(stringLongerThan3)
 		rec.RunAssertions(10 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

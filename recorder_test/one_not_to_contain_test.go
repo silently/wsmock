@@ -23,7 +23,7 @@ func TestOneNotToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToContain("ng1")
+		rec.NewAssertion().OneNotToContain("ng1")
 		rec.RunAssertions(100 * time.Millisecond)
 
 		if mockT.Failed() { // fail not expected
@@ -48,7 +48,7 @@ func TestOneNotToContain_Success(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToContain("byte1")
+		rec.NewAssertion().OneNotToContain("byte1")
 		before := time.Now()
 		rec.RunAssertions(100 * time.Millisecond)
 		after := time.Now()
@@ -78,7 +78,7 @@ func TestOneNotToContain_Failure(t *testing.T) {
 		}()
 
 		// assert
-		rec.Assert().OneNotToContain("nothing")
+		rec.NewAssertion().OneNotToContain("nothing")
 		rec.RunAssertions(50 * time.Millisecond)
 
 		if !mockT.Failed() { // fail expected

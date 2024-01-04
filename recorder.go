@@ -121,9 +121,9 @@ func (r *Recorder) manageErrors() {
 
 // API
 
-// Initialize a new chainable AssertionBuilder
-func (r *Recorder) Assert() *AssertionBuilder {
-	p := &AssertionBuilder{}
+// Initialize a new chainable Assertion
+func (r *Recorder) NewAssertion() *Assertion {
+	p := &Assertion{}
 	newAssertionJob(r, p)
 	return p
 }
@@ -153,7 +153,7 @@ func (r *Recorder) Assert() *AssertionBuilder {
 // rec.WaitFor(pointer, filter, timeout)
 // }
 
-// Runs all the assertions added on this recorder with Assert() and waits for their outcome.
+// Runs all the assertions added on this recorder with NewAssertion() and waits for their outcome.
 //
 // The specified timeout is not reached in the following cases:
 // - all of the assertions succeed
