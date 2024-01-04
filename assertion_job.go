@@ -1,11 +1,13 @@
 package wsmock
 
 import (
+	"fmt"
 	"time"
 )
 
 type assertionJob struct {
-	rec *Recorder
+	rec   *Recorder
+	index int // used in logs
 	// configuration
 	ab *AssertionBuilder
 	// events
@@ -25,6 +27,7 @@ func newAssertionJob(r *Recorder, ab *AssertionBuilder) *assertionJob {
 		done:          false,
 		currentIndex:  0,
 	}
+	job.index = r.currentRound.addJob(job)
 	return job
 }
 
@@ -33,11 +36,21 @@ func (j *assertionJob) incPassed() {
 }
 
 func (j *assertionJob) allPassed() bool {
-	return len(j.ab.list) == j.currentIndex
+	return len(j.ab.conditions) == j.currentIndex
 }
 
 func (j *assertionJob) currentAsserter() Asserter {
-	return j.ab.list[j.currentIndex]
+	return j.ab.conditions[j.currentIndex]
+}
+
+func (j *assertionJob) addError(err string, end bool) {
+	prefix := "error on write"
+	if end {
+		prefix = "error on end"
+	}
+	// add assert index to error log
+	err = fmt.Sprintf(prefix+" in Assert#%v: ", j.index) + err
+	j.rec.addError(err)
 }
 
 func (j *assertionJob) assertOnEnd() {
@@ -52,7 +65,7 @@ func (j *assertionJob) assertOnEnd() {
 		if len(err) == 0 {
 			err = j.err
 		}
-		j.rec.addError(err)
+		j.addError(err, true)
 	}
 }
 
@@ -71,6 +84,7 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 		select {
 		case latest := <-j.latestWriteCh:
 			done, passed, err := j.currentAsserter().Try(false, latest, j.rec.serverWrites)
+			// log.Printf(">> %v latest %v", j.index, latest)
 			if done {
 				j.done = true
 				if passed { // current passed
@@ -79,7 +93,7 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 						return
 					}
 				} else {
-					j.rec.addError(err)
+					j.addError(err, false)
 					return
 				}
 			}

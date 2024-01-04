@@ -90,7 +90,7 @@ func (r *Recorder) outputError(err string, isFirst bool) {
 
 	errorParts := strings.Split(err, "\n")
 	label, rest := errorParts[0], errorParts[1:]
-	errorOutput := formatErrorSection(r, "error: "+label, rest)
+	errorOutput := formatErrorSection(r, label, rest)
 
 	if isFirst {
 		num := len(r.serverWrites)
@@ -123,9 +123,8 @@ func (r *Recorder) manageErrors() {
 
 // Initialize a new chainable AssertionBuilder
 func (r *Recorder) Assert() *AssertionBuilder {
-	p := &AssertionBuilder{rec: r}
-	j := newAssertionJob(r, p)
-	r.currentRound.addJob(j)
+	p := &AssertionBuilder{}
+	newAssertionJob(r, p)
 	return p
 }
 
@@ -154,7 +153,7 @@ func (r *Recorder) Assert() *AssertionBuilder {
 // rec.WaitFor(pointer, filter, timeout)
 // }
 
-// Runs all the conditions added on this recorder with Assert() and waits for their outcome.
+// Runs all the assertions added on this recorder with Assert() and waits for their outcome.
 //
 // The specified timeout is not reached in the following cases:
 // - all of the assertions succeed

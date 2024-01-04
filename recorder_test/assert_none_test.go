@@ -31,11 +31,12 @@ func TestFailing(t *testing.T) {
 		t.Skip()
 		conn, rec := ws.NewGorillaMockAndRecorder(t)
 
-		go conn.WriteJSON(Message{"chat", "sentence1"})
+		go conn.WriteJSON("no")
 
 		// assert
 		rec.Assert().OneNotToBe(Message{"chat", "sentence1"})
 		rec.Assert().NextToBe(Message{"chat", "notfound"})
+		rec.Assert().OneToCheck(stringLongerThan3)
 		rec.RunAssertions(100 * time.Millisecond)
 	})
 }

@@ -242,7 +242,7 @@ Here are some example:
 
 ### Closing conditions
 
-The name of closing condition methods is any combination of `LastTo|LastNotTo|AllTo|NoneTo + Be|Check|Contain|Match` (plus the special `ConnClosed` that checks the connection is closed). They behave similarly to chaining condition methods, with the following differences:
+The name of closing condition methods is any combination of `LastTo|LastNotTo|AllTo|NoneTo + Be|Check|Contain|Match`. They behave similarly to chaining condition methods, with the following differences:
 
 - they need the whole message history to succeed, meaning they can fail fast (for instance if `NoneToBe("a")` receives `"a"`) but can only succeed on end (timeout or conn closed)
 - there can be only one closing condition in an assertion (or the assertion will always fail)
@@ -329,7 +329,7 @@ func customAsserter(end bool, latest any, _ []any) (done, passed bool, err strin
 rec.Assert().With(customAsserter) // it's possible to chain it with other AssertionBuilder conditions
 ```
 
-...this `customAsserter` is in fact the implementation of `OneNotToBe`.
+...this `customAsserter` is an alternate implementation of `OneNotToBe`.
 
 ## Implementation specifics
 
@@ -356,16 +356,17 @@ In case of a failing test, the output looks like:
                 {Kind:chat Payload:sentence1}
             
         assert_none_test.go:41: 
-            Recorder#0 error: [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
+            Recorder#0 error on write in Assert#1: [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
                 Failing message (of type recorder_test.Message): {Kind:chat Payload:sentence1}
             
         assert_none_test.go:41: 
-            Recorder#0 error: [OneNotToBe] message unexpectedly equal to: {Kind:chat Payload:sentence1}
+            Recorder#0 error on end in Assert#0: [OneNotToBe] message unexpectedly equal to: {Kind:chat Payload:sentence1}
 ```
 
 Where:
 
-- `Recorder#0` serves as a unique identifier of the failing recorder within the test `TestFailing` (the index `#0` maps the creation order of the recorder in `TestFailing`)
+- `Recorder#0` uniquely identifies the failing recorder within the test `TestFailing` (the index `#0` maps the creation order of the recorder in `TestFailing`)
+- `Assert#0` uniquely identifies the failing assertion of a given recorder (the index `#0` maps the creation order of the assertion on the recorder)
 - if there is at least one error for `Recorder#0`, the introductory log `Recorder#0 1 message received:` may help understand errors that follow
 
 ## For wsmock developers

@@ -17,9 +17,11 @@ func newRound() *round {
 	}
 }
 
-func (r *round) addJob(j *assertionJob) {
+func (r *round) addJob(j *assertionJob) (index int) {
+	index = len(r.jobIndex) // index is length before adding new job (or new length minus one)
 	r.jobIndex[j] = true
 	r.wg.Add(1)
+	return
 }
 
 func (r *round) start(timeout time.Duration) {
