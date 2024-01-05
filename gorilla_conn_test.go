@@ -10,11 +10,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
-	Kind    string `json:"kind"`
-	Payload string `json:"payload"`
-}
-
 func TestGorillaConnWrite(t *testing.T) {
 	t.Run("NextWriter can write to recorder", func(t *testing.T) {
 		mockT := &testing.T{}
@@ -29,7 +24,7 @@ func TestGorillaConnWrite(t *testing.T) {
 			t.Error(err)
 		}
 
-		if len(rec.serverWriteCh) != 1 {
+		if len(rec.writeCh) != 1 {
 			t.Error("recorder should contain one write")
 		}
 	})
@@ -43,7 +38,7 @@ func TestGorillaConnWrite(t *testing.T) {
 			t.Error(err)
 		}
 
-		if len(rec.serverWriteCh) != 1 {
+		if len(rec.writeCh) != 1 {
 			t.Error("recorder should contain one write")
 		}
 	})
@@ -57,7 +52,7 @@ func TestGorillaConnWrite(t *testing.T) {
 			t.Error(err)
 		}
 
-		if len(rec.serverWriteCh) != 1 {
+		if len(rec.writeCh) != 1 {
 			t.Error("recorder should contain one write")
 		}
 	})

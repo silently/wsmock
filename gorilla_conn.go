@@ -182,7 +182,7 @@ func (conn *GorillaConn) WriteJSON(m any) error {
 	if conn.closed {
 		return errors.New("[wsmock] conn closed while writing")
 	}
-	conn.recorder.serverWriteCh <- m
+	conn.recorder.writeCh <- m
 	return nil
 }
 
@@ -192,9 +192,9 @@ func (conn *GorillaConn) WriteMessage(messageType int, data []byte) error {
 		return errors.New("[wsmock] conn closed while writing")
 	}
 	if messageType == websocket.TextMessage {
-		conn.recorder.serverWriteCh <- string(data)
+		conn.recorder.writeCh <- string(data)
 	} else {
-		conn.recorder.serverWriteCh <- data
+		conn.recorder.writeCh <- data
 	}
 	return nil
 }

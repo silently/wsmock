@@ -11,21 +11,29 @@ type assertionJob struct {
 	// configuration
 	a *Assertion
 	// events
-	latestWriteCh chan any
+	writeCh chan any
+	// message writes history
+	writes []any
 	// state
 	done         bool // means finished, as a success OR failure
 	currentIndex int
-	// optional
-	err string
+}
+
+func last[T any](slice []T) (T, bool) {
+	if len(slice) == 0 {
+		var zero T
+		return zero, false
+	}
+	return slice[len(slice)-1], true
 }
 
 func newAssertionJob(r *Recorder, a *Assertion) *assertionJob {
 	job := &assertionJob{
-		rec:           r,
-		a:             a,
-		latestWriteCh: make(chan any, 256),
-		done:          false,
-		currentIndex:  0,
+		rec:          r,
+		a:            a,
+		writeCh:      make(chan any, 256),
+		done:         false,
+		currentIndex: 0,
 	}
 	job.index = r.currentRound.addJob(job)
 	return job
@@ -44,27 +52,36 @@ func (j *assertionJob) currentCondition() Condition {
 }
 
 func (j *assertionJob) addError(err string, end bool) {
-	prefix := "error on write"
-	if end {
-		prefix = "error on end"
+	// introduction
+	numMessages := len(j.writes)
+	messagesLabel := fmt.Sprintf("%v messages received:", numMessages)
+	if numMessages == 0 {
+		messagesLabel = "no message received"
+	} else if numMessages == 1 {
+		messagesLabel = "1 message received:"
 	}
-	// add assert index to error log
-	err = fmt.Sprintf(prefix+" in Assert#%v: ", j.index) + err
-	j.rec.addError(err)
+	output := fmt.Sprintf("\nIn recorder#%v → assertion#%v, ", j.rec.index, j.index) + messagesLabel + "\n"
+	for _, item := range j.writes {
+		output = fmt.Sprintf("%v\t%+v\n", output, item)
+	}
+	// actual error
+	errorLabel := "Error occured on write:\n\t"
+	if end {
+		errorLabel = "Error occured on end:\n\t"
+	}
+	output = output + errorLabel + err + "\n"
+	j.rec.addError(output)
 }
 
 func (j *assertionJob) assertOnEnd() {
-	latest, _ := last(j.rec.serverWrites)
+	latest, _ := last(j.writes)
 	// on end, done is considered true anyway
-	_, passed, err := j.currentCondition().Try(true, latest, j.rec.serverWrites)
+	_, passed, err := j.currentCondition().Try(true, latest, j.writes)
 	j.done = true
 
 	if passed {
 		j.incPassed()
 	} else {
-		if len(err) == 0 {
-			err = j.err
-		}
 		j.addError(err, true)
 	}
 }
@@ -82,8 +99,10 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 
 	for {
 		select {
-		case latest := <-j.latestWriteCh:
-			done, passed, err := j.currentCondition().Try(false, latest, j.rec.serverWrites)
+		case w := <-j.writeCh:
+			j.writes = append(j.writes, w)
+
+			done, passed, err := j.currentCondition().Try(false, w, j.writes)
 			// log.Printf(">> %v latest %v", j.index, latest)
 			if done {
 				j.done = true

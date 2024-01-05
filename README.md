@@ -2,7 +2,7 @@
 
 Golang library to help with WebSocket testing by providing Gorilla mocks, expressive scripting of assertions, parallelism, configurable timeouts and meaningful logs. wsmock is itself thoroughly tested.
 
-With wsmock, tests are written like:
+With wsmock, tests look like:
 
 ```golang
 func TestRockPaperScissors(t *testing.T) {
@@ -155,7 +155,7 @@ func TestChat(t *testing.T) {
     // the next assertion is "not received" (supposing chat history is not implemented)
     michelineRec.NewAssertion().OneNotToBe(Message{"incoming", "Hello"})
     // run all assertions in this test, with a timeout
-    wsmock.RunAssertions(t, 100 * time.Millisecond)
+    wsmock.RunAssertions(t, 10 * durationUnit)
 
     // round #2 of Sends and Asserts
     johnnyConn.Send(Message{"send", "Are you French?"})
@@ -165,7 +165,7 @@ func TestChat(t *testing.T) {
       OneToContain("French").
       OneToContain("English")
     // you can run assertions on a given recorder, with a timeout
-    michelineRec.RunAssertions(100 * time.Millisecond)
+    michelineRec.RunAssertions(10 * durationUnit)
   })
 }
 ```
@@ -184,21 +184,21 @@ Then you add assertions on recorders (`rec.NewAssertion().<Assertion(...)>`), se
 
 You can run assertions either:
 
-- per recorder, for instance `michelineRec.Run(100 * time.Millisecond)`
-- per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
+- per recorder, for instance `michelineRec.Run(10 * durationUnit)`
+- per test: `wsmock.RunAssertions(t, 10 * durationUnit)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 After `RunAssertions(...)`, the message history on recorders is emptied and `wsmock` internally creates a new *round* of events. It means you can pursue scripting your test with `conn.Send(...)`, define and run new assertions on recorders, but messages from previous rounds won't be taken into account in the current round.
 
 ## Assertion concepts
 
-With wsmock we define assertions regarding messages (received by a recorder) as ordered chains of conditions. The assertion succeeds only if all of the conditions in the chain succeed in order:
+With wsmock we define assertions as ordered chains of conditions (that will be validated upon messages received by a recorder). The assertion succeeds only if all of the conditions in the chain succeed, in order:
 
 ```golang
 rec.NewAssertion().  // this
   NextToBe("a").     // is
   NextToBe("b").     // an
   OneToBe("d")       // assertion
-rec.RunAssertions(100 * time.Millisecond)
+rec.RunAssertions(10 * durationUnit)
 ```
 
 The preceding assertion will for instance succeed if the message history is `["a", "b", "c", "d"]` but fail with `["a", "d", "b"]` (wrong order) or `["z" "a", "b", "d"]` (unexpected first element).
@@ -351,29 +351,33 @@ Here are some gotchas:
 In case of a failing test, the output looks like:
 
 ```
---- FAIL: TestFailing (0.00s)
-    --- FAIL: TestFailing/should_fail (0.00s)
-        assert_none_test.go:41: 
-            Recorder#0 1 message received:
-                {Kind:chat Payload:sentence1}
+--- FAIL: TestFailing (0.10s)
+    --- FAIL: TestFailing/should_fail (0.10s)
+        assert_failing_test.go:23: 
+            In recorder#0 → assertion#1, 1 message received:
+                1
+            Error occured on write:
+                [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
+                Failing message (of type string): 1
             
-        assert_none_test.go:41: 
-            Recorder#0 error on write in Assert#1: [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
-                Failing message (of type recorder_test.Message): {Kind:chat Payload:sentence1}
-            
-        assert_none_test.go:41: 
-            Recorder#0 error on end in Assert#0: [OneNotToBe] message unexpectedly equal to: {Kind:chat Payload:sentence1}
+        assert_failing_test.go:23: 
+            In recorder#0 → assertion#2, 3 messages received:
+                1
+                2
+                3
+            Error occured on end:
+                [OneToCheck] no message checks predicate: github.com/silently/wsmock/integration_test_test.stringLongerThan3
 ```
 
 Where:
 
-- `Recorder#0` uniquely identifies the failing recorder within the test `TestFailing` (the index `#0` maps the creation order of the recorder in `TestFailing`)
-- `Assert#0` uniquely identifies the failing assertion of a given recorder (the index `#0` maps the creation order of the assertion on the recorder)
-- if there is at least one error for `Recorder#0`, the introductory log `Recorder#0 1 message received:` may help understand errors that follow
+- `recorder#0` uniquely identifies the failing recorder within `TestFailing` (`#0` maps the creation order of the recorder in `TestFailing`)
+- `assertion#1` uniquely identifies the failing assertion of a given recorder (`#1` maps the creation order of the assertion on the recorder)
+- messages received by the assertion are printed before the actual error
 
 ## For wsmock developers
 
-Even if it does not follow Go conventions, we've decided to put recorder tests in a separate `recorder_test` folder to be able to split them in many different files without polluting the root folder.
+Even if it does not follow Go conventions, we've decided to put additional tests in a separate `integration_test` folder to be able to split them in many different files without polluting the root folder.
 
 Then you may run wsmock own tests with:
 

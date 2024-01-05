@@ -1,8 +1,6 @@
 package wsmock
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,11 +15,9 @@ type Recorder struct {
 	index        int // used in logs
 	currentRound *round
 	// ws communication
-	serverWriteCh chan any
-	done          bool
-	doneCh        chan struct{}
-	// messages queue
-	serverWrites []any
+	writeCh chan any
+	done    bool
+	doneCh  chan struct{}
 	// when fails
 	mu     sync.RWMutex
 	errors []string
@@ -29,9 +25,9 @@ type Recorder struct {
 
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
-		t:             t,
-		serverWriteCh: make(chan any, 256),
-		doneCh:        make(chan struct{}),
+		t:       t,
+		writeCh: make(chan any, 256),
+		doneCh:  make(chan struct{}),
 	}
 	r.index = indexRecorder(t, &r)
 	r.resetRound()
@@ -39,7 +35,6 @@ func newRecorder(t *testing.T) *Recorder {
 }
 
 func (r *Recorder) resetRound() {
-	r.serverWrites = nil
 	r.currentRound = newRound()
 }
 
@@ -55,12 +50,10 @@ func (r *Recorder) stop() {
 func (r *Recorder) forwardWritesDuringRound() {
 	for {
 		select {
-		case w := <-r.serverWriteCh:
-			r.serverWrites = append(r.serverWrites, w)
-
+		case w := <-r.writeCh:
 			for job := range r.currentRound.jobIndex {
 				if !job.done { // to prevent blocking channel
-					job.latestWriteCh <- w
+					job.writeCh <- w
 				}
 			}
 		case <-r.doneCh:
@@ -77,34 +70,9 @@ func (r *Recorder) addError(err string) {
 	r.errors = append(r.errors, err)
 }
 
-func formatErrorSection[T any](r *Recorder, label string, items []T) string {
-	output := fmt.Sprintf("Recorder#%v ", r.index) + label + "\n"
-	for _, item := range items {
-		output = fmt.Sprintf("%v\t%+v\n", output, item)
-	}
-	return output
-}
-
-func (r *Recorder) outputError(err string, isFirst bool) {
+func (r *Recorder) outputError(err string) {
 	r.t.Helper()
-
-	errorParts := strings.Split(err, "\n")
-	label, rest := errorParts[0], errorParts[1:]
-	errorOutput := formatErrorSection(r, label, rest)
-
-	if isFirst {
-		num := len(r.serverWrites)
-		label := fmt.Sprintf("%v messages received:", num)
-		if num == 0 {
-			label = "no message received"
-		} else if num == 1 {
-			label = "1 message received:"
-		}
-		stateOutput := formatErrorSection(r, label, r.serverWrites)
-		r.t.Log("\n" + stateOutput)
-	}
-
-	r.t.Error("\n" + errorOutput)
+	r.t.Error(err)
 }
 
 func (r *Recorder) manageErrors() {
@@ -112,8 +80,8 @@ func (r *Recorder) manageErrors() {
 
 	r.mu.RLock()
 	if len(r.errors) > 0 {
-		for i, err := range r.errors {
-			r.outputError(err, i == 0)
+		for _, err := range r.errors {
+			r.outputError(err)
 		}
 	}
 	r.mu.RUnlock()

@@ -51,12 +51,12 @@ func (a *Assertion) OneToCheck(f Predicate) *Assertion {
 
 // Adds a condition that succeeds if a new message contains the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) OneToContain(sub string) *Assertion {
-	return a.append(newOneTo(contains(sub), fmt.Sprintf("[OneToContain] no message contains string: %v", sub)))
+	return a.append(newOneTo(contain(sub), fmt.Sprintf("[OneToContain] no message contains string: %v", sub)))
 }
 
 // Adds a condition that succeeds if a new message matches the regular expression
 func (a *Assertion) OneToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newOneTo(matches(re), fmt.Sprintf("[OneToMatch] no message matches regexp: %v", re)))
+	return a.append(newOneTo(match(re), fmt.Sprintf("[OneToMatch] no message matches regexp: %v", re)))
 }
 
 // OneNot*
@@ -73,12 +73,12 @@ func (a *Assertion) OneNotToCheck(f Predicate) *Assertion {
 
 // Adds a condition that succeeds if a new message does not contain the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) OneNotToContain(sub string) *Assertion {
-	return a.append(newOneTo(not(contains(sub)), fmt.Sprintf("[OneNotToContain] message unexpectedly contains string: %v", sub)))
+	return a.append(newOneTo(not(contain(sub)), fmt.Sprintf("[OneNotToContain] message unexpectedly contains string: %v", sub)))
 }
 
 // Adds a condition that succeeds if a new message does not match the regular expression
 func (a *Assertion) OneNotToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newOneTo(not(matches(re)), fmt.Sprintf("[OneNotToMatch] message unexpectedly matches regexp: %v", re)))
+	return a.append(newOneTo(not(match(re)), fmt.Sprintf("[OneNotToMatch] message unexpectedly matches regexp: %v", re)))
 }
 
 // NextTo*
@@ -95,12 +95,12 @@ func (a *Assertion) NextToCheck(f Predicate) *Assertion {
 
 // Adds a condition that succeeds if the next message contains the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) NextToContain(sub string) *Assertion {
-	return a.append(newNextTo(contains(sub), fmt.Sprintf("[NextToContain] next message does not contain string: %v", sub)))
+	return a.append(newNextTo(contain(sub), fmt.Sprintf("[NextToContain] next message does not contain string: %v", sub)))
 }
 
 // Adds a condition that succeeds if the next message matches the regular expression
 func (a *Assertion) NextToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newNextTo(matches(re), fmt.Sprintf("[NextToMatch] next message does not match regexp: %v", re)))
+	return a.append(newNextTo(match(re), fmt.Sprintf("[NextToMatch] next message does not match regexp: %v", re)))
 }
 
 // NextNot*
@@ -117,12 +117,12 @@ func (a *Assertion) NextNotToCheck(f Predicate) *Assertion {
 
 // Adds a condition that succeeds if the next message does not contain the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) NextNotToContain(sub string) *Assertion {
-	return a.append(newNextTo(not(contains(sub)), fmt.Sprintf("[NextNotToContain] next message unexpectedly contains string: %v", sub)))
+	return a.append(newNextTo(not(contain(sub)), fmt.Sprintf("[NextNotToContain] next message unexpectedly contains string: %v", sub)))
 }
 
 // Adds a condition that succeeds if the next message does not match the regular expression
 func (a *Assertion) NextNotToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newNextTo(not(matches(re)), fmt.Sprintf("[NextNotToMatch] next message unexpectedly matches regexp: %v", re)))
+	return a.append(newNextTo(not(match(re)), fmt.Sprintf("[NextNotToMatch] next message unexpectedly matches regexp: %v", re)))
 }
 
 // Last*
@@ -139,12 +139,12 @@ func (a *Assertion) LastToCheck(f Predicate) {
 
 // Adds a condition that succeeds if the last message contains the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) LastToContain(sub string) {
-	a.append(newLastTo(contains(sub), fmt.Sprintf("[LastToContain] last message does not contain string: %v", sub)))
+	a.append(newLastTo(contain(sub), fmt.Sprintf("[LastToContain] last message does not contain string: %v", sub)))
 }
 
 // Adds a condition that succeeds if the last message matches the regular expression
 func (a *Assertion) LastToMatch(re *regexp.Regexp) {
-	a.append(newLastTo(matches(re), fmt.Sprintf("[LastToMatch] last message does not match regexp: %v", re)))
+	a.append(newLastTo(match(re), fmt.Sprintf("[LastToMatch] last message does not match regexp: %v", re)))
 }
 
 // LastNot*
@@ -161,12 +161,12 @@ func (a *Assertion) LastNotToCheck(f Predicate) {
 
 // Adds a condition that succeeds if the last message does not contain the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) LastNotToContain(sub string) {
-	a.append(newLastTo(not(contains(sub)), fmt.Sprintf("[LastNotToContain] last message unexpectedly contains string: %v", sub)))
+	a.append(newLastTo(not(contain(sub)), fmt.Sprintf("[LastNotToContain] last message unexpectedly contains string: %v", sub)))
 }
 
 // Adds a condition that succeeds if the last message does not match the regular expression
 func (a *Assertion) LastNotToMatch(re *regexp.Regexp) {
-	a.append(newLastTo(not(matches(re)), fmt.Sprintf("[LastNotToMatch] last message unexpectedly matches regexp: %v", re)))
+	a.append(newLastTo(not(match(re)), fmt.Sprintf("[LastNotToMatch] last message unexpectedly matches regexp: %v", re)))
 }
 
 // All*
@@ -183,12 +183,12 @@ func (a *Assertion) AllToCheck(f Predicate) *Assertion {
 
 // Adds a condition that succeeds if all remaining messages contain the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) AllToContain(sub string) *Assertion {
-	return a.append(newAllTo(contains(sub), fmt.Sprintf("[AllToContain] message does not contain string: %v", sub)))
+	return a.append(newAllTo(contain(sub), fmt.Sprintf("[AllToContain] message does not contain string: %v", sub)))
 }
 
 // Adds a condition that succeeds if all remaining messages match the regular expression
 func (a *Assertion) AllToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newAllTo(matches(re), fmt.Sprintf("[AllToMatch] message does not match regexp: %v", re)))
+	return a.append(newAllTo(match(re), fmt.Sprintf("[AllToMatch] message does not match regexp: %v", re)))
 }
 
 // None*
@@ -205,10 +205,10 @@ func (a *Assertion) NoneToCheck(f Predicate) {
 
 // Adds a condition that succeeds if no remaining message contains the given string (messages that can't be converted to strings are JSON-marshalled first)
 func (a *Assertion) NoneToContain(sub string) {
-	a.append(newAllTo(not(contains(sub)), fmt.Sprintf("[NoneToContain] message unexpectedly contains string: %v", sub)))
+	a.append(newAllTo(not(contain(sub)), fmt.Sprintf("[NoneToContain] message unexpectedly contains string: %v", sub)))
 }
 
 // Adds a condition that succeeds if no remaining message matches the regular expression
 func (a *Assertion) NoneToMatch(re *regexp.Regexp) {
-	a.append(newAllTo(not(matches(re)), fmt.Sprintf("[NoneToMatch] message unexpectedly matches regexp: %v", re)))
+	a.append(newAllTo(not(match(re)), fmt.Sprintf("[NoneToMatch] message unexpectedly matches regexp: %v", re)))
 }
