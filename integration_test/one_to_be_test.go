@@ -38,7 +38,7 @@ func TestOneToBe_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("OneToBe should succeed faster")
 			}
 		}
@@ -104,11 +104,12 @@ func TestOneToBe_Failure(t *testing.T) {
 			t.Error("OneToBe should fail because of unexpected message")
 		}
 		// assert error message
-		expectedErrorMessage := "no message is equal to: pong3"
+		expectedErrorMessage := "no message is equal to: \"pong3\""
+		actualErrorMessage := getTestOutput(mockT)
 		processedErrorMessage := removeSpaces(expectedErrorMessage)
-		processedActualErrorMessage := removeSpaces(getTestOutput(mockT))
+		processedActualErrorMessage := removeSpaces(actualErrorMessage)
 		if !strings.Contains(processedActualErrorMessage, processedErrorMessage) {
-			t.Errorf("OneToBe wrong error message, expected:\n\"%v\"", expectedErrorMessage)
+			t.Errorf("OneToBe wrong error message\nexpected: \"%v\"\ngot: \"%v\"", expectedErrorMessage, actualErrorMessage)
 		}
 	})
 
@@ -158,7 +159,7 @@ func TestOneToBe_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Error("OneToBe should fail faster because of Close")
 			}
 		}

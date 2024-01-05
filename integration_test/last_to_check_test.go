@@ -33,7 +33,7 @@ func TestLastToCheck_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed < 30*time.Millisecond {
+			if elapsed < 3*durationUnit {
 				t.Error("LastToCheck should not succeed before timeout")
 			}
 		}

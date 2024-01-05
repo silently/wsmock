@@ -31,7 +31,7 @@ func newAssertionJob(r *Recorder, a *Assertion) *assertionJob {
 	job := &assertionJob{
 		rec:          r,
 		a:            a,
-		writeCh:      make(chan any, 256),
+		writeCh:      make(chan any, 512),
 		done:         false,
 		currentIndex: 0,
 	}
@@ -62,7 +62,7 @@ func (j *assertionJob) addError(err string, end bool) {
 	}
 	output := fmt.Sprintf("\nIn recorder#%v → assertion#%v, ", j.rec.index, j.index) + messagesLabel + "\n"
 	for _, item := range j.writes {
-		output = fmt.Sprintf("%v\t%+v\n", output, item)
+		output = fmt.Sprintf("%v\t%#v\n", output, item)
 	}
 	// actual error
 	errorLabel := "Error occured on write:\n\t"

@@ -32,7 +32,7 @@ func TestAllToContain_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed < 30*time.Millisecond {
+			if elapsed < 3*durationUnit {
 				t.Error("AllToContain should not succeed before timeout")
 			}
 		}
@@ -111,7 +111,7 @@ func TestAllToContain_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("AllToContain should fail faster")
 			}
 		}

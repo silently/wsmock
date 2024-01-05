@@ -30,7 +30,7 @@ func TestOneNotToBe_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("OneNotToBe should succeed faster")
 			}
 		}
@@ -58,7 +58,7 @@ func TestOneNotToBe_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("OneNotToBe should succeed faster")
 			}
 		}

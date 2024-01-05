@@ -122,7 +122,7 @@ func (c *Client) writePump() {
 }
 
 func runClient(hub *Hub, conn wsmock.IGorilla) {
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 512)}
 	hub.register <- client
 	go client.writePump()
 	go client.readPump()

@@ -49,7 +49,7 @@ func TestCustom_AlwaysTrue(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed >= 50*time.Millisecond {
+			if elapsed >= 5*durationUnit {
 				t.Error("RunAssertions should be faster with trueExceptOnEnd")
 			}
 		}
@@ -99,7 +99,7 @@ func TestCustom_AlwaysFalse(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed >= 30*time.Millisecond {
+			if elapsed >= 3*durationUnit {
 				t.Error("RunAssertions should be faster with alwaysFalse")
 			}
 		}

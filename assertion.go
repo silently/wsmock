@@ -41,7 +41,7 @@ func (a *Assertion) With(f ConditionFunc) *Assertion {
 
 // Adds a condition that succeeds if a new message is equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) OneToBe(target any) *Assertion {
-	return a.append(newOneTo(eq(target), fmt.Sprintf("[OneToBe] no message is equal to: %+v", target)))
+	return a.append(newOneTo(eq(target), fmt.Sprintf("[OneToBe] no message is equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if a new message checks the Predicate
@@ -63,7 +63,7 @@ func (a *Assertion) OneToMatch(re *regexp.Regexp) *Assertion {
 
 // Adds a condition that succeeds if a new message is not equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) OneNotToBe(target any) *Assertion {
-	return a.append(newOneTo(not(eq(target)), fmt.Sprintf("[OneNotToBe] message unexpectedly equal to: %+v", target)))
+	return a.append(newOneTo(not(eq(target)), fmt.Sprintf("[OneNotToBe] message unexpectedly equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if a new message does not check the Predicate
@@ -85,7 +85,7 @@ func (a *Assertion) OneNotToMatch(re *regexp.Regexp) *Assertion {
 
 // Adds a condition that succeeds if the next message is equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) NextToBe(target any) *Assertion {
-	return a.append(newNextTo(eq(target), fmt.Sprintf("[NextToBe] next message is not equal to: %+v", target)))
+	return a.append(newNextTo(eq(target), fmt.Sprintf("[NextToBe] next message is not equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if the next message checks the Predicate
@@ -107,7 +107,7 @@ func (a *Assertion) NextToMatch(re *regexp.Regexp) *Assertion {
 
 // Adds a condition that succeeds if the next message is not equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) NextNotToBe(target any) *Assertion {
-	return a.append(newNextTo(not(eq(target)), fmt.Sprintf("[NextNotToBe] next message unexpectedly equal to: %+v", target)))
+	return a.append(newNextTo(not(eq(target)), fmt.Sprintf("[NextNotToBe] next message unexpectedly equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if the next message does not check the Predicate
@@ -129,7 +129,7 @@ func (a *Assertion) NextNotToMatch(re *regexp.Regexp) *Assertion {
 
 // Adds a condition that succeeds if the last message is equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) LastToBe(target any) {
-	a.append(newLastTo(eq(target), fmt.Sprintf("[LastToBe] last message is not equal to: %+v", target)))
+	a.append(newLastTo(eq(target), fmt.Sprintf("[LastToBe] last message is not equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if the last message checks the Predicate
@@ -151,7 +151,7 @@ func (a *Assertion) LastToMatch(re *regexp.Regexp) {
 
 // Adds a condition that succeeds if the last message is not equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) LastNotToBe(target any) {
-	a.append(newLastTo(not(eq(target)), fmt.Sprintf("[LastNotToBe] last message unexpectedly equal to: %+v", target)))
+	a.append(newLastTo(not(eq(target)), fmt.Sprintf("[LastNotToBe] last message unexpectedly equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if the last message does not check the Predicate
@@ -173,7 +173,7 @@ func (a *Assertion) LastNotToMatch(re *regexp.Regexp) {
 
 // Adds a condition that succeeds if all remaining messages are equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) AllToBe(target any) *Assertion {
-	return a.append(newAllTo(eq(target), fmt.Sprintf("[AllToBe] message is not equal to: %+v", target)))
+	return a.append(newAllTo(eq(target), fmt.Sprintf("[AllToBe] message is not equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if all remaining messages check the Predicate
@@ -195,7 +195,7 @@ func (a *Assertion) AllToMatch(re *regexp.Regexp) *Assertion {
 
 // Adds a condition that succeeds if no remaining message is equal to the given interface (according to the equality operator `==`)
 func (a *Assertion) NoneToBe(target any) {
-	a.append(newAllTo(not(eq(target)), fmt.Sprintf("[NoneToBe] message unexpectedly equal to: %+v", target)))
+	a.append(newAllTo(not(eq(target)), fmt.Sprintf("[NoneToBe] message unexpectedly equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if no remaining message checks the Predicate

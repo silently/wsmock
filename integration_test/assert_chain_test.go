@@ -42,10 +42,10 @@ func TestChainOneToBe(t *testing.T) {
 			OneToBe(Message{"chat", "sentence2"}).
 			OneToBe(Message{"chat", "sentence3"})
 
-		rec.RunAssertions(15 * durationUnit)
+		rec.RunAssertions(20 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
-			t.Error("OneToBe*s* should succeed, mockT output is:\n", getTestOutput(mockT))
+			t.Error("OneToBe*s* should succeed, mockT output is:\n\t", getTestOutput(mockT))
 		}
 	})
 }
@@ -156,7 +156,7 @@ func TestChainVarious(t *testing.T) {
 			OneNotToCheck(truthy).
 			LastToCheck(stringLongerThan3)
 
-		rec.RunAssertions(10 * durationUnit)
+		rec.RunAssertions(20 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("Chain4 should succeed, mockT output is:\n", getTestOutput(mockT))

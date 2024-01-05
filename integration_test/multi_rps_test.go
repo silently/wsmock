@@ -4,7 +4,6 @@ import (
 	"slices"
 	"sync"
 	"testing"
-	"time"
 
 	ws "github.com/silently/wsmock"
 )
@@ -98,7 +97,7 @@ func TestMulti_RPS(t *testing.T) {
 		// assert
 		rec1.NewAssertion().OneToBe("win")
 		rec2.NewAssertion().OneToBe("loss")
-		ws.RunAssertions(mockT, 50*time.Millisecond)
+		ws.RunAssertions(mockT, 5*durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in RPS game, mockT output is:\n", getTestOutput(mockT))

@@ -155,7 +155,7 @@ func TestChat(t *testing.T) {
     // the next assertion is "not received" (supposing chat history is not implemented)
     michelineRec.NewAssertion().OneNotToBe(Message{"incoming", "Hello"})
     // run all assertions in this test, with a timeout
-    wsmock.RunAssertions(t, 10 * durationUnit)
+    wsmock.RunAssertions(t, 100 $ time.M)
 
     // round #2 of Sends and Asserts
     johnnyConn.Send(Message{"send", "Are you French?"})
@@ -165,7 +165,7 @@ func TestChat(t *testing.T) {
       OneToContain("French").
       OneToContain("English")
     // you can run assertions on a given recorder, with a timeout
-    michelineRec.RunAssertions(10 * durationUnit)
+    michelineRec.RunAssertions(100 * time.Millisecond)
   })
 }
 ```
@@ -184,8 +184,8 @@ Then you add assertions on recorders (`rec.NewAssertion().<Assertion(...)>`), se
 
 You can run assertions either:
 
-- per recorder, for instance `michelineRec.Run(10 * durationUnit)`
-- per test: `wsmock.RunAssertions(t, 10 * durationUnit)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
+- per recorder, for instance `michelineRec.Run(100 * time.Millisecond)`
+- per test: `wsmock.RunAssertions(t, 100 * time.Millisecond)` (all recorders created with `t` in ` wsmock.NewGorillaMockAndRecorder(t)` will be ran)
 
 After `RunAssertions(...)`, the message history on recorders is emptied and `wsmock` internally creates a new *round* of events. It means you can pursue scripting your test with `conn.Send(...)`, define and run new assertions on recorders, but messages from previous rounds won't be taken into account in the current round.
 
@@ -198,7 +198,7 @@ rec.NewAssertion().  // this
   NextToBe("a").     // is
   NextToBe("b").     // an
   OneToBe("d")       // assertion
-rec.RunAssertions(10 * durationUnit)
+rec.RunAssertions(100 * time.Millisecond)
 ```
 
 The preceding assertion will for instance succeed if the message history is `["a", "b", "c", "d"]` but fail with `["a", "d", "b"]` (wrong order) or `["z" "a", "b", "d"]` (unexpected first element).
@@ -342,7 +342,7 @@ The flow of messages in a test goes like (considering a `runWs` server handler):
 
 Here are some gotchas:
 - `conn.Send(message any)` ensures messages are processed in arrival's order on the same `conn`, but depending on your WebSocket server handler implementation, there is no guarantee that messages sent on **several** conns will be processed in the same order they were sent
-- all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 256 buffered channels on wsmock `Recorder` type
+- all messages sent to the WebSocket server handler (`conn.Send(message any)`) or written by it (`WriteJSON` for instance) go through 512 buffered channels on wsmock `Recorder` type
 - the `Recorder` stores all the messages written by the server handler: indeed some assertions need to know the complete history of messages to decide their outcome
 - **but** the message history is cleared after each run (`wsmock.RunAssertions(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
@@ -353,18 +353,18 @@ In case of a failing test, the output looks like:
 ```
 --- FAIL: TestFailing (0.10s)
     --- FAIL: TestFailing/should_fail (0.10s)
-        assert_failing_test.go:23: 
+        assert_failing_test.go:25: 
             In recorder#0 → assertion#1, 1 message received:
-                1
+                "1"
             Error occured on write:
-                [NextToBe] next message is not equal to: {Kind:chat Payload:notfound}
+                [NextToBe] next message is not equal to: integration_test.Message{Kind:"chat", Payload:"notfound"}
                 Failing message (of type string): 1
             
-        assert_failing_test.go:23: 
+        assert_failing_test.go:25: 
             In recorder#0 → assertion#2, 3 messages received:
-                1
-                2
-                3
+                "1"
+                "2"
+                "3"
             Error occured on end:
                 [OneToCheck] no message checks predicate: github.com/silently/wsmock/integration_test_test.stringLongerThan3
 ```

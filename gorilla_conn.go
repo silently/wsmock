@@ -89,7 +89,7 @@ func (r *gorillaReader) Read(p []byte) (n int, err error) {
 func NewGorillaMockAndRecorder(t *testing.T) (*GorillaConn, *Recorder) {
 	recorder := newRecorder(t)
 	conn := &GorillaConn{
-		serverReadCh: make(chan any, 256),
+		serverReadCh: make(chan any, 512),
 		recorder:     recorder,
 		closedCh:     make(chan struct{}),
 	}

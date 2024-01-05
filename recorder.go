@@ -26,7 +26,7 @@ type Recorder struct {
 func newRecorder(t *testing.T) *Recorder {
 	r := Recorder{
 		t:       t,
-		writeCh: make(chan any, 256),
+		writeCh: make(chan any, 512),
 		doneCh:  make(chan struct{}),
 	}
 	r.index = indexRecorder(t, &r)

@@ -61,7 +61,7 @@ func TestMulti_Chat(t *testing.T) {
 		// assert
 		rec1.NewAssertion().OneToBe(Message{"joined", "user1"})
 		rec2.NewAssertion().NoneToBe(Message{"user1", "hello"}) // user2 has not joined
-		ws.RunAssertions(mockT, 110*time.Millisecond)
+		ws.RunAssertions(mockT, 11*durationUnit)
 
 		// script
 		conn2.Send(Message{"join", "user2"})
@@ -73,7 +73,7 @@ func TestMulti_Chat(t *testing.T) {
 		rec1.NewAssertion().OneToBe(Message{"user3", "hi"})
 		rec2.NewAssertion().OneToBe(Message{"user3", "hi"})
 		rec3.NewAssertion().NoneToBe(Message{"user3", "hi"})
-		ws.RunAssertions(mockT, 110*time.Millisecond)
+		ws.RunAssertions(mockT, 11*durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("unexpected messages in chat room, mockT output is:\n", getTestOutput(mockT))

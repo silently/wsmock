@@ -32,7 +32,7 @@ func TestAllToBe_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed < 30*time.Millisecond {
+			if elapsed < 3*durationUnit {
 				t.Error("AllToBe should not succeed before timeout")
 			}
 		}
@@ -113,7 +113,7 @@ func TestAllToBe_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("AllToBe should fail faster")
 			}
 		}

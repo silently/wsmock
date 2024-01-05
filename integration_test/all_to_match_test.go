@@ -32,7 +32,7 @@ func TestAllToMatch_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed < 30*time.Millisecond {
+			if elapsed < 3*durationUnit {
 				t.Error("AllToMatch should not succeed before timeout")
 			}
 		}
@@ -111,7 +111,7 @@ func TestAllToMatch_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Errorf("AllToMatch should fail faster")
 			}
 		}

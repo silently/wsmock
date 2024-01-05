@@ -37,7 +37,7 @@ func TestOneToCheck_Success(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 20*time.Millisecond {
+			if elapsed > 2*durationUnit {
 				t.Errorf("OneToCheck should succeed faster")
 			}
 		}
@@ -153,7 +153,7 @@ func TestOneToCheck_Failure(t *testing.T) {
 		} else {
 			// test timing
 			elapsed := after.Sub(before)
-			if elapsed > 50*time.Millisecond {
+			if elapsed > 5*durationUnit {
 				t.Error("OneToCheck should fail faster because of Close")
 			}
 		}
