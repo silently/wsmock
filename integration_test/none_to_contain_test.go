@@ -44,7 +44,7 @@ func TestNoneToContain_Success(t *testing.T) {
 
 		// assert
 		rec.NewAssertion().NoneToContain("spec")
-		rec.RunAssertions(5 * durationUnit)
+		rec.RunAssertions(4 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("NoneToContain should succeed, mockT output is:\n", getTestOutput(mockT))

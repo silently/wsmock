@@ -103,15 +103,15 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 			j.writes = append(j.writes, w)
 
 			done, passed, err := j.currentCondition().Try(false, w, j.writes)
-			// log.Printf(">> %v latest %v", j.index, latest)
 			if done {
-				j.done = true
 				if passed { // current passed
 					j.incPassed()
 					if j.allPassed() { // all passed
+						j.done = true
 						return
 					}
 				} else {
+					j.done = true
 					j.addError(err, false)
 					return
 				}

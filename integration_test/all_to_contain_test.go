@@ -53,7 +53,7 @@ func TestAllToContain_Success(t *testing.T) {
 
 		// assert
 		rec.NewAssertion().AllToContain("spec")
-		rec.RunAssertions(5 * durationUnit)
+		rec.RunAssertions(4 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("AllToContain should succeed, mockT output is:\n", getTestOutput(mockT))

@@ -53,7 +53,7 @@ func TestAllToCheck_Success(t *testing.T) {
 
 		// assert
 		rec.NewAssertion().AllToCheck(stringLongerThan3)
-		rec.RunAssertions(5 * durationUnit)
+		rec.RunAssertions(4 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("AllToCheck should succeed, mockT output is:\n", getTestOutput(mockT))
