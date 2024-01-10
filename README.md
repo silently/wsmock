@@ -1,6 +1,6 @@
 # wsmock
 
-Golang library to help with WebSocket testing by providing Gorilla mocks, assertion scripting, assertion parallelism and timeouts. wsmock is itself thoroughly tested and logs meaningful errors.
+Golang library to help with WebSocket testing by providing Gorilla mocks, assertion scripting, assertion parallelism and timeouts. wsmock is itself thoroughly tested and prints meaningful errors.
 
 With wsmock, tests look like:
 
@@ -50,20 +50,20 @@ func serveWs(w http.ResponseWriter, r *http.Request) { // HTTP handler
   if err != nil {
     log.Println(err)
   }
-  wsHandler(conn)                                      // WebSocket handler -> target of the test
+  wsHandler(conn)                                      // WebSocket handler -> test target
 }
 ```
 
 ## Status
 
-wsmock is in an early stage of development (API may evolve) but has itself a good test coverage.
+wsmock is in an early stage of development (API may evolve) but has a good test coverage.
 
 Currently, only Gorilla WebSocket mocks are provided (more WebSocket implementation mocks could be considered) with a focus on reading from and writing to the Conn:
 
 - that's why we provide mock implementations for the methods: `Close`, `ReadJSON`, `ReadMessage`, `NextReader`, `NextWriter`, `WriteJSON`, `WriteMessage`
 - but other methods (like  `CloseHandler`, `EnableWriteCompression`...) from Gorilla `websocket.Conn` are blank/noop
 
-*(wsmock test coverage does not reach 100% because of these blank/noop implementations: they will only be tested when a proper implementation is considered)*
+*(wsmock test coverage does not reach 100% because of these blank/noop implementations: they will only be tested when a proper/useful implementation is considered)*
 
 ## Installation
 
@@ -75,7 +75,7 @@ go get github.com/silently/wsmock
 
 **In short**: replace Gorilla's `*websocket.Conn` type with `wsmock.IGorilla` (or your own compliant interface) to be able to use a mocked conn in tests.
 
-Indeed, the main gotcha is to be able to call WebSocket handlers:
+In more details, the main gotcha is to be able to call WebSocket handlers:
 
 - with Gorilla's `*websocket.Conn` in the main app code
 - with `*wsmock.GorillaConn` in tests
@@ -189,7 +189,7 @@ You can run assertions either:
 
 After `RunAssertions(…)` is finished, the message history on recorders is emptied and `wsmock` internally creates a new *round* of events. It means you can pursue scripting your test with `conn.Send(…)`, define and run new assertions on recorders, but messages from previous rounds won't be taken into account in the current round.
 
-## Assertion concepts
+## Assertion Concepts
 
 With wsmock we define assertions as ordered chains of conditions (that will be validated upon messages received by a recorder). The assertion succeeds only if all of the conditions in the chain succeed in order:
 
@@ -223,7 +223,7 @@ Check the [API documentation](https://pkg.go.dev/github.com/silently/wsmock#Asse
 
 `Recorder#NewAssertion()` returns a new struct that enables chaining and ordering conditions.
 
-### Chainable conditions
+### Chainable Conditions
 
 The name of chainable condition methods is any combination of `Next|One + To|NotTo + Be|Check|Contain|Match`, with the following meaning:
 
@@ -242,7 +242,7 @@ Here are some example:
 - `rec.NewAssertion().OneToBe(target)`: one message should be equal to `target`
 - `rec.NewAssertion().NextToCheck(f)`: the next (or first in that case) message should validate the predicate function `f`
 
-### Closing conditions
+### Closing Conditions
 
 The name of closing condition methods is any combination of `LastTo|LastNotTo|AllTo|NoneTo + Be|Check|Contain|Match`. They behave similarly to chaining conditions, with the following differences:
 
@@ -264,7 +264,7 @@ rec.NewAssertion().
   NoneToMatch(regex)
 ```
 
-### Condition evaluation order
+### Condition Evaluation Order
 
 Let's inspect the following assertion:
 
@@ -302,7 +302,7 @@ Beware of this potential confusion:
 - `NoneToBe(x)` means "no message until end should be equal to x" → if no message is received the condition succeeds
 - `OneNotToBe(x)` means "a message not equal to x is expected" → if no message is received the condition fails (and like other `One*` condition, only one message satisfying the condition is needed)
 
-### With
+### Custom Condition
 
 The predefined set of conditions may not fit your needs. In that case you can define a custom `ConditionFunc`: 
 
@@ -334,7 +334,7 @@ rec.NewAssertion().With(customCondition) // it's possible to chain it with other
 
 ...this `customCondition` is a possible implementation of `OneNotToBe`.
 
-## Implementation specifics
+## Implementation Specifics
 
 The flow of messages in a test goes like (considering a `wsHandler` server handler):
 - `conn.Send("input")` → conn's serverReadCh channel → read by `wsHandler` (typically with `ReadJSON` or `ReadMessage`)
@@ -347,7 +347,7 @@ Here are some gotchas:
 - messages written by the server handler are stored until timeout is reached: indeed some assertions need to know the complete history of messages to decide their outcome
 - **but** the message history is cleared after each run (`wsmock.RunAssertions(t, timeout)` or `rec.Run(timeout)`), which is important to know if you make several runs in the same test
 
-## wsmock output
+## wsmock Output
 
 In case of a failing test, the output looks like:
 
@@ -376,7 +376,7 @@ Where:
 - `assertion#1` uniquely identifies the failing assertion of a given recorder (`#1` maps the creation order of the assertion on the recorder)
 - messages received by the assertion are printed before the actual error
 
-## For wsmock developers
+## For wsmock Developers
 
 Even if it does not follow Go conventions, we've decided to put additional tests in a separate `integration_test` folder to be able to split them in many different files without polluting the root folder.
 
