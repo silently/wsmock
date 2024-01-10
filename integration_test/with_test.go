@@ -12,6 +12,10 @@ func trueExceptOnEnd(end bool, _ any, _ []any) (done, passed bool, err string) {
 	return true, !end, ""
 }
 
+func alwaysTrue(_ bool, _ any, _ []any) (done, passed bool, err string) {
+	return true, true, ""
+}
+
 func alwaysFalse(_ bool, _ any, _ []any) (done, passed bool, err string) {
 	return true, false, ""
 }
@@ -26,7 +30,29 @@ func hasMoreMessagesOnEndThan(count int) ws.ConditionFunc {
 	}
 }
 
-func TestCustom_AlwaysTrue(t *testing.T) {
+func TestPendingTooLate(t *testing.T) {
+	t.Run("fails when last condition is not met", func(t *testing.T) {
+		// init
+		mockT := &testing.T{}
+		conn, rec := ws.NewGorillaMockAndRecorder(mockT)
+
+		go conn.WriteJSON("hello")
+
+		// declare expected chains
+		rec.NewAssertion().
+			OneToBe("hello").
+			With(alwaysTrue).
+			OneToBe("something")
+
+		rec.RunAssertions(20 * durationUnit)
+
+		if !mockT.Failed() { // fail expected
+			t.Error("OneToBe*s* should not succeed since no message is sent")
+		}
+	})
+}
+
+func TestCustom_TrueExceptOnEnd(t *testing.T) {
 	t.Run("succeeds when custom Condition does", func(t *testing.T) {
 		// init
 		mockT := &testing.T{}

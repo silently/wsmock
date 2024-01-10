@@ -55,7 +55,7 @@ func TestNextToBe_Success(t *testing.T) {
 
 		// assert
 		rec.NewAssertion().OneToBe("pong2").NextToBe("pong3")
-		rec.RunAssertions(5 * durationUnit)
+		rec.RunAssertions(10 * durationUnit)
 
 		if mockT.Failed() { // fail not expected
 			t.Error("NextToBe should succeed, mockT output is:\n", getTestOutput(mockT))

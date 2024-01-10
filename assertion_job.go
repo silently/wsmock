@@ -76,13 +76,16 @@ func (j *assertionJob) addError(err string, end bool) {
 func (j *assertionJob) assertOnEnd() {
 	latest, _ := last(j.writes)
 	// on end, done is considered true anyway
-	_, passed, err := j.currentCondition().Try(true, latest, j.writes)
+	_, currentPassed, currentErr := j.currentCondition().Try(true, latest, j.writes)
 	j.done = true
 
-	if passed {
+	if currentPassed {
 		j.incPassed()
 	} else {
-		j.addError(err, true)
+		j.addError(currentErr, true)
+	}
+	if !j.allPassed() {
+		j.addError(fmt.Sprintf("only %v/%v condition(s) passed", j.currentIndex, len(j.a.conditions)), true)
 	}
 }
 
@@ -102,9 +105,9 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 		case w := <-j.writeCh:
 			j.writes = append(j.writes, w)
 
-			done, passed, err := j.currentCondition().Try(false, w, j.writes)
-			if done {
-				if passed { // current passed
+			currentDone, currentPassed, currentError := j.currentCondition().Try(false, w, j.writes)
+			if currentDone {
+				if currentPassed { // current passed
 					j.incPassed()
 					if j.allPassed() { // all passed
 						j.done = true
@@ -112,7 +115,7 @@ func (j *assertionJob) loopWithTimeout(timeout time.Duration) {
 					}
 				} else {
 					j.done = true
-					j.addError(err, false)
+					j.addError(currentError, false)
 					return
 				}
 			}

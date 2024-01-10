@@ -172,23 +172,23 @@ func (a *Assertion) LastNotToMatch(re *regexp.Regexp) {
 // All*
 
 // Adds a condition that succeeds if all remaining messages are equal to the given interface (according to the equality operator `==`)
-func (a *Assertion) AllToBe(target any) *Assertion {
-	return a.append(newAllTo(eq(target), fmt.Sprintf("[AllToBe] message is not equal to: %#v", target)))
+func (a *Assertion) AllToBe(target any) {
+	a.append(newAllTo(eq(target), fmt.Sprintf("[AllToBe] message is not equal to: %#v", target)))
 }
 
 // Adds a condition that succeeds if all remaining messages check the Predicate
-func (a *Assertion) AllToCheck(f Predicate) *Assertion {
-	return a.append(newAllTo(f, fmt.Sprintf("[AllToCheck] message does not check predicate: %v", getFunctionName(f))))
+func (a *Assertion) AllToCheck(f Predicate) {
+	a.append(newAllTo(f, fmt.Sprintf("[AllToCheck] message does not check predicate: %v", getFunctionName(f))))
 }
 
 // Adds a condition that succeeds if all remaining messages contain the given string (messages that can't be converted to strings are JSON-marshalled first)
-func (a *Assertion) AllToContain(sub string) *Assertion {
-	return a.append(newAllTo(contain(sub), fmt.Sprintf("[AllToContain] message does not contain string: %v", sub)))
+func (a *Assertion) AllToContain(sub string) {
+	a.append(newAllTo(contain(sub), fmt.Sprintf("[AllToContain] message does not contain string: %v", sub)))
 }
 
 // Adds a condition that succeeds if all remaining messages match the regular expression
-func (a *Assertion) AllToMatch(re *regexp.Regexp) *Assertion {
-	return a.append(newAllTo(match(re), fmt.Sprintf("[AllToMatch] message does not match regexp: %v", re)))
+func (a *Assertion) AllToMatch(re *regexp.Regexp) {
+	a.append(newAllTo(match(re), fmt.Sprintf("[AllToMatch] message does not match regexp: %v", re)))
 }
 
 // None*
